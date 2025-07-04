@@ -96,7 +96,7 @@ func DeleteImage(relativePath string) error {
 
 	cleanPath := strings.TrimPrefix(relativePath, "/")
 
-	fullPath := filepath.Join(publicPath, strings.TrimPrefix(cleanPath, "uploads/"))
+	fullPath := filepath.Join(publicPath, cleanPath)
 
 	if err := DeleteFile(fullPath); err != nil {
 		return fmt.Errorf("failed to delete image: %v", err)
