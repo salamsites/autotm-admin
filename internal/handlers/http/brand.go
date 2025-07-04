@@ -341,7 +341,7 @@ func (h *BrandHandler) v1DeleteModel(w http.ResponseWriter, r *http.Request) sht
 		return shttp.BadRequest.SetData("invalid brand model ID")
 	}
 
-	err = h.service.DeleteBrand(r.Context(), id)
+	err = h.service.DeleteBrandModel(r.Context(), id)
 	if err != nil {
 		h.logger.Error("unable to delete brand model", err)
 		return shttp.InternalServerError.SetData(err.Error())
