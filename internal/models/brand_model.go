@@ -1,14 +1,14 @@
 package models
 
 type Brand struct {
-	ID       int64  `json:"id"`
-	Name     string `json:"name"`
-	LogoPath string `json:"logo_path"`
+	ID       int64
+	Name     string
+	LogoPath string
 }
 
 type BrandResult struct {
-	Brands []Brand `json:"brands"`
-	Count  int64   `json:"count"`
+	Brands []Brand
+	Count  int64
 }
 
 type ID struct {
@@ -16,14 +16,14 @@ type ID struct {
 }
 
 type BrandModel struct {
-	ID        int64  `json:"id"`
-	Name      string `json:"name"`
-	LogoPath  string `json:"logo_path"`
-	BrandID   int64  `json:"brand_id"`
-	BrandName string `json:"brand_name"`
+	ID        int64
+	Name      string
+	LogoPath  string
+	BrandID   int64
+	BrandName string
 }
 
 type BrandModelResult struct {
-	BrandModels []BrandModel `json:"brand_models"`
-	Count       int64        `json:"count"`
+	BrandModels []BrandModel
+	Count       int64
 }

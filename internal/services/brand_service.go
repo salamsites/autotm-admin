@@ -31,7 +31,7 @@ func (s *BrandService) UploadImage(file multipart.File, header *multipart.FileHe
 	return imagePath, nil
 }
 
-func (s *BrandService) CreateBrand(ctx context.Context, brand dtos.V1BrandDTO) (int64, error) {
+func (s *BrandService) CreateBrand(ctx context.Context, brand dtos.Brand) (int64, error) {
 	validate := helpers.GetValidator()
 	if err := validate.Struct(brand); err != nil {
 		s.logger.Errorf("validate err: %v", err)
@@ -51,7 +51,7 @@ func (s *BrandService) CreateBrand(ctx context.Context, brand dtos.V1BrandDTO) (
 	return brandID, nil
 }
 
-func (s *BrandService) GetBrands(ctx context.Context, limit, page int64, search string) (models.BrandResult, error) {
+func (s *BrandService) GetBrands(ctx context.Context, limit, page int64, search string) (dtos.BrandResult, error) {
 	offset := (page - 1) * limit
 	if page <= 0 {
 		page = 1
@@ -61,17 +61,25 @@ func (s *BrandService) GetBrands(ctx context.Context, limit, page int64, search 
 	brands, count, err := s.repo.GetBrands(ctx, limit, offset, search)
 	if err != nil {
 		s.logger.Errorf("get brands err: %v", err)
-		return models.BrandResult{}, err
+		return dtos.BrandResult{}, err
+	}
+	var dtoBrands []dtos.Brand
+	for _, b := range brands {
+		dtoBrands = append(dtoBrands, dtos.Brand{
+			ID:       b.ID,
+			Name:     b.Name,
+			LogoPath: b.LogoPath,
+		})
 	}
 
-	result := models.BrandResult{
-		Brands: brands,
+	result := dtos.BrandResult{
+		Brands: dtoBrands,
 		Count:  count,
 	}
 	return result, nil
 }
 
-func (s *BrandService) UpdateBrand(ctx context.Context, brand dtos.V1BrandDTO) (int64, error) {
+func (s *BrandService) UpdateBrand(ctx context.Context, brand dtos.Brand) (int64, error) {
 	validate := helpers.GetValidator()
 	if err := validate.Struct(brand); err != nil {
 		s.logger.Errorf("validate err: %v", err)
@@ -129,7 +137,7 @@ func (s *BrandService) DeleteBrand(ctx context.Context, id int64) error {
 	return nil
 }
 
-func (s *BrandService) CreateBrandModel(ctx context.Context, model dtos.V1BrandModelDTO) (int64, error) {
+func (s *BrandService) CreateBrandModel(ctx context.Context, model dtos.BrandModel) (int64, error) {
 	validate := helpers.GetValidator()
 	if err := validate.Struct(model); err != nil {
 		s.logger.Errorf("validate err: %v", err)
@@ -150,7 +158,7 @@ func (s *BrandService) CreateBrandModel(ctx context.Context, model dtos.V1BrandM
 	return modelID, nil
 }
 
-func (s *BrandService) GetBrandModels(ctx context.Context, limit, page int64, search string) (models.BrandModelResult, error) {
+func (s *BrandService) GetBrandModels(ctx context.Context, limit, page int64, search string) (dtos.BrandModelResult, error) {
 	offset := (page - 1) * limit
 	if page <= 0 {
 		page = 1
@@ -160,17 +168,25 @@ func (s *BrandService) GetBrandModels(ctx context.Context, limit, page int64, se
 	brandModels, count, err := s.repo.GetBrandModels(ctx, limit, offset, search)
 	if err != nil {
 		s.logger.Errorf("get brand models err: %v", err)
-		return models.BrandModelResult{}, err
+		return dtos.BrandModelResult{}, err
+	}
+	var dtoBrands []dtos.BrandModel
+	for _, b := range brandModels {
+		dtoBrands = append(dtoBrands, dtos.BrandModel{
+			ID:       b.ID,
+			Name:     b.Name,
+			LogoPath: b.LogoPath,
+		})
 	}
 
-	result := models.BrandModelResult{
-		BrandModels: brandModels,
+	result := dtos.BrandModelResult{
+		BrandModels: dtoBrands,
 		Count:       count,
 	}
 	return result, nil
 }
 
-func (s *BrandService) UpdateBrandModel(ctx context.Context, model dtos.V1BrandModelDTO) (int64, error) {
+func (s *BrandService) UpdateBrandModel(ctx context.Context, model dtos.BrandModel) (int64, error) {
 	validate := helpers.GetValidator()
 	if err := validate.Struct(model); err != nil {
 		s.logger.Errorf("validate err: %v", err)

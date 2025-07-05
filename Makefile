@@ -32,3 +32,15 @@ deps:
 
 test:
 	go test -v ./...
+
+DB_URL := postgres://autotm:autotm@127.0.0.1:5432/autotm_admin?sslmode=disable
+
+
+migrate_create:
+	$(shell go env GOPATH)/bin/migrate create -ext sql -dir db/migrations -seq init_autotm_admin
+
+migrate_up:
+	$(shell go env GOPATH)/bin/migrate -path db/migrations -database "$(DB_URL)" up
+
+migrate_down:
+	$(shell go env GOPATH)/bin/migrate -path db/migrations -database "$(DB_URL)" down

@@ -72,7 +72,7 @@ func (h *BrandHandler) v1UploadImage(w http.ResponseWriter, r *http.Request) sht
 // @Tags Brand
 // @Accept json
 // @Produce json
-// @Param brand body dtos.V1BrandDTO true "Brand data"
+// @Param brand body dtos.Brand true "Brand data"
 // @Success 200 {object} map[string]int64 "Returns created brand ID"
 // @Failure 400 {object} string "Bad request"
 // @Failure 422 {object} string "Unprocessable entity"
@@ -86,7 +86,7 @@ func (h *BrandHandler) v1CreateBrand(w http.ResponseWriter, r *http.Request) sht
 	}
 	defer r.Body.Close()
 
-	var brandDTO dtos.V1BrandDTO
+	var brandDTO dtos.Brand
 	errData := json.Unmarshal(body, &brandDTO)
 	if errData != nil {
 		h.logger.Error("unable to unmarshal request body", errData)
@@ -112,7 +112,7 @@ func (h *BrandHandler) v1CreateBrand(w http.ResponseWriter, r *http.Request) sht
 // @Param limit query int false "Limit number of brands to return"
 // @Param page query int false "Page number"
 // @Param search query string false "Search string to filter brands by name"
-// @Success 200 {object} models.BrandResult "List of brands with pagination info"
+// @Success 200 {object} dtos.BrandResult "List of brands with pagination info"
 // @Failure 400 {object} string "Bad request"
 // @Failure 500 {object} string "Internal server error"
 // @Router /brand/get-brands [get]
@@ -144,7 +144,7 @@ func (h *BrandHandler) v1GetBrands(w http.ResponseWriter, r *http.Request) shttp
 // @Tags Brand
 // @Accept json
 // @Produce json
-// @Param brand body dtos.V1BrandDTO true "Brand data with ID"
+// @Param brand body dtos.Brand true "Brand data with ID"
 // @Success 200 {object} map[string]int64 "Returns updated brand ID"
 // @Failure 400 {object} string "Bad request"
 // @Failure 422 {object} string "Unprocessable entity"
@@ -158,7 +158,7 @@ func (h *BrandHandler) v1UpdateBrand(w http.ResponseWriter, r *http.Request) sht
 	}
 	defer r.Body.Close()
 
-	var brandDTO dtos.V1BrandDTO
+	var brandDTO dtos.Brand
 	errData := json.Unmarshal(body, &brandDTO)
 	if errData != nil {
 		h.logger.Error("unable to unmarshal request body", errData)
@@ -214,7 +214,7 @@ func (h *BrandHandler) v1DeleteBrand(w http.ResponseWriter, r *http.Request) sht
 // @Tags Brand Model
 // @Accept json
 // @Produce json
-// @Param brand body dtos.V1BrandModelDTO true "Brand Model data"
+// @Param brand body dtos.BrandModel true "Brand Model data"
 // @Success 200 {object} map[string]int64 "Returns created model ID"
 // @Failure 400 {object} string "Bad request"
 // @Failure 422 {object} string "Unprocessable entity"
@@ -228,7 +228,7 @@ func (h *BrandHandler) v1CreateModel(w http.ResponseWriter, r *http.Request) sht
 	}
 	defer r.Body.Close()
 
-	var modelDTO dtos.V1BrandModelDTO
+	var modelDTO dtos.BrandModel
 	errData := json.Unmarshal(body, &modelDTO)
 	if errData != nil {
 		h.logger.Error("unable to unmarshal request body", errData)
@@ -254,7 +254,7 @@ func (h *BrandHandler) v1CreateModel(w http.ResponseWriter, r *http.Request) sht
 // @Param limit query int false "Limit number of brand models to return"
 // @Param page query int false "Page number"
 // @Param search query string false "Search string to filter brand models or brands by name"
-// @Success 200 {object} models.BrandModelResult "List of brand models with pagination info"
+// @Success 200 {object} dtos.BrandModelResult "List of brand models with pagination info"
 // @Failure 400 {object} string "Bad request"
 // @Failure 500 {object} string "Internal server error"
 // @Router /brand/get-models [get]
@@ -286,7 +286,7 @@ func (h *BrandHandler) v1GetModels(w http.ResponseWriter, r *http.Request) shttp
 // @Tags Brand Model
 // @Accept json
 // @Produce json
-// @Param brand body dtos.V1BrandModelDTO true "Brand Model data with ID"
+// @Param brand body dtos.BrandModel true "Brand Model data with ID"
 // @Success 200 {object} map[string]int64 "Returns updated brand model ID"
 // @Failure 400 {object} string "Bad request"
 // @Failure 422 {object} string "Unprocessable entity"
@@ -300,7 +300,7 @@ func (h *BrandHandler) v1UpdateModel(w http.ResponseWriter, r *http.Request) sht
 	}
 	defer r.Body.Close()
 
-	var modelDTO dtos.V1BrandModelDTO
+	var modelDTO dtos.BrandModel
 	errData := json.Unmarshal(body, &modelDTO)
 	if errData != nil {
 		h.logger.Error("unable to unmarshal request body", errData)
