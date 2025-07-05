@@ -22,7 +22,3 @@ type BrandModelResult struct {
 	BrandModels []BrandModel `json:"brand_models"`
 	Count       int64        `json:"count"`
 }
-
-type ID struct {
-	ID int64 `json:"id"`
-}

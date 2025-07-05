@@ -6,11 +6,6 @@ type Brand struct {
 	LogoPath string
 }
 
-type BrandResult struct {
-	Brands []Brand
-	Count  int64
-}
-
 type ID struct {
 	ID int64 `json:"id"`
 }
@@ -21,9 +16,4 @@ type BrandModel struct {
 	LogoPath  string
 	BrandID   int64
 	BrandName string
-}
-
-type BrandModelResult struct {
-	BrandModels []BrandModel
-	Count       int64
 }
