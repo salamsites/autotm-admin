@@ -132,7 +132,7 @@ func (h *BrandHandler) v1GetBrands(w http.ResponseWriter, r *http.Request) shttp
 
 	brands, err := h.service.GetBrands(r.Context(), limit, page, search)
 	if err != nil {
-		h.logger.Error("unable to get brands", err, err)
+		h.logger.Error("unable to get brands", err)
 		return shttp.InternalServerError.SetData(err.Error())
 	}
 	return shttp.Success.SetData(brands)
@@ -167,7 +167,7 @@ func (h *BrandHandler) v1UpdateBrand(w http.ResponseWriter, r *http.Request) sht
 
 	id, err := h.service.UpdateBrand(r.Context(), brandDTO)
 	if err != nil {
-		h.logger.Error("unable to update brand", err, err)
+		h.logger.Error("unable to update brand", err)
 		return shttp.InternalServerError.SetData(err.Error())
 	}
 	return shttp.Success.SetData(map[string]interface{}{
@@ -274,7 +274,7 @@ func (h *BrandHandler) v1GetModels(w http.ResponseWriter, r *http.Request) shttp
 
 	brandModels, err := h.service.GetBrandModels(r.Context(), limit, page, search)
 	if err != nil {
-		h.logger.Error("unable to get brand models", err, err)
+		h.logger.Error("unable to get brand models", err)
 		return shttp.InternalServerError.SetData(err.Error())
 	}
 	return shttp.Success.SetData(brandModels)
@@ -309,7 +309,7 @@ func (h *BrandHandler) v1UpdateModel(w http.ResponseWriter, r *http.Request) sht
 
 	id, err := h.service.UpdateBrandModel(r.Context(), modelDTO)
 	if err != nil {
-		h.logger.Error("unable to update brand model", err, err)
+		h.logger.Error("unable to update brand model", err)
 		return shttp.InternalServerError.SetData(err.Error())
 	}
 	return shttp.Success.SetData(map[string]interface{}{

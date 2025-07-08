@@ -12,10 +12,11 @@ type BrandResult struct {
 }
 
 type BrandModel struct {
-	ID       int64  `json:"id"`
-	Name     string `json:"name"`
-	LogoPath string `json:"logo_path"`
-	BrandID  int64  `json:"brand_id"`
+	ID        int64  `json:"id"`
+	Name      string `json:"name"`
+	LogoPath  string `json:"logo_path"`
+	BrandID   int64  `json:"brand_id"`
+	BrandName string `json:"brand_name"`
 }
 
 type BrandModelResult struct {

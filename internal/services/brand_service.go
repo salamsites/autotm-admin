@@ -173,9 +173,11 @@ func (s *BrandService) GetBrandModels(ctx context.Context, limit, page int64, se
 	var dtoBrands []dtos.BrandModel
 	for _, b := range brandModels {
 		dtoBrands = append(dtoBrands, dtos.BrandModel{
-			ID:       b.ID,
-			Name:     b.Name,
-			LogoPath: b.LogoPath,
+			ID:        b.ID,
+			Name:      b.Name,
+			LogoPath:  b.LogoPath,
+			BrandID:   b.BrandID,
+			BrandName: b.BrandName,
 		})
 	}
 
@@ -191,18 +193,6 @@ func (s *BrandService) UpdateBrandModel(ctx context.Context, model dtos.BrandMod
 	if err := validate.Struct(model); err != nil {
 		s.logger.Errorf("validate err: %v", err)
 		return 0, err
-	}
-
-	oldModel, err := s.repo.GetBrandModelByID(ctx, model.ID)
-	if err != nil {
-		s.logger.Errorf("get old brand model err: %v", err)
-		return 0, err
-	}
-
-	if oldModel.LogoPath != model.LogoPath && model.LogoPath != "" {
-		if err := helpers.DeleteImage(oldModel.LogoPath); err != nil {
-			s.logger.Errorf("delete old logo path err: %v", err)
-		}
 	}
 
 	newModel := models.BrandModel{
@@ -221,25 +211,13 @@ func (s *BrandService) UpdateBrandModel(ctx context.Context, model dtos.BrandMod
 }
 
 func (s *BrandService) DeleteBrandModel(ctx context.Context, id int64) error {
-	oldBrand, err := s.repo.GetBrandModelByID(ctx, id)
-	if err != nil {
-		s.logger.Errorf("get old brand model err: %v", err)
-		return err
-	}
-
-	if oldBrand.LogoPath != "" {
-		if err := helpers.DeleteImage(oldBrand.LogoPath); err != nil {
-			s.logger.Errorf("delete old logo path err: %v", err)
-		}
-	}
-
 	deleteID := models.ID{
 		ID: id,
 	}
 
-	err = s.repo.DeleteBrandModel(ctx, deleteID)
+	err := s.repo.DeleteBrandModel(ctx, deleteID)
 	if err != nil {
-		s.logger.Errorf("delete brand err: %v", err)
+		s.logger.Errorf("delete brand model err: %v", err)
 		return err
 	}
 	return nil
