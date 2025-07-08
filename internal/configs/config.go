@@ -46,6 +46,7 @@ type Psql struct {
 	Username      string `yaml:"username" env-required:"true"`
 	Password      string `yaml:"password" env-required:"true"`
 	PgPoolMaxConn int    `yaml:"pg_pool_max_conn" env-required:"true"`
+	Migration     bool   `yaml:"migration" env-default:"false"`
 }
 
 type Log struct {

@@ -16,6 +16,7 @@ storage:
     username: autotm
     password: autotm
     pg_pool_max_conn: 400
+    migration: true
 log:
   path:   /home/user/Desktop/sada/autotm-admin/logs
   filename: autotm-admin.log

@@ -4,6 +4,7 @@ import (
 	_ "autotm-admin/docs"
 	"autotm-admin/internal/configs"
 	"autotm-admin/internal/handlers"
+	"autotm-admin/internal/migrations"
 	"context"
 	_ "github.com/lib/pq"
 	"github.com/rs/cors"
@@ -51,6 +52,9 @@ func main() {
 	}
 	defer psqlClient.Close()
 	logger.Info("psql client connected")
+
+	// Run db migrations
+	migrations.RunMigrations(logger, cfg)
 
 	router := handlers.Manager(logger, psqlClient, cfg)
 
