@@ -66,8 +66,8 @@ CREATE TABLE IF NOT EXISTS cities (
 
 CREATE TABLE IF NOT EXISTS sliders (
             "id" SERIAL PRIMARY KEY,
-            "image_path" CHARACTER VARYING(255),
-            "title" CHARACTER VARYING(255) NOT NULL,
+            "image_path" CHARACTER VARYING(255) NOT NULL,
+            "title" CHARACTER VARYING(255),
             "platform" CHARACTER VARYING(100) NOT NULL,
             "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
