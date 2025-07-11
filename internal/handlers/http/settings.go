@@ -37,7 +37,6 @@ func (h *SettingsHandler) SettingsRegisterRoutes(r chi.Router) {
 	r.Method("GET", "/get-users", h.middleware.Base(h.v1GetAllUsers))
 	r.Method("PUT", "/update-user", h.middleware.Base(h.v1UpdateUser))
 	r.Method("DELETE", "/delete-user", h.middleware.Base(h.v1DeleteUser))
-
 }
 
 // v1CreateRole

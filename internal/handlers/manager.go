@@ -17,6 +17,8 @@ const (
 	baseURL     = "/autotm-admin"
 	brandURL    = baseURL + "/brand"
 	settingsURL = baseURL + "/settings"
+	regionsURL  = baseURL + "/regions"
+	slidersURL  = baseURL + "/sliders"
 )
 
 func Manager(logger *slog.Logger, clientPsql spsql.Client, cfg *configs.Config) chi.Router {
@@ -36,12 +38,26 @@ func Manager(logger *slog.Logger, clientPsql spsql.Client, cfg *configs.Config) 
 	r.Route(settingsURL, func(subRouter chi.Router) {
 		settingsRepo := repository.NewSettingsPsqlRepository(logger, clientPsql)
 		settingsService := services.NewSettingsService(logger, settingsRepo)
-		
+
 		if err := settingsService.InitSuperAdmin(context.Background()); err != nil {
 			logger.Errorf("Failed to initialize super admin settings: %v", err)
 		}
 		settingsHandler := http.NewSettingsHandler(logger, newMiddleware, settingsService)
 		settingsHandler.SettingsRegisterRoutes(subRouter)
+	})
+
+	r.Route(regionsURL, func(subRouter chi.Router) {
+		regionsRepo := repository.NewRegionsPsqlRepository(logger, clientPsql)
+		regionsService := services.NewRegionsService(logger, regionsRepo)
+		regionsHandler := http.NewRegionsHandler(logger, newMiddleware, regionsService)
+		regionsHandler.RegionsRegisterRoutes(subRouter)
+	})
+
+	r.Route(slidersURL, func(subRouter chi.Router) {
+		sliderRepo := repository.NewSliderPsqlRepository(logger, clientPsql)
+		sliderService := services.NewSlidersService(logger, sliderRepo)
+		sliderHandler := http.NewSliderHandler(logger, newMiddleware, sliderService)
+		sliderHandler.SliderRegisterRoutes(subRouter)
 	})
 
 	return r

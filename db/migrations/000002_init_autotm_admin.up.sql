@@ -1,19 +1,3 @@
-CREATE ROLE autotm LOGIN PASSWORD 'autotm';
-
-CREATE DATABASE autotm_admin
-       WITH
-       OWNER = autotm
-       ENCODING = 'UTF8'
-       CONNECTION LIMIT = -1
-       IS_TEMPLATE = False;
-
-GRANT ALL PRIVILEGES ON DATABASE autotm_admin TO postgres;
-
-\c autotm_admin;
-
-SET client_encoding TO 'UTF-8';
-
-
 CREATE TABLE IF NOT EXISTS brands (
             "id" SERIAL PRIMARY KEY,
             "name" CHARACTER VARYING(255) NOT NULL,
@@ -28,10 +12,10 @@ CREATE TABLE IF NOT EXISTS brand_models (
             "brand_id" INTEGER,
             "created_at" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
             "updated_at" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-                    CONSTRAINT brand_id_fk
-                        FOREIGN KEY (brand_id)
-                            REFERENCES brands(id)
-                                ON UPDATE CASCADE ON DELETE SET NULL
+            CONSTRAINT brand_id_fk
+                FOREIGN KEY (brand_id)
+                    REFERENCES brands(id)
+                        ON UPDATE CASCADE ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS roles (
@@ -52,9 +36,9 @@ CREATE TABLE IF NOT EXISTS users (
             "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             CONSTRAINT role_id_fk
                 FOREIGN KEY (role_id)
-                     REFERENCES roles(id)
+                    REFERENCES roles(id)
                         ON UPDATE CASCADE ON DELETE SET NULL
-);
+    );
 
 
 CREATE TABLE IF NOT EXISTS regions (
@@ -63,7 +47,7 @@ CREATE TABLE IF NOT EXISTS regions (
             "name_en" CHARACTER VARYING(255) NOT NULL,
             "name_ru" CHARACTER VARYING(255) NOT NULL,
             "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS cities (
@@ -82,8 +66,8 @@ CREATE TABLE IF NOT EXISTS cities (
 
 CREATE TABLE IF NOT EXISTS sliders (
             "id" SERIAL PRIMARY KEY,
-            "image_path" CHARACTER VARYING(255) NOT NULL,
-            "title" CHARACTER VARYING(255),
+            "image_path" CHARACTER VARYING(255),
+            "title" CHARACTER VARYING(255) NOT NULL,
             "platform" CHARACTER VARYING(100) NOT NULL,
             "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
