@@ -187,7 +187,7 @@ func (h *SettingsHandler) v1DeleteRole(w http.ResponseWriter, r *http.Request) s
 // @Tags User
 // @Accept json
 // @Produce json
-// @Param Role body dtos.User true "User data"
+// @Param Role body dtos.CreateUserReq true "User data"
 // @Success 200 {object} map[string]int64 "Returns created user ID"
 // @Failure 400 {object} string "Bad request"
 // @Failure 422 {object} string "Unprocessable entity"
@@ -201,7 +201,7 @@ func (h *SettingsHandler) v1CreateUser(w http.ResponseWriter, r *http.Request) s
 	}
 	defer r.Body.Close()
 
-	var userDTO dtos.User
+	var userDTO dtos.CreateUserReq
 	errData := json.Unmarshal(body, &userDTO)
 	if errData != nil {
 		h.logger.Error("unable to unmarshal request body", errData)
