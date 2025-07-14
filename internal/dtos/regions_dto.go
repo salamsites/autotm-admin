@@ -1,5 +1,10 @@
 package dtos
 
+type CreateRegionReq struct {
+	NameTM string `json:"name_tm"`
+	NameEN string `json:"name_en"`
+	NameRu string `json:"name_ru"`
+}
 type Region struct {
 	ID     int64  `json:"id"`
 	NameTM string `json:"name_tm"`
@@ -10,6 +15,13 @@ type Region struct {
 type RegionResult struct {
 	Regions []Region `json:"regions"`
 	Count   int64    `json:"count"`
+}
+
+type CreateCityReq struct {
+	NameTM   string `json:"name_tm"`
+	NameEN   string `json:"name_en"`
+	NameRu   string `json:"name_ru"`
+	RegionID int64  `json:"region_id"`
 }
 
 type City struct {

@@ -31,7 +31,7 @@ func (s *BrandService) UploadImage(file multipart.File, header *multipart.FileHe
 	return imagePath, nil
 }
 
-func (s *BrandService) CreateBrand(ctx context.Context, brand dtos.Brand) (int64, error) {
+func (s *BrandService) CreateBrand(ctx context.Context, brand dtos.CreateBrandReq) (int64, error) {
 	validate := helpers.GetValidator()
 	if err := validate.Struct(brand); err != nil {
 		s.logger.Errorf("validate err: %v", err)
@@ -137,7 +137,7 @@ func (s *BrandService) DeleteBrand(ctx context.Context, id int64) error {
 	return nil
 }
 
-func (s *BrandService) CreateBrandModel(ctx context.Context, model dtos.BrandModel) (int64, error) {
+func (s *BrandService) CreateBrandModel(ctx context.Context, model dtos.CreateBrandModelReq) (int64, error) {
 	validate := helpers.GetValidator()
 	if err := validate.Struct(model); err != nil {
 		s.logger.Errorf("validate err: %v", err)
@@ -145,9 +145,8 @@ func (s *BrandService) CreateBrandModel(ctx context.Context, model dtos.BrandMod
 	}
 
 	newModel := models.BrandModel{
-		Name:     model.Name,
-		LogoPath: model.LogoPath,
-		BrandID:  model.BrandID,
+		Name:    model.Name,
+		BrandID: model.BrandID,
 	}
 
 	modelID, err := s.repo.CreateBrandModel(ctx, newModel)

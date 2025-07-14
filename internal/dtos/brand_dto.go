@@ -1,5 +1,9 @@
 package dtos
 
+type CreateBrandReq struct {
+	Name     string `json:"name"`
+	LogoPath string `json:"logo_path"`
+}
 type Brand struct {
 	ID       int64  `json:"id"`
 	Name     string `json:"name"`
@@ -9,6 +13,11 @@ type Brand struct {
 type BrandResult struct {
 	Brands []Brand `json:"brands"`
 	Count  int64   `json:"count"`
+}
+
+type CreateBrandModelReq struct {
+	Name    string `json:"name"`
+	BrandID int64  `json:"brand_id"`
 }
 
 type BrandModel struct {

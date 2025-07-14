@@ -39,7 +39,7 @@ func (h *SliderHandler) SliderRegisterRoutes(r chi.Router) {
 // @Tags Slider
 // @Accept json
 // @Produce json
-// @Param slider body dtos.Slider true "Slider data"
+// @Param slider body dtos.CreateSliderReq true "Slider data"
 // @Success 200 {object} map[string]int64 "Returns created slider ID"
 // @Failure 400 {object} string "Bad request"
 // @Failure 422 {object} string "Unprocessable entity"
@@ -53,7 +53,7 @@ func (h *SliderHandler) v1CreateSlider(w http.ResponseWriter, r *http.Request) s
 	}
 	defer r.Body.Close()
 
-	var sliderDTO dtos.Slider
+	var sliderDTO dtos.CreateSliderReq
 	errData := json.Unmarshal(body, &sliderDTO)
 	if errData != nil {
 		h.logger.Error("unable to unmarshal request body", errData)

@@ -72,7 +72,7 @@ func (h *BrandHandler) v1UploadImage(w http.ResponseWriter, r *http.Request) sht
 // @Tags Brand
 // @Accept json
 // @Produce json
-// @Param brand body dtos.Brand true "Brand data"
+// @Param brand body dtos.CreateBrandReq true "Brand data"
 // @Success 200 {object} map[string]int64 "Returns created brand ID"
 // @Failure 400 {object} string "Bad request"
 // @Failure 422 {object} string "Unprocessable entity"
@@ -86,7 +86,7 @@ func (h *BrandHandler) v1CreateBrand(w http.ResponseWriter, r *http.Request) sht
 	}
 	defer r.Body.Close()
 
-	var brandDTO dtos.Brand
+	var brandDTO dtos.CreateBrandReq
 	errData := json.Unmarshal(body, &brandDTO)
 	if errData != nil {
 		h.logger.Error("unable to unmarshal request body", errData)
@@ -214,7 +214,7 @@ func (h *BrandHandler) v1DeleteBrand(w http.ResponseWriter, r *http.Request) sht
 // @Tags Brand Model
 // @Accept json
 // @Produce json
-// @Param brand body dtos.BrandModel true "Brand Model data"
+// @Param brand body dtos.CreateBrandModelReq true "Brand Model data"
 // @Success 200 {object} map[string]int64 "Returns created model ID"
 // @Failure 400 {object} string "Bad request"
 // @Failure 422 {object} string "Unprocessable entity"
@@ -228,7 +228,7 @@ func (h *BrandHandler) v1CreateModel(w http.ResponseWriter, r *http.Request) sht
 	}
 	defer r.Body.Close()
 
-	var modelDTO dtos.BrandModel
+	var modelDTO dtos.CreateBrandModelReq
 	errData := json.Unmarshal(body, &modelDTO)
 	if errData != nil {
 		h.logger.Error("unable to unmarshal request body", errData)

@@ -45,7 +45,7 @@ func (h *SettingsHandler) SettingsRegisterRoutes(r chi.Router) {
 // @Tags Role
 // @Accept json
 // @Produce json
-// @Param Role body dtos.Role true "Role data (the 'role' field accepts any JSON object)"
+// @Param Role body dtos.CreateRoleReq true "Role data (the 'role' field accepts any JSON object)"
 // @Success 200 {object} map[string]int64 "Returns created role ID"
 // @Failure 400 {object} string "Bad request"
 // @Failure 422 {object} string "Unprocessable entity"
@@ -59,7 +59,7 @@ func (h *SettingsHandler) v1CreateRole(w http.ResponseWriter, r *http.Request) s
 	}
 	defer r.Body.Close()
 
-	var roleDTO dtos.Role
+	var roleDTO dtos.CreateRoleReq
 	errData := json.Unmarshal(body, &roleDTO)
 	if errData != nil {
 		h.logger.Error("unable to unmarshal request body", errData)

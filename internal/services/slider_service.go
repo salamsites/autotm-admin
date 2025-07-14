@@ -21,7 +21,7 @@ func NewSlidersService(logger *slog.Logger, repo storage.SlidersRepository) *Sli
 	}
 }
 
-func (s *SlidersService) CreateSlider(ctx context.Context, slider dtos.Slider) (int64, error) {
+func (s *SlidersService) CreateSlider(ctx context.Context, slider dtos.CreateSliderReq) (int64, error) {
 	validate := helpers.GetValidator()
 	if err := validate.Struct(slider); err != nil {
 		s.logger.Errorf("validate err: %v", err)

@@ -21,7 +21,7 @@ func NewRegionsService(logger *slog.Logger, repo storage.RegionsRepository) *Reg
 	}
 }
 
-func (s *RegionsService) CreateRegion(ctx context.Context, region dtos.Region) (int64, error) {
+func (s *RegionsService) CreateRegion(ctx context.Context, region dtos.CreateRegionReq) (int64, error) {
 	validate := helpers.GetValidator()
 	if err := validate.Struct(region); err != nil {
 		s.logger.Errorf("validate err: %v", err)
@@ -107,7 +107,7 @@ func (s *RegionsService) DeleteRegion(ctx context.Context, id int64) error {
 }
 
 // Cities
-func (s *RegionsService) CreateCity(ctx context.Context, city dtos.City) (int64, error) {
+func (s *RegionsService) CreateCity(ctx context.Context, city dtos.CreateCityReq) (int64, error) {
 	validate := helpers.GetValidator()
 	if err := validate.Struct(city); err != nil {
 		s.logger.Errorf("validate err: %v", err)

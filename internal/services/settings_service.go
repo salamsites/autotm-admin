@@ -22,7 +22,7 @@ func NewSettingsService(logger *slog.Logger, repo storage.SettingsRepository) *S
 	}
 }
 
-func (s *SettingsService) CreateRole(ctx context.Context, role dtos.Role) (int64, error) {
+func (s *SettingsService) CreateRole(ctx context.Context, role dtos.CreateRoleReq) (int64, error) {
 	validate := helpers.GetValidator()
 	if err := validate.Struct(role); err != nil {
 		s.logger.Errorf("validate err: %v", err)
@@ -105,7 +105,7 @@ func (s *SettingsService) DeleteRole(ctx context.Context, id int64) error {
 }
 
 // User
-func (s *SettingsService) CreateUser(ctx context.Context, user dtos.User) (int64, error) {
+func (s *SettingsService) CreateUser(ctx context.Context, user dtos.CreateUserReq) (int64, error) {
 	validate := helpers.GetValidator()
 	if err := validate.Struct(user); err != nil {
 		s.logger.Errorf("validate user err: %v", err)

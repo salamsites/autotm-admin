@@ -6,13 +6,13 @@ import (
 )
 
 type RegionsService interface {
-	CreateRegion(ctx context.Context, region dtos.Region) (int64, error)
+	CreateRegion(ctx context.Context, region dtos.CreateRegionReq) (int64, error)
 	GetAllRegions(ctx context.Context, limit, page int64, search string) (dtos.RegionResult, error)
 	UpdateRegion(ctx context.Context, region dtos.Region) (int64, error)
 	DeleteRegion(ctx context.Context, id int64) error
 
 	// Cities
-	CreateCity(ctx context.Context, city dtos.City) (int64, error)
+	CreateCity(ctx context.Context, city dtos.CreateCityReq) (int64, error)
 	GetAllCities(ctx context.Context, limit, page int64, search string) (dtos.CityResult, error)
 	UpdateCity(ctx context.Context, region dtos.City) (int64, error)
 	DeleteCity(ctx context.Context, id int64) error

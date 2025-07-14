@@ -45,7 +45,7 @@ func (h *RegionsHandler) RegionsRegisterRoutes(r chi.Router) {
 // @Tags Region
 // @Accept json
 // @Produce json
-// @Param Region body dtos.Region true "Region data"
+// @Param Region body dtos.CreateRegionReq true "Region data"
 // @Success 200 {object} map[string]int64 "Returns created region ID"
 // @Failure 400 {object} string "Bad request"
 // @Failure 422 {object} string "Unprocessable entity"
@@ -59,7 +59,7 @@ func (h *RegionsHandler) v1CreateRegion(w http.ResponseWriter, r *http.Request) 
 	}
 	defer r.Body.Close()
 
-	var regionDTO dtos.Region
+	var regionDTO dtos.CreateRegionReq
 	errData := json.Unmarshal(body, &regionDTO)
 	if errData != nil {
 		h.logger.Error("unable to unmarshal request body", errData)
@@ -187,7 +187,7 @@ func (h *RegionsHandler) v1DeleteRegion(w http.ResponseWriter, r *http.Request) 
 // @Tags City
 // @Accept json
 // @Produce json
-// @Param City body dtos.City true "City data"
+// @Param City body dtos.CreateCityReq true "City data"
 // @Success 200 {object} map[string]int64 "Returns created city ID"
 // @Failure 400 {object} string "Bad request"
 // @Failure 422 {object} string "Unprocessable entity"
@@ -201,7 +201,7 @@ func (h *RegionsHandler) v1CreateCity(w http.ResponseWriter, r *http.Request) sh
 	}
 	defer r.Body.Close()
 
-	var cityDTO dtos.City
+	var cityDTO dtos.CreateCityReq
 	errData := json.Unmarshal(body, &cityDTO)
 	if errData != nil {
 		h.logger.Error("unable to unmarshal request body", errData)

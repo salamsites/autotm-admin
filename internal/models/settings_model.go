@@ -1,11 +1,9 @@
 package models
 
-import "encoding/json"
-
 type Role struct {
 	ID   int64
 	Name string
-	Role json.RawMessage
+	Role interface{}
 }
 
 type User struct {
