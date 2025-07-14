@@ -70,7 +70,7 @@ func (s *SettingsService) GetAllRoles(ctx context.Context, limit, page int64, se
 	return result, nil
 }
 
-func (s *SettingsService) UpdateRole(ctx context.Context, role dtos.Role) (int64, error) {
+func (s *SettingsService) UpdateRole(ctx context.Context, role dtos.UpdateRoleReq) (int64, error) {
 	validate := helpers.GetValidator()
 	if err := validate.Struct(role); err != nil {
 		s.logger.Errorf("validate err: %v", err)
@@ -211,7 +211,7 @@ func (s *SettingsService) GetAllUsers(ctx context.Context, limit, page int64, se
 	return result, nil
 }
 
-func (s *SettingsService) UpdateUser(ctx context.Context, user dtos.User) (int64, error) {
+func (s *SettingsService) UpdateUser(ctx context.Context, user dtos.UpdateUserReq) (int64, error) {
 	validate := helpers.GetValidator()
 	if err := validate.Struct(user); err != nil {
 		s.logger.Errorf("validate err: %v", err)

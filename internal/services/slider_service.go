@@ -71,7 +71,7 @@ func (s *SlidersService) GetAllSliders(ctx context.Context, limit, page int64, p
 	return result, nil
 }
 
-func (s *SlidersService) UpdateSlider(ctx context.Context, slider dtos.Slider) (int64, error) {
+func (s *SlidersService) UpdateSlider(ctx context.Context, slider dtos.UpdateSliderReq) (int64, error) {
 	validate := helpers.GetValidator()
 	if err := validate.Struct(slider); err != nil {
 		s.logger.Errorf("validate err: %v", err)

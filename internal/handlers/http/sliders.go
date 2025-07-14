@@ -111,7 +111,7 @@ func (h *SliderHandler) v1GetAllSliders(w http.ResponseWriter, r *http.Request) 
 // @Tags Slider
 // @Accept json
 // @Produce json
-// @Param slider body dtos.Slider true "Slider data with ID"
+// @Param slider body dtos.UpdateSliderReq true "Slider data with ID"
 // @Success 200 {object} map[string]int64 "Returns updated slider ID"
 // @Failure 400 {object} string "Bad request"
 // @Failure 422 {object} string "Unprocessable entity"
@@ -125,7 +125,7 @@ func (h *SliderHandler) v1UpdateSlider(w http.ResponseWriter, r *http.Request) s
 	}
 	defer r.Body.Close()
 
-	var sliderDTO dtos.Slider
+	var sliderDTO dtos.UpdateSliderReq
 	errData := json.Unmarshal(body, &sliderDTO)
 	if errData != nil {
 		h.logger.Error("unable to unmarshal request body", errData)

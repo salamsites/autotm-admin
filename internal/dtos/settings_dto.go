@@ -5,6 +5,12 @@ type CreateRoleReq struct {
 	Role interface{} `json:"role"`
 }
 
+type UpdateRoleReq struct {
+	ID   int64       `json:"id"`
+	Name string      `json:"name"`
+	Role interface{} `json:"role"`
+}
+
 type Role struct {
 	ID   int64       `json:"id"`
 	Name string      `json:"name"`
@@ -21,6 +27,14 @@ type CreateUserReq struct {
 	Login    string `json:"login" validate:"required"`
 	Password string `json:"password,omitempty" validate:"required"`
 	RoleID   int64  `json:"role_id" validate:"required"`
+}
+
+type UpdateUserReq struct {
+	ID       int64  `json:"id"`
+	Username string `json:"username"`
+	Login    string `json:"login"`
+	Password string `json:"password,omitempty"`
+	RoleID   int64  `json:"role_id"`
 }
 type User struct {
 	ID       int64  `json:"id"`

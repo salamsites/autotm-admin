@@ -117,7 +117,7 @@ func (h *SettingsHandler) v1GetAllRoles(w http.ResponseWriter, r *http.Request) 
 // @Tags Role
 // @Accept json
 // @Produce json
-// @Param Role body dtos.Role true "Role data with ID"
+// @Param Role body dtos.UpdateRoleReq true "Role data with ID"
 // @Success 200 {object} map[string]int64 "Returns updated role ID"
 // @Failure 400 {object} string "Bad request"
 // @Failure 422 {object} string "Unprocessable entity"
@@ -131,7 +131,7 @@ func (h *SettingsHandler) v1UpdateRole(w http.ResponseWriter, r *http.Request) s
 	}
 	defer r.Body.Close()
 
-	var roleDTO dtos.Role
+	var roleDTO dtos.UpdateRoleReq
 	errData := json.Unmarshal(body, &roleDTO)
 	if errData != nil {
 		h.logger.Error("unable to unmarshal request body", errData)
@@ -259,7 +259,7 @@ func (h *SettingsHandler) v1GetAllUsers(w http.ResponseWriter, r *http.Request) 
 // @Tags User
 // @Accept json
 // @Produce json
-// @Param Role body dtos.User true "User data with ID"
+// @Param Role body dtos.UpdateUserReq true "User data with ID"
 // @Success 200 {object} map[string]int64 "Returns updated user ID"
 // @Failure 400 {object} string "Bad request"
 // @Failure 422 {object} string "Unprocessable entity"
@@ -273,7 +273,7 @@ func (h *SettingsHandler) v1UpdateUser(w http.ResponseWriter, r *http.Request) s
 	}
 	defer r.Body.Close()
 
-	var userDTO dtos.User
+	var userDTO dtos.UpdateUserReq
 	errData := json.Unmarshal(body, &userDTO)
 	if errData != nil {
 		h.logger.Error("unable to unmarshal request body", errData)

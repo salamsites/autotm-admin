@@ -71,7 +71,7 @@ func (s *RegionsService) GetAllRegions(ctx context.Context, limit, page int64, s
 	return result, nil
 }
 
-func (s *RegionsService) UpdateRegion(ctx context.Context, region dtos.Region) (int64, error) {
+func (s *RegionsService) UpdateRegion(ctx context.Context, region dtos.UpdateRegionReq) (int64, error) {
 	validate := helpers.GetValidator()
 	if err := validate.Struct(region); err != nil {
 		s.logger.Errorf("validate err: %v", err)
@@ -162,7 +162,7 @@ func (s *RegionsService) GetAllCities(ctx context.Context, limit, page int64, se
 	return result, nil
 }
 
-func (s *RegionsService) UpdateCity(ctx context.Context, city dtos.City) (int64, error) {
+func (s *RegionsService) UpdateCity(ctx context.Context, city dtos.UpdateCityReq) (int64, error) {
 	validate := helpers.GetValidator()
 	if err := validate.Struct(city); err != nil {
 		s.logger.Errorf("validate err: %v", err)

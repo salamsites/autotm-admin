@@ -144,7 +144,7 @@ func (h *BrandHandler) v1GetBrands(w http.ResponseWriter, r *http.Request) shttp
 // @Tags Brand
 // @Accept json
 // @Produce json
-// @Param brand body dtos.Brand true "Brand data with ID"
+// @Param brand body dtos.UpdateBrandReq true "Brand data with ID"
 // @Success 200 {object} map[string]int64 "Returns updated brand ID"
 // @Failure 400 {object} string "Bad request"
 // @Failure 422 {object} string "Unprocessable entity"
@@ -158,7 +158,7 @@ func (h *BrandHandler) v1UpdateBrand(w http.ResponseWriter, r *http.Request) sht
 	}
 	defer r.Body.Close()
 
-	var brandDTO dtos.Brand
+	var brandDTO dtos.UpdateBrandReq
 	errData := json.Unmarshal(body, &brandDTO)
 	if errData != nil {
 		h.logger.Error("unable to unmarshal request body", errData)
@@ -286,7 +286,7 @@ func (h *BrandHandler) v1GetModels(w http.ResponseWriter, r *http.Request) shttp
 // @Tags Brand Model
 // @Accept json
 // @Produce json
-// @Param brand body dtos.BrandModel true "Brand Model data with ID"
+// @Param brand body dtos.UpdateBrandModelReq true "Brand Model data with ID"
 // @Success 200 {object} map[string]int64 "Returns updated brand model ID"
 // @Failure 400 {object} string "Bad request"
 // @Failure 422 {object} string "Unprocessable entity"
@@ -300,7 +300,7 @@ func (h *BrandHandler) v1UpdateModel(w http.ResponseWriter, r *http.Request) sht
 	}
 	defer r.Body.Close()
 
-	var modelDTO dtos.BrandModel
+	var modelDTO dtos.UpdateBrandModelReq
 	errData := json.Unmarshal(body, &modelDTO)
 	if errData != nil {
 		h.logger.Error("unable to unmarshal request body", errData)

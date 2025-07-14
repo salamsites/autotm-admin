@@ -5,6 +5,13 @@ type CreateRegionReq struct {
 	NameEN string `json:"name_en"`
 	NameRu string `json:"name_ru"`
 }
+
+type UpdateRegionReq struct {
+	ID     int64  `json:"id"`
+	NameTM string `json:"name_tm"`
+	NameEN string `json:"name_en"`
+	NameRu string `json:"name_ru"`
+}
 type Region struct {
 	ID     int64  `json:"id"`
 	NameTM string `json:"name_tm"`
@@ -18,6 +25,14 @@ type RegionResult struct {
 }
 
 type CreateCityReq struct {
+	NameTM   string `json:"name_tm"`
+	NameEN   string `json:"name_en"`
+	NameRu   string `json:"name_ru"`
+	RegionID int64  `json:"region_id"`
+}
+
+type UpdateCityReq struct {
+	ID       int64  `json:"id"`
 	NameTM   string `json:"name_tm"`
 	NameEN   string `json:"name_en"`
 	NameRu   string `json:"name_ru"`

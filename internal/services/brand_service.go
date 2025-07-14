@@ -79,7 +79,7 @@ func (s *BrandService) GetBrands(ctx context.Context, limit, page int64, search 
 	return result, nil
 }
 
-func (s *BrandService) UpdateBrand(ctx context.Context, brand dtos.Brand) (int64, error) {
+func (s *BrandService) UpdateBrand(ctx context.Context, brand dtos.UpdateBrandReq) (int64, error) {
 	validate := helpers.GetValidator()
 	if err := validate.Struct(brand); err != nil {
 		s.logger.Errorf("validate err: %v", err)
@@ -187,7 +187,7 @@ func (s *BrandService) GetBrandModels(ctx context.Context, limit, page int64, se
 	return result, nil
 }
 
-func (s *BrandService) UpdateBrandModel(ctx context.Context, model dtos.BrandModel) (int64, error) {
+func (s *BrandService) UpdateBrandModel(ctx context.Context, model dtos.UpdateBrandModelReq) (int64, error) {
 	validate := helpers.GetValidator()
 	if err := validate.Struct(model); err != nil {
 		s.logger.Errorf("validate err: %v", err)
@@ -195,10 +195,9 @@ func (s *BrandService) UpdateBrandModel(ctx context.Context, model dtos.BrandMod
 	}
 
 	newModel := models.BrandModel{
-		ID:       model.ID,
-		Name:     model.Name,
-		LogoPath: model.LogoPath,
-		BrandID:  model.BrandID,
+		ID:      model.ID,
+		Name:    model.Name,
+		BrandID: model.BrandID,
 	}
 
 	brandID, err := s.repo.UpdateBrandModel(ctx, newModel)

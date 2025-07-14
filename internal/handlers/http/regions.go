@@ -117,7 +117,7 @@ func (h *RegionsHandler) v1GetAllRegions(w http.ResponseWriter, r *http.Request)
 // @Tags Region
 // @Accept json
 // @Produce json
-// @Param Region body dtos.Region true "Region data with ID"
+// @Param Region body dtos.UpdateRegionReq true "Region data with ID"
 // @Success 200 {object} map[string]int64 "Returns updated region ID"
 // @Failure 400 {object} string "Bad request"
 // @Failure 422 {object} string "Unprocessable entity"
@@ -131,7 +131,7 @@ func (h *RegionsHandler) v1UpdateRegion(w http.ResponseWriter, r *http.Request) 
 	}
 	defer r.Body.Close()
 
-	var regionDTO dtos.Region
+	var regionDTO dtos.UpdateRegionReq
 	errData := json.Unmarshal(body, &regionDTO)
 	if errData != nil {
 		h.logger.Error("unable to unmarshal request body", errData)
@@ -259,7 +259,7 @@ func (h *RegionsHandler) v1GetAllCities(w http.ResponseWriter, r *http.Request) 
 // @Tags City
 // @Accept json
 // @Produce json
-// @Param City body dtos.City true "City data with ID"
+// @Param City body dtos.UpdateCityReq true "City data with ID"
 // @Success 200 {object} map[string]int64 "Returns updated city ID"
 // @Failure 400 {object} string "Bad request"
 // @Failure 422 {object} string "Unprocessable entity"
@@ -273,7 +273,7 @@ func (h *RegionsHandler) v1UpdateCity(w http.ResponseWriter, r *http.Request) sh
 	}
 	defer r.Body.Close()
 
-	var cityDTO dtos.City
+	var cityDTO dtos.UpdateCityReq
 	errData := json.Unmarshal(body, &cityDTO)
 	if errData != nil {
 		h.logger.Error("unable to unmarshal request body", errData)

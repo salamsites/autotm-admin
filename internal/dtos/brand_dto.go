@@ -4,6 +4,12 @@ type CreateBrandReq struct {
 	Name     string `json:"name"`
 	LogoPath string `json:"logo_path"`
 }
+
+type UpdateBrandReq struct {
+	ID       int64  `json:"id"`
+	Name     string `json:"name"`
+	LogoPath string `json:"logo_path"`
+}
 type Brand struct {
 	ID       int64  `json:"id"`
 	Name     string `json:"name"`
@@ -16,6 +22,12 @@ type BrandResult struct {
 }
 
 type CreateBrandModelReq struct {
+	Name    string `json:"name"`
+	BrandID int64  `json:"brand_id"`
+}
+
+type UpdateBrandModelReq struct {
+	ID      int64  `json:"id"`
 	Name    string `json:"name"`
 	BrandID int64  `json:"brand_id"`
 }
