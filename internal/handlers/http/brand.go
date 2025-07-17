@@ -28,10 +28,20 @@ func NewBrandHandler(logger *slog.Logger, middleware *shttp.Middleware, service 
 
 func (h *BrandHandler) BrandRegisterRoutes(r chi.Router) {
 	r.Method("POST", "/upload-image", h.middleware.Base(h.v1UploadImage))
+
+	// Body Type
+	r.Method("POST", "/create-body-type", h.middleware.Base(h.v1CreateBodyType))
+	r.Method("GET", "/get-body-types-by-category", h.middleware.Base(h.v1GetBodyTypesByCategory))
+	r.Method("PUT", "/update-body-type", h.middleware.Base(h.v1UpdateBodyType))
+	r.Method("DELETE", "/delete-body-type", h.middleware.Base(h.v1DeleteBodyType))
+
+	// Brand
 	r.Method("POST", "/create-brand", h.middleware.Base(h.v1CreateBrand))
-	r.Method("GET", "/get-brands", h.middleware.Base(h.v1GetBrands))
+	r.Method("GET", "/get-brands-by-category", h.middleware.Base(h.v1GetBrandsByCategory))
 	r.Method("PUT", "/update-brand", h.middleware.Base(h.v1UpdateBrand))
-	r.Method("DELETE", "/delete-brand", h.middleware.Base(h.v1DeleteBrand))
+	r.Method("DELETE", "/delete-brand", h.middleware.Base(h.v1DeleteBrandCategory))
+
+	// Model
 	r.Method("POST", "/create-model", h.middleware.Base(h.v1CreateModel))
 	r.Method("GET", "/get-models", h.middleware.Base(h.v1GetModels))
 	r.Method("PUT", "/update-model", h.middleware.Base(h.v1UpdateModel))
@@ -64,6 +74,148 @@ func (h *BrandHandler) v1UploadImage(w http.ResponseWriter, r *http.Request) sht
 	}
 
 	return shttp.Success.SetData(imagePath)
+}
+
+// v1CreateBodyType
+// @Summary Create a new body type
+// @Description Creates a new body type with the given name, category and image path
+// @Tags Body Type
+// @Accept json
+// @Produce json
+// @Param brand body dtos.CreateBodyTypeReq true "Body Type data"
+// @Success 200 {object} map[string]int64 "Returns created bodyType ID"
+// @Failure 400 {object} string "Bad request"
+// @Failure 422 {object} string "Unprocessable entity"
+// @Failure 500 {object} string "Internal server error"
+// @Router /brand/create-body-type [post]
+func (h *BrandHandler) v1CreateBodyType(w http.ResponseWriter, r *http.Request) shttp.Response {
+	body, errBody := io.ReadAll(r.Body)
+	if errBody != nil {
+		h.logger.Error("unable to read request body", errBody)
+		return shttp.BadRequest.SetData(errBody.Error())
+	}
+	defer r.Body.Close()
+
+	var bodyTypeDTO dtos.CreateBodyTypeReq
+	errData := json.Unmarshal(body, &bodyTypeDTO)
+	if errData != nil {
+		h.logger.Error("unable to unmarshal request body", errData)
+		return shttp.UnprocessableEntity.SetData(errData.Error())
+	}
+
+	id, err := h.service.CreateBodyType(r.Context(), bodyTypeDTO)
+	if err != nil {
+		h.logger.Error("unable to create body type", err)
+		return shttp.InternalServerError.SetData(err.Error())
+	}
+	return shttp.Success.SetData(map[string]interface{}{
+		"id": id,
+	})
+}
+
+// v1GetBodyTypesByCategory
+// @Summary Get body types by category
+// @Description Get paginated list of body types filtered optional search string
+// @Tags Body Type
+// @Accept json
+// @Produce json
+// @Param limit query int false "Limit number of body types to return"
+// @Param page query int false "Page number"
+// @Param search query string false "Search string to filter body types by name"
+// @Success 200 {object} dtos.BodyTypeResult "List of body types with pagination info"
+// @Failure 400 {object} string "Bad request"
+// @Failure 500 {object} string "Internal server error"
+// @Router /brand/get-body-type [get]
+func (h *BrandHandler) v1GetBodyTypesByCategory(w http.ResponseWriter, r *http.Request) shttp.Response {
+	limitStr := r.URL.Query().Get("limit")
+	pageStr := r.URL.Query().Get("page")
+	search := r.URL.Query().Get("search")
+
+	limit, err := strconv.ParseInt(limitStr, 10, 64)
+	if err != nil || limit <= 0 {
+		limit = 10
+	}
+	page, err := strconv.ParseInt(pageStr, 10, 64)
+	if err != nil || page <= 0 {
+		page = 1
+	}
+
+	brands, err := h.service.GetBodyType(r.Context(), limit, page, search)
+	if err != nil {
+		h.logger.Error("unable to get body types", err)
+		return shttp.InternalServerError.SetData(err.Error())
+	}
+	return shttp.Success.SetData(brands)
+}
+
+// v1UpdateBodyType handler
+// @Summary Update an existing body type
+// @Description Updates body type details by ID
+// @Tags Body Type
+// @Accept json
+// @Produce json
+// @Param brand body dtos.UpdateBodyTypeReq true "Body Type data with ID"
+// @Success 200 {object} map[string]int64 "Returns updated body Type ID"
+// @Failure 400 {object} string "Bad request"
+// @Failure 422 {object} string "Unprocessable entity"
+// @Failure 500 {object} string "Internal server error"
+// @Router /brand/update-body-type [put]
+func (h *BrandHandler) v1UpdateBodyType(w http.ResponseWriter, r *http.Request) shttp.Response {
+	body, errBody := io.ReadAll(r.Body)
+	if errBody != nil {
+		h.logger.Error("unable to read request body", errBody)
+		return shttp.BadRequest.SetData(errBody.Error())
+	}
+	defer r.Body.Close()
+
+	var bodyTypeDTO dtos.UpdateBodyTypeReq
+	errData := json.Unmarshal(body, &bodyTypeDTO)
+	if errData != nil {
+		h.logger.Error("unable to unmarshal request body ", errData)
+		return shttp.UnprocessableEntity.SetData(errData.Error())
+	}
+
+	id, err := h.service.UpdateBodyType(r.Context(), bodyTypeDTO)
+	if err != nil {
+		h.logger.Error("unable to update body type ", err)
+		return shttp.InternalServerError.SetData(err.Error())
+	}
+	return shttp.Success.SetData(map[string]interface{}{
+		"id": id,
+	})
+}
+
+// v1DeleteBodyType
+// @Summary Delete a body type
+// @Description Deletes a body type by ID
+// @Tags Body Type
+// @Accept json
+// @Produce json
+// @Param id query int true "Body Type ID to delete"
+// @Success 200 {object} string "Body Type deleted successfully"
+// @Failure 400 {object} string "Bad request"
+// @Failure 404 {object} string "Body Type not found"
+// @Failure 500 {object} string "Internal server error"
+// @Router /brand/delete-body-type [delete]
+func (h *BrandHandler) v1DeleteBodyType(w http.ResponseWriter, r *http.Request) shttp.Response {
+	idStr := r.URL.Query().Get("id")
+	if idStr == "" {
+		return shttp.BadRequest.SetData("missing body type ID")
+	}
+
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		h.logger.Error("invalid body type ID", err)
+		return shttp.BadRequest.SetData("invalid body type ID")
+	}
+
+	err = h.service.DeleteBodyType(r.Context(), id)
+	if err != nil {
+		h.logger.Error("unable to delete body type", err)
+		return shttp.InternalServerError.SetData(err.Error())
+	}
+
+	return shttp.Success.SetData("body type deleted successfully")
 }
 
 // v1CreateBrand
@@ -103,20 +255,25 @@ func (h *BrandHandler) v1CreateBrand(w http.ResponseWriter, r *http.Request) sht
 	})
 }
 
-// v1GetBrands
-// @Summary Get all brands
-// @Description Get a paginated list of brands with optional search
+// v1GetBrandsByCategory
+// @Summary Get brands by category
+// @Description Get paginated list of brands filtered by category and optional search string
 // @Tags Brand
 // @Accept json
 // @Produce json
+// @Param category query string true "Category filter (auto, moto, truck)"
 // @Param limit query int false "Limit number of brands to return"
 // @Param page query int false "Page number"
 // @Param search query string false "Search string to filter brands by name"
 // @Success 200 {object} dtos.BrandResult "List of brands with pagination info"
 // @Failure 400 {object} string "Bad request"
 // @Failure 500 {object} string "Internal server error"
-// @Router /brand/get-brands [get]
-func (h *BrandHandler) v1GetBrands(w http.ResponseWriter, r *http.Request) shttp.Response {
+// @Router /brand/get-brands-by-category [get]
+func (h *BrandHandler) v1GetBrandsByCategory(w http.ResponseWriter, r *http.Request) shttp.Response {
+	category := r.URL.Query().Get("category")
+	if category == "" {
+		return shttp.BadRequest.SetData("category parameter is required")
+	}
 	limitStr := r.URL.Query().Get("limit")
 	pageStr := r.URL.Query().Get("page")
 	search := r.URL.Query().Get("search")
@@ -130,7 +287,7 @@ func (h *BrandHandler) v1GetBrands(w http.ResponseWriter, r *http.Request) shttp
 		page = 1
 	}
 
-	brands, err := h.service.GetBrands(r.Context(), limit, page, search)
+	brands, err := h.service.GetBrandsByCategory(r.Context(), limit, page, category, search)
 	if err != nil {
 		h.logger.Error("unable to get brands", err)
 		return shttp.InternalServerError.SetData(err.Error())
@@ -182,12 +339,17 @@ func (h *BrandHandler) v1UpdateBrand(w http.ResponseWriter, r *http.Request) sht
 // @Accept json
 // @Produce json
 // @Param id query int true "Brand ID to delete"
+// @Param category query string true "Brand Category to delete (auto, moto, truck)"
 // @Success 200 {object} string "Brand deleted successfully"
 // @Failure 400 {object} string "Bad request"
 // @Failure 404 {object} string "Brand not found"
 // @Failure 500 {object} string "Internal server error"
 // @Router /brand/delete-brand [delete]
-func (h *BrandHandler) v1DeleteBrand(w http.ResponseWriter, r *http.Request) shttp.Response {
+func (h *BrandHandler) v1DeleteBrandCategory(w http.ResponseWriter, r *http.Request) shttp.Response {
+	category := r.URL.Query().Get("category")
+	if category == "" {
+		return shttp.BadRequest.SetData("missing brand category")
+	}
 	idStr := r.URL.Query().Get("id")
 	if idStr == "" {
 		return shttp.BadRequest.SetData("missing brand ID")
@@ -199,7 +361,7 @@ func (h *BrandHandler) v1DeleteBrand(w http.ResponseWriter, r *http.Request) sht
 		return shttp.BadRequest.SetData("invalid brand ID")
 	}
 
-	err = h.service.DeleteBrand(r.Context(), id)
+	err = h.service.DeleteBrandCategory(r.Context(), id, category)
 	if err != nil {
 		h.logger.Error("unable to delete brand", err)
 		return shttp.InternalServerError.SetData(err.Error())

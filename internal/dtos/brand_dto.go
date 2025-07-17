@@ -1,19 +1,44 @@
 package dtos
 
+type CreateBodyTypeReq struct {
+	Name      string `json:"name" binding:"required"`
+	ImagePath string `json:"image_path"`
+}
+
+type UpdateBodyTypeReq struct {
+	ID        int64  `json:"id"`
+	Name      string `json:"name"`
+	ImagePath string `json:"image_path"`
+}
+
+type BodyType struct {
+	ID        int64  `json:"id"`
+	Name      string `json:"name"`
+	ImagePath string `json:"image_path"`
+	Category  string `json:"category"`
+}
+
+type BodyTypeResult struct {
+	BodyTypes []BodyType `json:"body_types"`
+	Count     int64      `json:"count"`
+}
 type CreateBrandReq struct {
-	Name     string `json:"name"`
-	LogoPath string `json:"logo_path"`
+	Name       string   `json:"name"`
+	LogoPath   string   `json:"logo_path"`
+	Categories []string `json:"categories" binding:"required,dive,oneof=auto moto truck"`
 }
 
 type UpdateBrandReq struct {
-	ID       int64  `json:"id"`
-	Name     string `json:"name"`
-	LogoPath string `json:"logo_path"`
+	ID         int64    `json:"id"`
+	Name       string   `json:"name"`
+	LogoPath   string   `json:"logo_path"`
+	Categories []string `json:"categories" binding:"required,dive,oneof=auto moto truck"`
 }
 type Brand struct {
-	ID       int64  `json:"id"`
-	Name     string `json:"name"`
-	LogoPath string `json:"logo_path"`
+	ID         int64    `json:"id"`
+	Name       string   `json:"name"`
+	LogoPath   string   `json:"logo_path"`
+	Categories []string `json:"categories"`
 }
 
 type BrandResult struct {

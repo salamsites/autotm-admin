@@ -19,20 +19,145 @@ func NewBrandPsqlRepository(logger *slog.Logger, client spsql.Client) *BrandPsql
 	}
 }
 
-func (r *BrandPsqlRepository) CreateBrand(ctx context.Context, brand models.Brand) (int64, error) {
+func (r *BrandPsqlRepository) CreateBodyType(ctx context.Context, bodyType models.BodyType) (int64, error) {
 	var id int64
 
-	query := `INSERT INTO brands (name, logo_path) VALUES ($1, $2) RETURNING id`
+	query := ` INSERT INTO body_types (name, image_path) VALUES ($1, $2) RETURNING id `
 
-	err := r.client.QueryRow(ctx, query, brand.Name, brand.LogoPath).Scan(&id)
+	err := r.client.QueryRow(ctx, query, bodyType.Name, bodyType.ImagePath).Scan(&id)
 	if err != nil {
-		r.logger.Errorf("create err: %v", err)
+		r.logger.Errorf("Error creating body type: %s", err.Error())
 		return id, err
 	}
 	return id, nil
 }
 
-func (r *BrandPsqlRepository) GetBrands(ctx context.Context, limit, page int64, search string) ([]models.Brand, int64, error) {
+func (r *BrandPsqlRepository) GetBodyType(ctx context.Context, limit, page int64, search string) ([]models.BodyType, int64, error) {
+	var (
+		bodyTypes []models.BodyType
+		count     int64
+	)
+
+	query := `
+			SELECT 
+				id, name, category, image_path
+            FROM body_types
+			WHERE name ILIKE '%' || $2 || '%'
+			ORDER BY created_at DESC
+			LIMIT $3 OFFSET $4;
+		`
+
+	rows, err := r.client.Query(ctx, query, search, limit, page)
+	if err != nil {
+		r.logger.Errorf("get body types query err : %v", err)
+		return nil, 0, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var bodyType models.BodyType
+		if err = rows.Scan(&bodyType.ID, &bodyType.Name, &bodyType.ImagePath); err != nil {
+			r.logger.Errorf("get body types scan err : %v", err)
+			return nil, 0, err
+		}
+		bodyTypes = append(bodyTypes, bodyType)
+	}
+
+	queryCount := `
+			SELECT 
+			    COUNT(*) 
+			FROM body_types 
+			WHERE name ILIKE '%' || $2 || '%'
+		`
+	errCount := r.client.QueryRow(ctx, queryCount, search).Scan(&count)
+	if errCount != nil {
+		r.logger.Errorf("get body types count err : %v", err)
+		return nil, 0, err
+	}
+	return bodyTypes, count, nil
+}
+
+func (r *BrandPsqlRepository) GetBodyTypeByID(ctx context.Context, id int64) (models.BodyType, error) {
+	var bodyType models.BodyType
+
+	query := `
+		SELECT
+			id, name, image_path
+		FROM body_types
+		WHERE id = $1
+		`
+
+	err := r.client.QueryRow(ctx, query, id).Scan(&bodyType.ID, &bodyType.Name, &bodyType.ImagePath)
+	if err != nil {
+		r.logger.Errorf("get body type by id query err : %v", err)
+		return bodyType, err
+	}
+	return bodyType, nil
+}
+
+func (r *BrandPsqlRepository) UpdateBodyType(ctx context.Context, bodyType models.BodyType) (int64, error) {
+	var bodyTypeID int64
+
+	query := `
+		UPDATE body_types SET 
+		    name = $1, image_path = $2, updated_at = NOW()
+		WHERE id = $3
+		RETURNING id
+	`
+	err := r.client.QueryRow(ctx, query, bodyType.Name, bodyType.ImagePath, bodyType.ID).Scan(&bodyTypeID)
+	if err != nil {
+		r.logger.Errorf("update body types err: %v", err)
+		return bodyTypeID, err
+	}
+	return bodyTypeID, nil
+}
+
+func (r *BrandPsqlRepository) DeleteBodyType(ctx context.Context, id models.ID) error {
+	query := `DELETE FROM body_types WHERE id = $1`
+	_, err := r.client.Exec(ctx, query, id.ID)
+	if err != nil {
+		r.logger.Errorf("delete body types err: %v", err)
+		return err
+	}
+	return nil
+}
+
+func (r *BrandPsqlRepository) CreateBrand(ctx context.Context, brand models.Brand) (int64, error) {
+	var brandID int64
+
+	tx, err := r.client.Begin(ctx)
+	if err != nil {
+		return 0, err
+	}
+	defer tx.Rollback(ctx)
+
+	query := `INSERT INTO brands (name, logo_path) VALUES ($1, $2) RETURNING id`
+
+	err = tx.QueryRow(ctx, query, brand.Name, brand.LogoPath).Scan(&brandID)
+	if err != nil {
+		r.logger.Errorf("create brand err: %v", err)
+		return brandID, err
+	}
+
+	for _, category := range brand.Categories {
+		_, err = tx.Exec(ctx,
+			`INSERT INTO brand_category (brand_id, category) VALUES ($1, $2)`,
+			brandID, category,
+		)
+		if err != nil {
+			r.logger.Errorf("create brand_categorys err: %v", err)
+			return 0, err
+		}
+	}
+
+	err = tx.Commit(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	return brandID, nil
+}
+
+func (r *BrandPsqlRepository) GetBrandsByCategory(ctx context.Context, limit, page int64, categoryType, search string) ([]models.Brand, int64, error) {
 	var (
 		brands []models.Brand
 		count  int64
@@ -40,14 +165,18 @@ func (r *BrandPsqlRepository) GetBrands(ctx context.Context, limit, page int64, 
 
 	query := `
 		SELECT 
-		    id, name, logo_path 
-		FROM brands
-		WHERE name ILIKE '%' || $1 || '%'
-		ORDER BY created_at DESC
-		LIMIT $2 OFFSET $3;
+		    b.id, b.name, b.logo_path,
+		    ARRAY_AGG(bc.category) AS categories
+		FROM brands b
+		LEFT JOIN brand_category bc ON bc.brand_id = b.id
+		WHERE  bc.category = $1 AND
+			b.name ILIKE '%' || $2 || '%'
+		GROUP BY b.id
+		ORDER BY b.created_at DESC
+		LIMIT $3 OFFSET $4;
 	`
 
-	rows, err := r.client.Query(ctx, query, search, limit, page)
+	rows, err := r.client.Query(ctx, query, categoryType, search, limit, page)
 	if err != nil {
 		r.logger.Errorf("get brands query err : %v", err)
 		return nil, 0, err
@@ -55,7 +184,7 @@ func (r *BrandPsqlRepository) GetBrands(ctx context.Context, limit, page int64, 
 	defer rows.Close()
 	for rows.Next() {
 		var brand models.Brand
-		if err := rows.Scan(&brand.ID, &brand.Name, &brand.LogoPath); err != nil {
+		if err := rows.Scan(&brand.ID, &brand.Name, &brand.LogoPath, &brand.Categories); err != nil {
 			r.logger.Errorf("get brands scan err : %v", err)
 			return nil, 0, err
 		}
@@ -64,11 +193,13 @@ func (r *BrandPsqlRepository) GetBrands(ctx context.Context, limit, page int64, 
 
 	queryCount := `
 			SELECT 
-			    COUNT(*) 
-			FROM brands
-			WHERE name ILIKE '%' || $1 || '%'
+			    COUNT(b.id) 
+			FROM brands b
+			LEFT JOIN brand_category bc ON bc.brand_id = b.id
+			WHERE  bc.category = $1 AND
+				b.name ILIKE '%' || $2 || '%'
 		`
-	errCount := r.client.QueryRow(ctx, queryCount, search).Scan(&count)
+	errCount := r.client.QueryRow(ctx, queryCount, categoryType, search).Scan(&count)
 	if errCount != nil {
 		r.logger.Errorf("get brands count err : %v", err)
 		return nil, 0, err
@@ -77,6 +208,12 @@ func (r *BrandPsqlRepository) GetBrands(ctx context.Context, limit, page int64, 
 }
 
 func (r *BrandPsqlRepository) UpdateBrand(ctx context.Context, brand models.Brand) (int64, error) {
+	tx, err := r.client.Begin(ctx)
+	if err != nil {
+		return 0, err
+	}
+	defer tx.Rollback(ctx)
+
 	var id int64
 
 	query := `
@@ -85,11 +222,32 @@ func (r *BrandPsqlRepository) UpdateBrand(ctx context.Context, brand models.Bran
 		WHERE id = $3
 		RETURNING id
 	`
-	err := r.client.QueryRow(ctx, query, brand.Name, brand.LogoPath, brand.ID).Scan(&id)
-	if err != nil {
+	errUpdate := r.client.QueryRow(ctx, query, brand.Name, brand.LogoPath, brand.ID).Scan(&id)
+	if errUpdate != nil {
 		r.logger.Errorf("update brand err: %v", err)
+		return id, errUpdate
+	}
+
+	_, err = tx.Exec(ctx, `DELETE FROM brand_category WHERE brand_id = $1`, brand.ID)
+	if err != nil {
+		r.logger.Errorf("delete old brand_category err: %v", err)
 		return id, err
 	}
+
+	for _, category := range brand.Categories {
+		_, err = tx.Exec(ctx,
+			`INSERT INTO brand_category (brand_id, category) VALUES ($1, $2)`,
+			brand.ID, category,
+		)
+		if err != nil {
+			r.logger.Errorf("update brand_categorys err: %v", err)
+		}
+	}
+	err = tx.Commit(ctx)
+	if err != nil {
+		return id, err
+	}
+
 	return id, nil
 }
 
@@ -110,11 +268,11 @@ func (r *BrandPsqlRepository) GetBrandByID(ctx context.Context, id int64) (model
 	return brand, nil
 }
 
-func (r *BrandPsqlRepository) DeleteBrand(ctx context.Context, id models.ID) error {
-	query := `DELETE FROM brands WHERE id = $1`
-	_, err := r.client.Exec(ctx, query, id.ID)
+func (r *BrandPsqlRepository) DeleteBrandCategory(ctx context.Context, id models.ID) error {
+	query := `DELETE FROM brand_category WHERE brand_id = $1 AND category = $2`
+	_, err := r.client.Exec(ctx, query, id.ID, id.Category)
 	if err != nil {
-		r.logger.Errorf("delete brand err: %v", err)
+		r.logger.Errorf("delete brand category err: %v", err)
 		return err
 	}
 	return nil

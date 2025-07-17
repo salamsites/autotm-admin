@@ -1,36 +1,33 @@
 package migrations
 
 import (
-	"autotm-admin/internal/configs"
-	"fmt"
+	"database/sql"
 	_ "github.com/lib/pq"
+	"github.com/pressly/goose/v3"
 	slog "github.com/salamsites/package-log"
-	"log"
-	"os/exec"
 )
 
-func RunMigrations(logger *slog.Logger, cfg *configs.Config) {
-	if !cfg.Storage.Psql.Migration {
-		log.Println("ℹ️ Migration flag is disabled in config. Skipping migrations.")
-		return
-	}
-
-	dsn := fmt.Sprintf(
-		"postgres://%s:%s@%s:%s/%s?sslmode=disable",
-		cfg.Storage.Psql.Username,
-		cfg.Storage.Psql.Password,
-		cfg.Storage.Psql.Host,
-		cfg.Storage.Psql.Port,
-		cfg.Storage.Psql.Database,
-	)
-	logger.Println("🚀 Running migrations...")
-
-	cmd := exec.Command("migrate", "-path", "db/migrations", "-database", dsn, "up")
-
-	output, err := cmd.CombinedOutput()
+func RunMigrations(logger *slog.Logger, dbURL string) error {
+	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
-		logger.Fatalf("❌ Migration failed: %v\n🧾 Details:\n%s", err, string(output))
+		logger.Errorf("Failed to open DB: %v", err)
+		return err
+	}
+	defer db.Close()
+
+	logger.Println("🚀 Running goose migrations...")
+
+	if err = goose.SetDialect("postgres"); err != nil {
+		logger.Errorf("Failed to set goose dialect: %v", err)
+		return err
 	}
 
-	logger.Info("✅ Migrations applied successfully:\n%s", string(output))
+	err = goose.Up(db, "db/migrations")
+	if err != nil {
+		logger.Errorf("Migration failed: %v", err)
+		return err
+	}
+
+	logger.Info("✅ Migrations applied successfully")
+	return nil
 }

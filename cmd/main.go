@@ -6,6 +6,7 @@ import (
 	"autotm-admin/internal/handlers"
 	"autotm-admin/internal/migrations"
 	"context"
+	"fmt"
 	_ "github.com/lib/pq"
 	"github.com/rs/cors"
 	slog "github.com/salamsites/package-log"
@@ -22,7 +23,7 @@ import (
 // @version 3.0.0
 // @description AutoTM-Admin swagger
 // @externalDocs.description  Other services
-// @BasePath /autotm-admin
+// @BasePath /api/v1/autotm-admin
 // @schemes http https
 // @securityDefinitions.apiKey  ApiKeyAuth
 // @security
@@ -54,8 +55,19 @@ func main() {
 	logger.Info("psql client connected")
 
 	// Run db migrations
-	migrations.RunMigrations(logger, cfg)
+	dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
+		cfg.Storage.Psql.Username,
+		cfg.Storage.Psql.Password,
+		cfg.Storage.Psql.Host,
+		cfg.Storage.Psql.Port,
+		cfg.Storage.Psql.Database,
+	)
 
+	if cfg.Storage.Psql.Migration {
+		migrations.RunMigrations(logger, dsn)
+	} else {
+		logger.Info("Migration flag is disabled; skipping migrations.")
+	}
 	router := handlers.Manager(logger, psqlClient, cfg)
 
 	router.Get("/autotm-admin/swagger/*", httpSwagger.WrapHandler)

@@ -1,8 +1,9 @@
 package models
 
 type Slider struct {
-	ID        int64
-	ImagePath string
-	Title     string
-	Platform  string
+	ID          int64
+	ImagePathTM string
+	ImagePathEN string
+	ImagePathRU string
+	Platform    string
 }

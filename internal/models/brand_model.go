@@ -1,13 +1,20 @@
 package models
 
+type BodyType struct {
+	ID        int64
+	Name      string
+	ImagePath string
+}
 type Brand struct {
-	ID       int64
-	Name     string
-	LogoPath string
+	ID         int64
+	Name       string
+	LogoPath   string
+	Categories []string
 }
 
 type ID struct {
-	ID int64 `json:"id"`
+	ID       int64  `json:"id"`
+	Category string `json:"category"`
 }
 
 type BrandModel struct {

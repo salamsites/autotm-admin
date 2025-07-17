@@ -1,22 +1,25 @@
 package dtos
 
 type CreateSliderReq struct {
-	ImagePath string `json:"image_path" validate:"required"`
-	Title     string `json:"title" validate:"required"`
-	Platform  string `json:"platform" validate:"required"`
+	ImagePathTM string `json:"image_path_tm" validate:"required"`
+	ImagePathEN string `json:"image_path_en" validate:"required"`
+	ImagePathRU string `json:"image_path_ru" validate:"required"`
+	Platform    string `json:"platform" validate:"required"`
 }
 
 type UpdateSliderReq struct {
-	ID        int64  `json:"id"`
-	ImagePath string `json:"image_path"`
-	Title     string `json:"title"`
-	Platform  string `json:"platform"`
+	ID          int64  `json:"id"`
+	ImagePathTM string `json:"image_path_tm"`
+	ImagePathEN string `json:"image_path_en"`
+	ImagePathRU string `json:"image_path_ru"`
+	Platform    string `json:"platform"`
 }
 type Slider struct {
-	ID        int64  `json:"id"`
-	ImagePath string `json:"image_path"`
-	Title     string `json:"title"`
-	Platform  string `json:"platform"`
+	ID          int64  `json:"id"`
+	ImagePathTM string `json:"image_path_tm"`
+	ImagePathEN string `json:"image_path_en"`
+	ImagePathRU string `json:"image_path_ru"`
+	Platform    string `json:"platform"`
 }
 
 type SliderResult struct {

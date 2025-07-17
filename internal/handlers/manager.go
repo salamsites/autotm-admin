@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	baseURL     = "/autotm-admin"
+	baseURL     = "/api/v1/autotm-admin"
 	brandURL    = baseURL + "/brand"
 	settingsURL = baseURL + "/settings"
 	regionsURL  = baseURL + "/regions"

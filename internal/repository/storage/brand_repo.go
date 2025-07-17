@@ -6,11 +6,21 @@ import (
 )
 
 type BrandRepository interface {
+	//Body Type
+	CreateBodyType(ctx context.Context, bodyType models.BodyType) (int64, error)
+	GetBodyType(ctx context.Context, limit, page int64, search string) ([]models.BodyType, int64, error)
+	UpdateBodyType(ctx context.Context, bodyType models.BodyType) (int64, error)
+	GetBodyTypeByID(ctx context.Context, id int64) (models.BodyType, error)
+	DeleteBodyType(ctx context.Context, id models.ID) error
+
+	//Brand
 	CreateBrand(ctx context.Context, brand models.Brand) (int64, error)
-	GetBrands(ctx context.Context, limit, page int64, search string) ([]models.Brand, int64, error)
+	GetBrandsByCategory(ctx context.Context, limit, page int64, category, search string) ([]models.Brand, int64, error)
 	UpdateBrand(ctx context.Context, brand models.Brand) (int64, error)
 	GetBrandByID(ctx context.Context, id int64) (models.Brand, error)
-	DeleteBrand(ctx context.Context, id models.ID) error
+	DeleteBrandCategory(ctx context.Context, id models.ID) error
+
+	// Model
 	CreateBrandModel(ctx context.Context, model models.BrandModel) (int64, error)
 	GetBrandModels(ctx context.Context, limit, page int64, search string) ([]models.BrandModel, int64, error)
 	UpdateBrandModel(ctx context.Context, model models.BrandModel) (int64, error)

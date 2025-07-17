@@ -29,9 +29,10 @@ func (s *SlidersService) CreateSlider(ctx context.Context, slider dtos.CreateSli
 	}
 
 	newSlider := models.Slider{
-		ImagePath: slider.ImagePath,
-		Title:     slider.Title,
-		Platform:  slider.Platform,
+		ImagePathTM: slider.ImagePathTM,
+		ImagePathEN: slider.ImagePathEN,
+		ImagePathRU: slider.ImagePathRU,
+		Platform:    slider.Platform,
 	}
 
 	brandID, err := s.repo.CreateSlider(ctx, newSlider)
@@ -57,10 +58,11 @@ func (s *SlidersService) GetAllSliders(ctx context.Context, limit, page int64, p
 	var dtoSliders []dtos.Slider
 	for _, b := range sliders {
 		dtoSliders = append(dtoSliders, dtos.Slider{
-			ID:        b.ID,
-			ImagePath: b.ImagePath,
-			Title:     b.Title,
-			Platform:  b.Platform,
+			ID:          b.ID,
+			ImagePathTM: b.ImagePathTM,
+			ImagePathEN: b.ImagePathEN,
+			ImagePathRU: b.ImagePathRU,
+			Platform:    b.Platform,
 		})
 	}
 
@@ -84,17 +86,30 @@ func (s *SlidersService) UpdateSlider(ctx context.Context, slider dtos.UpdateSli
 		return 0, err
 	}
 
-	if oldSlider.ImagePath != slider.ImagePath && slider.ImagePath != "" {
-		if err := helpers.DeleteImage(oldSlider.ImagePath); err != nil {
-			s.logger.Errorf("delete old image path err: %v", err)
+	if oldSlider.ImagePathTM != slider.ImagePathTM && slider.ImagePathTM != "" {
+		if err = helpers.DeleteImage(oldSlider.ImagePathTM); err != nil {
+			s.logger.Errorf("delete old image path tm err: %v", err)
+		}
+	}
+
+	if oldSlider.ImagePathEN != slider.ImagePathEN && slider.ImagePathEN != "" {
+		if err = helpers.DeleteImage(oldSlider.ImagePathEN); err != nil {
+			s.logger.Errorf("delete old image path en err: %v", err)
+		}
+	}
+
+	if oldSlider.ImagePathRU != slider.ImagePathRU && slider.ImagePathRU != "" {
+		if err = helpers.DeleteImage(oldSlider.ImagePathRU); err != nil {
+			s.logger.Errorf("delete old image path ru err: %v", err)
 		}
 	}
 
 	newSlider := models.Slider{
-		ID:        slider.ID,
-		ImagePath: slider.ImagePath,
-		Title:     slider.Title,
-		Platform:  slider.Platform,
+		ID:          slider.ID,
+		ImagePathTM: slider.ImagePathTM,
+		ImagePathEN: slider.ImagePathEN,
+		ImagePathRU: slider.ImagePathRU,
+		Platform:    slider.Platform,
 	}
 
 	sliderID, err := s.repo.UpdateSlider(ctx, newSlider)
@@ -112,9 +127,21 @@ func (s *SlidersService) DeleteSlider(ctx context.Context, id int64) error {
 		return err
 	}
 
-	if oldSlider.ImagePath != "" {
-		if err := helpers.DeleteImage(oldSlider.ImagePath); err != nil {
-			s.logger.Errorf("delete old image path err: %v", err)
+	if oldSlider.ImagePathTM != "" {
+		if err = helpers.DeleteImage(oldSlider.ImagePathTM); err != nil {
+			s.logger.Errorf("delete old image path tm err: %v", err)
+		}
+	}
+
+	if oldSlider.ImagePathEN != "" {
+		if err = helpers.DeleteImage(oldSlider.ImagePathEN); err != nil {
+			s.logger.Errorf("delete old image path en err: %v", err)
+		}
+	}
+
+	if oldSlider.ImagePathRU != "" {
+		if err = helpers.DeleteImage(oldSlider.ImagePathRU); err != nil {
+			s.logger.Errorf("delete old image path ru err: %v", err)
 		}
 	}
 

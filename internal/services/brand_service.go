@@ -31,6 +31,112 @@ func (s *BrandService) UploadImage(file multipart.File, header *multipart.FileHe
 	return imagePath, nil
 }
 
+func (s *BrandService) CreateBodyType(ctx context.Context, bodyType dtos.CreateBodyTypeReq) (int64, error) {
+	validate := helpers.GetValidator()
+	if err := validate.Struct(bodyType); err != nil {
+		s.logger.Errorf("validate err: %v", err)
+		return 0, err
+	}
+
+	newBodyType := models.BodyType{
+		Name:      bodyType.Name,
+		ImagePath: bodyType.ImagePath,
+	}
+
+	bodyTypeID, err := s.repo.CreateBodyType(ctx, newBodyType)
+	if err != nil {
+		s.logger.Errorf("create err: %v", err)
+		return bodyTypeID, err
+	}
+	return bodyTypeID, nil
+}
+
+func (s *BrandService) GetBodyType(ctx context.Context, limit, page int64, search string) (dtos.BodyTypeResult, error) {
+	offset := (page - 1) * limit
+	if page <= 0 {
+		page = 1
+		offset = 0
+	}
+
+	bodyTypes, count, err := s.repo.GetBodyType(ctx, limit, offset, search)
+	if err != nil {
+		s.logger.Errorf("get brands err: %v", err)
+		return dtos.BodyTypeResult{}, err
+	}
+	var dtoBodyTypes []dtos.BodyType
+	for _, b := range bodyTypes {
+		dtoBodyTypes = append(dtoBodyTypes, dtos.BodyType{
+			ID:        b.ID,
+			Name:      b.Name,
+			ImagePath: b.ImagePath,
+		})
+	}
+
+	result := dtos.BodyTypeResult{
+		BodyTypes: dtoBodyTypes,
+		Count:     count,
+	}
+	return result, nil
+}
+
+func (s *BrandService) UpdateBodyType(ctx context.Context, bodyType dtos.UpdateBodyTypeReq) (int64, error) {
+	validate := helpers.GetValidator()
+	if err := validate.Struct(bodyType); err != nil {
+		s.logger.Errorf("validate err: %v", err)
+		return 0, err
+	}
+
+	oldBodyType, err := s.repo.GetBodyTypeByID(ctx, bodyType.ID)
+	if err != nil {
+		s.logger.Errorf("get old body types err: %v", err)
+		return 0, err
+	}
+
+	if oldBodyType.ImagePath != bodyType.ImagePath && oldBodyType.ImagePath != "" {
+		if err = helpers.DeleteImage(oldBodyType.ImagePath); err != nil {
+			s.logger.Errorf("delete old image path err: %v", err)
+		}
+	}
+
+	newBodyType := models.BodyType{
+		ID:        bodyType.ID,
+		Name:      bodyType.Name,
+		ImagePath: bodyType.ImagePath,
+	}
+
+	bodyTypeID, err := s.repo.UpdateBodyType(ctx, newBodyType)
+	if err != nil {
+		s.logger.Errorf("update body types err: %v", err)
+		return bodyTypeID, err
+	}
+	return bodyTypeID, nil
+}
+
+func (s *BrandService) DeleteBodyType(ctx context.Context, id int64) error {
+	oldBodyType, err := s.repo.GetBodyTypeByID(ctx, id)
+	if err != nil {
+		s.logger.Errorf("get old body type err: %v", err)
+		return err
+	}
+
+	if oldBodyType.ImagePath != "" {
+		if err = helpers.DeleteImage(oldBodyType.ImagePath); err != nil {
+			s.logger.Errorf("delete old image path err: %v", err)
+		}
+	}
+
+	deleteID := models.ID{
+		ID: id,
+	}
+
+	err = s.repo.DeleteBodyType(ctx, deleteID)
+	if err != nil {
+		s.logger.Errorf("delete body type err: %v", err)
+		return err
+	}
+	return nil
+}
+
 func (s *BrandService) CreateBrand(ctx context.Context, brand dtos.CreateBrandReq) (int64, error) {
 	validate := helpers.GetValidator()
 	if err := validate.Struct(brand); err != nil {
@@ -39,8 +145,9 @@ func (s *BrandService) CreateBrand(ctx context.Context, brand dtos.CreateBrandRe
 	}
 
 	newBrand := models.Brand{
-		Name:     brand.Name,
-		LogoPath: brand.LogoPath,
+		Name:       brand.Name,
+		LogoPath:   brand.LogoPath,
+		Categories: brand.Categories,
 	}
 
 	brandID, err := s.repo.CreateBrand(ctx, newBrand)
@@ -51,14 +158,14 @@ func (s *BrandService) CreateBrand(ctx context.Context, brand dtos.CreateBrandRe
 	return brandID, nil
 }
 
-func (s *BrandService) GetBrands(ctx context.Context, limit, page int64, search string) (dtos.BrandResult, error) {
+func (s *BrandService) GetBrandsByCategory(ctx context.Context, limit, page int64, categoryType, search string) (dtos.BrandResult, error) {
 	offset := (page - 1) * limit
 	if page <= 0 {
 		page = 1
 		offset = 0
 	}
 
-	brands, count, err := s.repo.GetBrands(ctx, limit, offset, search)
+	brands, count, err := s.repo.GetBrandsByCategory(ctx, limit, offset, categoryType, search)
 	if err != nil {
 		s.logger.Errorf("get brands err: %v", err)
 		return dtos.BrandResult{}, err
@@ -66,9 +173,10 @@ func (s *BrandService) GetBrands(ctx context.Context, limit, page int64, search 
 	var dtoBrands []dtos.Brand
 	for _, b := range brands {
 		dtoBrands = append(dtoBrands, dtos.Brand{
-			ID:       b.ID,
-			Name:     b.Name,
-			LogoPath: b.LogoPath,
+			ID:         b.ID,
+			Name:       b.Name,
+			LogoPath:   b.LogoPath,
+			Categories: b.Categories,
 		})
 	}
 
@@ -112,7 +220,7 @@ func (s *BrandService) UpdateBrand(ctx context.Context, brand dtos.UpdateBrandRe
 	return brandID, nil
 }
 
-func (s *BrandService) DeleteBrand(ctx context.Context, id int64) error {
+func (s *BrandService) DeleteBrandCategory(ctx context.Context, id int64, category string) error {
 	oldBrand, err := s.repo.GetBrandByID(ctx, id)
 	if err != nil {
 		s.logger.Errorf("get old brand err: %v", err)
@@ -126,10 +234,11 @@ func (s *BrandService) DeleteBrand(ctx context.Context, id int64) error {
 	}
 
 	deleteID := models.ID{
-		ID: id,
+		ID:       id,
+		Category: category,
 	}
 
-	err = s.repo.DeleteBrand(ctx, deleteID)
+	err = s.repo.DeleteBrandCategory(ctx, deleteID)
 	if err != nil {
 		s.logger.Errorf("delete brand err: %v", err)
 		return err
