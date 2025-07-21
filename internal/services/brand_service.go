@@ -161,14 +161,14 @@ func (s *BrandService) CreateBrand(ctx context.Context, brand dtos.CreateBrandRe
 	return brandID, nil
 }
 
-func (s *BrandService) GetBrandsByCategory(ctx context.Context, limit, page int64, categoryType, search string) (dtos.BrandResult, error) {
+func (s *BrandService) GetBrands(ctx context.Context, limit, page int64, category, search string) (dtos.BrandResult, error) {
 	offset := (page - 1) * limit
 	if page <= 0 {
 		page = 1
 		offset = 0
 	}
 
-	brands, count, err := s.repo.GetBrandsByCategory(ctx, limit, offset, categoryType, search)
+	brands, count, err := s.repo.GetBrands(ctx, limit, offset, category, search)
 	if err != nil {
 		s.logger.Errorf("get brands err: %v", err)
 		return dtos.BrandResult{}, err
@@ -270,14 +270,14 @@ func (s *BrandService) CreateModel(ctx context.Context, model dtos.CreateModelRe
 	return modelID, nil
 }
 
-func (s *BrandService) GetModels(ctx context.Context, limit, page int64, search string) (dtos.ModelResult, error) {
+func (s *BrandService) GetModels(ctx context.Context, limit, page int64, category, search string) (dtos.ModelResult, error) {
 	offset := (page - 1) * limit
 	if page <= 0 {
 		page = 1
 		offset = 0
 	}
 
-	brandModels, count, err := s.repo.GetModels(ctx, limit, offset, search)
+	brandModels, count, err := s.repo.GetModels(ctx, limit, offset, category, search)
 	if err != nil {
 		s.logger.Errorf("get models err: %v", err)
 		return dtos.ModelResult{}, err

@@ -31,13 +31,13 @@ func (h *BrandHandler) BrandRegisterRoutes(r chi.Router) {
 
 	// Body Type
 	r.Method("POST", "/create-body-type", h.middleware.Base(h.v1CreateBodyType))
-	r.Method("GET", "/get-body-types-by-category", h.middleware.Base(h.v1GetBodyTypesByCategory))
+	r.Method("GET", "/get-body-types", h.middleware.Base(h.v1GetBodyTypes))
 	r.Method("PUT", "/update-body-type", h.middleware.Base(h.v1UpdateBodyType))
 	r.Method("DELETE", "/delete-body-type", h.middleware.Base(h.v1DeleteBodyType))
 
 	// Brand
 	r.Method("POST", "/create-brand", h.middleware.Base(h.v1CreateBrand))
-	r.Method("GET", "/get-brands-by-category", h.middleware.Base(h.v1GetBrandsByCategory))
+	r.Method("GET", "/get-brands", h.middleware.Base(h.v1GetBrands))
 	r.Method("PUT", "/update-brand", h.middleware.Base(h.v1UpdateBrand))
 	r.Method("DELETE", "/delete-brand", h.middleware.Base(h.v1DeleteBrandCategory))
 
@@ -113,8 +113,8 @@ func (h *BrandHandler) v1CreateBodyType(w http.ResponseWriter, r *http.Request) 
 	})
 }
 
-// v1GetBodyTypesByCategory
-// @Summary Get body types by category
+// v1GetBodyTypes
+// @Summary Get body types
 // @Description Get paginated list of body types filtered optional search string
 // @Tags Body Type
 // @Accept json
@@ -126,8 +126,8 @@ func (h *BrandHandler) v1CreateBodyType(w http.ResponseWriter, r *http.Request) 
 // @Success 200 {object} dtos.BodyTypeResult "List of body types with pagination info"
 // @Failure 400 {object} string "Bad request"
 // @Failure 500 {object} string "Internal server error"
-// @Router /brand/get-body-type [get]
-func (h *BrandHandler) v1GetBodyTypesByCategory(w http.ResponseWriter, r *http.Request) shttp.Response {
+// @Router /brand/get-body-types [get]
+func (h *BrandHandler) v1GetBodyTypes(w http.ResponseWriter, r *http.Request) shttp.Response {
 	category := r.URL.Query().Get("category")
 	if category == "" {
 		return shttp.BadRequest.SetData("category parameter is required")
@@ -260,8 +260,8 @@ func (h *BrandHandler) v1CreateBrand(w http.ResponseWriter, r *http.Request) sht
 	})
 }
 
-// v1GetBrandsByCategory
-// @Summary Get brands by category
+// v1GetBrands
+// @Summary Get brands
 // @Description Get paginated list of brands filtered by category and optional search string
 // @Tags Brand
 // @Accept json
@@ -273,8 +273,8 @@ func (h *BrandHandler) v1CreateBrand(w http.ResponseWriter, r *http.Request) sht
 // @Success 200 {object} dtos.BrandResult "List of brands with pagination info"
 // @Failure 400 {object} string "Bad request"
 // @Failure 500 {object} string "Internal server error"
-// @Router /brand/get-brands-by-category [get]
-func (h *BrandHandler) v1GetBrandsByCategory(w http.ResponseWriter, r *http.Request) shttp.Response {
+// @Router /brand/get-brands [get]
+func (h *BrandHandler) v1GetBrands(w http.ResponseWriter, r *http.Request) shttp.Response {
 	category := r.URL.Query().Get("category")
 	if category == "" {
 		return shttp.BadRequest.SetData("category parameter is required")
@@ -292,7 +292,7 @@ func (h *BrandHandler) v1GetBrandsByCategory(w http.ResponseWriter, r *http.Requ
 		page = 1
 	}
 
-	brands, err := h.service.GetBrandsByCategory(r.Context(), limit, page, category, search)
+	brands, err := h.service.GetBrands(r.Context(), limit, page, category, search)
 	if err != nil {
 		h.logger.Error("unable to get brands", err)
 		return shttp.InternalServerError.SetData(err.Error())
@@ -418,6 +418,7 @@ func (h *BrandHandler) v1CreateModel(w http.ResponseWriter, r *http.Request) sht
 // @Tags Model
 // @Accept json
 // @Produce json
+// @Param category query string true "Category filter (auto, moto, truck)"
 // @Param limit query int false "Limit number of models to return"
 // @Param page query int false "Page number"
 // @Param search query string false "Search string to filter models or brands by name or body types by name"
@@ -426,6 +427,10 @@ func (h *BrandHandler) v1CreateModel(w http.ResponseWriter, r *http.Request) sht
 // @Failure 500 {object} string "Internal server error"
 // @Router /brand/get-models [get]
 func (h *BrandHandler) v1GetModels(w http.ResponseWriter, r *http.Request) shttp.Response {
+	category := r.URL.Query().Get("category")
+	if category == "" {
+		return shttp.BadRequest.SetData("missing brand category")
+	}
 	limitStr := r.URL.Query().Get("limit")
 	pageStr := r.URL.Query().Get("page")
 	search := r.URL.Query().Get("search")
@@ -439,7 +444,7 @@ func (h *BrandHandler) v1GetModels(w http.ResponseWriter, r *http.Request) shttp
 		page = 1
 	}
 
-	brandModels, err := h.service.GetModels(r.Context(), limit, page, search)
+	brandModels, err := h.service.GetModels(r.Context(), limit, page, category, search)
 	if err != nil {
 		h.logger.Error("unable to get models", err)
 		return shttp.InternalServerError.SetData(err.Error())
