@@ -246,7 +246,7 @@ func (s *BrandService) DeleteBrandCategory(ctx context.Context, id int64, catego
 	return nil
 }
 
-func (s *BrandService) CreateBrandModel(ctx context.Context, model dtos.CreateModelReq) (int64, error) {
+func (s *BrandService) CreateModel(ctx context.Context, model dtos.CreateModelReq) (int64, error) {
 	validate := helpers.GetValidator()
 	if err := validate.Struct(model); err != nil {
 		s.logger.Errorf("validate err: %v", err)
@@ -299,7 +299,7 @@ func (s *BrandService) GetModels(ctx context.Context, limit, page int64, search 
 	return result, nil
 }
 
-func (s *BrandService) UpdateBrandModel(ctx context.Context, model dtos.UpdateModelReq) (int64, error) {
+func (s *BrandService) UpdateModel(ctx context.Context, model dtos.UpdateModelReq) (int64, error) {
 	validate := helpers.GetValidator()
 	if err := validate.Struct(model); err != nil {
 		s.logger.Errorf("validate err: %v", err)
