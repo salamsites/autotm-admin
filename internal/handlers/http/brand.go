@@ -119,6 +119,7 @@ func (h *BrandHandler) v1CreateBodyType(w http.ResponseWriter, r *http.Request) 
 // @Tags Body Type
 // @Accept json
 // @Produce json
+// @Param category query string true "Category filter (auto, moto, truck)"
 // @Param limit query int false "Limit number of body types to return"
 // @Param page query int false "Page number"
 // @Param search query string false "Search string to filter body types by name"
@@ -127,6 +128,10 @@ func (h *BrandHandler) v1CreateBodyType(w http.ResponseWriter, r *http.Request) 
 // @Failure 500 {object} string "Internal server error"
 // @Router /brand/get-body-type [get]
 func (h *BrandHandler) v1GetBodyTypesByCategory(w http.ResponseWriter, r *http.Request) shttp.Response {
+	category := r.URL.Query().Get("category")
+	if category == "" {
+		return shttp.BadRequest.SetData("category parameter is required")
+	}
 	limitStr := r.URL.Query().Get("limit")
 	pageStr := r.URL.Query().Get("page")
 	search := r.URL.Query().Get("search")
@@ -140,7 +145,7 @@ func (h *BrandHandler) v1GetBodyTypesByCategory(w http.ResponseWriter, r *http.R
 		page = 1
 	}
 
-	brands, err := h.service.GetBodyType(r.Context(), limit, page, search)
+	brands, err := h.service.GetBodyType(r.Context(), limit, page, category, search)
 	if err != nil {
 		h.logger.Error("unable to get body types", err)
 		return shttp.InternalServerError.SetData(err.Error())

@@ -3,12 +3,14 @@ package dtos
 type CreateBodyTypeReq struct {
 	Name      string `json:"name" binding:"required"`
 	ImagePath string `json:"image_path"`
+	Category  string `json:"category"`
 }
 
 type UpdateBodyTypeReq struct {
 	ID        int64  `json:"id"`
 	Name      string `json:"name"`
 	ImagePath string `json:"image_path"`
+	Category  string `json:"category"`
 }
 
 type BodyType struct {

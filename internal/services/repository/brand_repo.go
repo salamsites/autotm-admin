@@ -11,7 +11,7 @@ type BrandService interface {
 
 	// Body Type
 	CreateBodyType(ctx context.Context, bodyType dtos.CreateBodyTypeReq) (int64, error)
-	GetBodyType(ctx context.Context, limit, page int64, search string) (dtos.BodyTypeResult, error)
+	GetBodyType(ctx context.Context, limit, page int64, category, search string) (dtos.BodyTypeResult, error)
 	UpdateBodyType(ctx context.Context, bodyType dtos.UpdateBodyTypeReq) (int64, error)
 	DeleteBodyType(ctx context.Context, id int64) error
 

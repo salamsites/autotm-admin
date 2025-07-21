@@ -41,6 +41,7 @@ func (s *BrandService) CreateBodyType(ctx context.Context, bodyType dtos.CreateB
 	newBodyType := models.BodyType{
 		Name:      bodyType.Name,
 		ImagePath: bodyType.ImagePath,
+		Category:  bodyType.Category,
 	}
 
 	bodyTypeID, err := s.repo.CreateBodyType(ctx, newBodyType)
@@ -51,14 +52,14 @@ func (s *BrandService) CreateBodyType(ctx context.Context, bodyType dtos.CreateB
 	return bodyTypeID, nil
 }
 
-func (s *BrandService) GetBodyType(ctx context.Context, limit, page int64, search string) (dtos.BodyTypeResult, error) {
+func (s *BrandService) GetBodyType(ctx context.Context, limit, page int64, category, search string) (dtos.BodyTypeResult, error) {
 	offset := (page - 1) * limit
 	if page <= 0 {
 		page = 1
 		offset = 0
 	}
 
-	bodyTypes, count, err := s.repo.GetBodyType(ctx, limit, offset, search)
+	bodyTypes, count, err := s.repo.GetBodyType(ctx, limit, offset, category, search)
 	if err != nil {
 		s.logger.Errorf("get brands err: %v", err)
 		return dtos.BodyTypeResult{}, err
@@ -69,6 +70,7 @@ func (s *BrandService) GetBodyType(ctx context.Context, limit, page int64, searc
 			ID:        b.ID,
 			Name:      b.Name,
 			ImagePath: b.ImagePath,
+			Category:  b.Category,
 		})
 	}
 
@@ -102,6 +104,7 @@ func (s *BrandService) UpdateBodyType(ctx context.Context, bodyType dtos.UpdateB
 		ID:        bodyType.ID,
 		Name:      bodyType.Name,
 		ImagePath: bodyType.ImagePath,
+		Category:  bodyType.Category,
 	}
 
 	bodyTypeID, err := s.repo.UpdateBodyType(ctx, newBodyType)

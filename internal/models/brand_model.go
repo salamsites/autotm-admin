@@ -4,6 +4,7 @@ type BodyType struct {
 	ID        int64
 	Name      string
 	ImagePath string
+	Category  string
 }
 type Brand struct {
 	ID         int64
