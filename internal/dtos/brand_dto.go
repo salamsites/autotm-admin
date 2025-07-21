@@ -46,26 +46,30 @@ type BrandResult struct {
 	Count  int64   `json:"count"`
 }
 
-type CreateBrandModelReq struct {
-	Name    string `json:"name"`
-	BrandID int64  `json:"brand_id"`
+type CreateModelReq struct {
+	Name       string `json:"name"`
+	BrandID    int64  `json:"brand_id"`
+	BodyTypeID int64  `json:"body_type_id"`
 }
 
-type UpdateBrandModelReq struct {
-	ID      int64  `json:"id"`
-	Name    string `json:"name"`
-	BrandID int64  `json:"brand_id"`
+type UpdateModelReq struct {
+	ID         int64  `json:"id"`
+	Name       string `json:"name"`
+	BrandID    int64  `json:"brand_id"`
+	BodyTypeID int64  `json:"body_type_id"`
 }
 
-type BrandModel struct {
-	ID        int64  `json:"id"`
-	Name      string `json:"name"`
-	LogoPath  string `json:"logo_path"`
-	BrandID   int64  `json:"brand_id"`
-	BrandName string `json:"brand_name"`
+type Model struct {
+	ID           int64  `json:"id"`
+	Name         string `json:"name"`
+	LogoPath     string `json:"logo_path"`
+	BrandID      int64  `json:"brand_id"`
+	BrandName    string `json:"brand_name"`
+	BodyTypeID   int64  `json:"body_type_id"`
+	BodyTypeName string `json:"body_type_name"`
 }
 
-type BrandModelResult struct {
-	BrandModels []BrandModel `json:"brand_models"`
-	Count       int64        `json:"count"`
+type ModelResult struct {
+	Models []Model `json:"models"`
+	Count  int64   `json:"count"`
 }

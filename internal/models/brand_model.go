@@ -17,10 +17,12 @@ type ID struct {
 	Category string `json:"category"`
 }
 
-type BrandModel struct {
-	ID        int64
-	Name      string
-	LogoPath  string
-	BrandID   int64
-	BrandName string
+type Model struct {
+	ID           int64
+	Name         string
+	LogoPath     string
+	BrandID      int64
+	BrandName    string
+	BodyTypeID   int64
+	BodyTypeName string
 }

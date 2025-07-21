@@ -246,19 +246,20 @@ func (s *BrandService) DeleteBrandCategory(ctx context.Context, id int64, catego
 	return nil
 }
 
-func (s *BrandService) CreateBrandModel(ctx context.Context, model dtos.CreateBrandModelReq) (int64, error) {
+func (s *BrandService) CreateBrandModel(ctx context.Context, model dtos.CreateModelReq) (int64, error) {
 	validate := helpers.GetValidator()
 	if err := validate.Struct(model); err != nil {
 		s.logger.Errorf("validate err: %v", err)
 		return 0, err
 	}
 
-	newModel := models.BrandModel{
-		Name:    model.Name,
-		BrandID: model.BrandID,
+	newModel := models.Model{
+		Name:       model.Name,
+		BrandID:    model.BrandID,
+		BodyTypeID: model.BodyTypeID,
 	}
 
-	modelID, err := s.repo.CreateBrandModel(ctx, newModel)
+	modelID, err := s.repo.CreateModel(ctx, newModel)
 	if err != nil {
 		s.logger.Errorf("create model err: %v", err)
 		return modelID, err
@@ -266,65 +267,68 @@ func (s *BrandService) CreateBrandModel(ctx context.Context, model dtos.CreateBr
 	return modelID, nil
 }
 
-func (s *BrandService) GetBrandModels(ctx context.Context, limit, page int64, search string) (dtos.BrandModelResult, error) {
+func (s *BrandService) GetModels(ctx context.Context, limit, page int64, search string) (dtos.ModelResult, error) {
 	offset := (page - 1) * limit
 	if page <= 0 {
 		page = 1
 		offset = 0
 	}
 
-	brandModels, count, err := s.repo.GetBrandModels(ctx, limit, offset, search)
+	brandModels, count, err := s.repo.GetModels(ctx, limit, offset, search)
 	if err != nil {
-		s.logger.Errorf("get brand models err: %v", err)
-		return dtos.BrandModelResult{}, err
+		s.logger.Errorf("get models err: %v", err)
+		return dtos.ModelResult{}, err
 	}
-	var dtoBrands []dtos.BrandModel
+	var dtoModels []dtos.Model
 	for _, b := range brandModels {
-		dtoBrands = append(dtoBrands, dtos.BrandModel{
-			ID:        b.ID,
-			Name:      b.Name,
-			LogoPath:  b.LogoPath,
-			BrandID:   b.BrandID,
-			BrandName: b.BrandName,
+		dtoModels = append(dtoModels, dtos.Model{
+			ID:           b.ID,
+			Name:         b.Name,
+			LogoPath:     b.LogoPath,
+			BrandID:      b.BrandID,
+			BrandName:    b.BrandName,
+			BodyTypeID:   b.BodyTypeID,
+			BodyTypeName: b.BodyTypeName,
 		})
 	}
 
-	result := dtos.BrandModelResult{
-		BrandModels: dtoBrands,
-		Count:       count,
+	result := dtos.ModelResult{
+		Models: dtoModels,
+		Count:  count,
 	}
 	return result, nil
 }
 
-func (s *BrandService) UpdateBrandModel(ctx context.Context, model dtos.UpdateBrandModelReq) (int64, error) {
+func (s *BrandService) UpdateBrandModel(ctx context.Context, model dtos.UpdateModelReq) (int64, error) {
 	validate := helpers.GetValidator()
 	if err := validate.Struct(model); err != nil {
 		s.logger.Errorf("validate err: %v", err)
 		return 0, err
 	}
 
-	newModel := models.BrandModel{
-		ID:      model.ID,
-		Name:    model.Name,
-		BrandID: model.BrandID,
+	newModel := models.Model{
+		ID:         model.ID,
+		Name:       model.Name,
+		BrandID:    model.BrandID,
+		BodyTypeID: model.BodyTypeID,
 	}
 
-	brandID, err := s.repo.UpdateBrandModel(ctx, newModel)
+	brandID, err := s.repo.UpdateModel(ctx, newModel)
 	if err != nil {
-		s.logger.Errorf("update brand model err: %v", err)
+		s.logger.Errorf("update model err: %v", err)
 		return brandID, err
 	}
 	return brandID, nil
 }
 
-func (s *BrandService) DeleteBrandModel(ctx context.Context, id int64) error {
+func (s *BrandService) DeleteModel(ctx context.Context, id int64) error {
 	deleteID := models.ID{
 		ID: id,
 	}
 
-	err := s.repo.DeleteBrandModel(ctx, deleteID)
+	err := s.repo.DeleteModel(ctx, deleteID)
 	if err != nil {
-		s.logger.Errorf("delete brand model err: %v", err)
+		s.logger.Errorf("delete model err: %v", err)
 		return err
 	}
 	return nil

@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS brands (
             "updated_at" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS brand_category (
+CREATE TABLE IF NOT EXISTS brand_categories (
     "brand_id" INTEGER NOT NULL,
     "category" category_type NOT NULL,
     PRIMARY KEY (brand_id, category),

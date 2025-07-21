@@ -21,8 +21,8 @@ type BrandRepository interface {
 	DeleteBrandCategory(ctx context.Context, id models.ID) error
 
 	// Model
-	CreateBrandModel(ctx context.Context, model models.BrandModel) (int64, error)
-	GetBrandModels(ctx context.Context, limit, page int64, search string) ([]models.BrandModel, int64, error)
-	UpdateBrandModel(ctx context.Context, model models.BrandModel) (int64, error)
-	DeleteBrandModel(ctx context.Context, id models.ID) error
+	CreateModel(ctx context.Context, model models.Model) (int64, error)
+	GetModels(ctx context.Context, limit, page int64, search string) ([]models.Model, int64, error)
+	UpdateModel(ctx context.Context, model models.Model) (int64, error)
+	DeleteModel(ctx context.Context, id models.ID) error
 }

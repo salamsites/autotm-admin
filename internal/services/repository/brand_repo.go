@@ -22,8 +22,8 @@ type BrandService interface {
 	DeleteBrandCategory(ctx context.Context, id int64, category string) error
 
 	// Model
-	CreateBrandModel(ctx context.Context, model dtos.CreateBrandModelReq) (int64, error)
-	GetBrandModels(ctx context.Context, limit, page int64, search string) (dtos.BrandModelResult, error)
-	UpdateBrandModel(ctx context.Context, model dtos.UpdateBrandModelReq) (int64, error)
-	DeleteBrandModel(ctx context.Context, id int64) error
+	CreateModel(ctx context.Context, model dtos.CreateModelReq) (int64, error)
+	GetModels(ctx context.Context, limit, page int64, search string) (dtos.ModelResult, error)
+	UpdateModel(ctx context.Context, model dtos.UpdateModelReq) (int64, error)
+	DeleteModel(ctx context.Context, id int64) error
 }

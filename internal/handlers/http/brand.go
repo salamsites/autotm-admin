@@ -370,13 +370,13 @@ func (h *BrandHandler) v1DeleteBrandCategory(w http.ResponseWriter, r *http.Requ
 	return shttp.Success.SetData("brand deleted successfully")
 }
 
-// v1CreateBrandModel
+// v1CreateModel
 // @Summary Create a new brand model
 // @Description Creates a new brand model with the given name and logo path
-// @Tags Brand Model
+// @Tags Model
 // @Accept json
 // @Produce json
-// @Param brand body dtos.CreateBrandModelReq true "Brand Model data"
+// @Param brand body dtos.CreateModelReq true "Model data"
 // @Success 200 {object} map[string]int64 "Returns created model ID"
 // @Failure 400 {object} string "Bad request"
 // @Failure 422 {object} string "Unprocessable entity"
@@ -390,16 +390,16 @@ func (h *BrandHandler) v1CreateModel(w http.ResponseWriter, r *http.Request) sht
 	}
 	defer r.Body.Close()
 
-	var modelDTO dtos.CreateBrandModelReq
+	var modelDTO dtos.CreateModelReq
 	errData := json.Unmarshal(body, &modelDTO)
 	if errData != nil {
 		h.logger.Error("unable to unmarshal request body", errData)
 		return shttp.UnprocessableEntity.SetData(errData.Error())
 	}
 
-	id, err := h.service.CreateBrandModel(r.Context(), modelDTO)
+	id, err := h.service.CreateModel(r.Context(), modelDTO)
 	if err != nil {
-		h.logger.Error("unable to create brand model", err)
+		h.logger.Error("unable to create model", err)
 		return shttp.InternalServerError.SetData(err.Error())
 	}
 	return shttp.Success.SetData(map[string]interface{}{
@@ -407,16 +407,16 @@ func (h *BrandHandler) v1CreateModel(w http.ResponseWriter, r *http.Request) sht
 	})
 }
 
-// v1GetBrandModels
-// @Summary Get all brand models
-// @Description Get a paginated list of brand models with optional search
-// @Tags Brand Model
+// v1GetModels
+// @Summary Get all models
+// @Description Get a paginated list of models with optional search
+// @Tags Model
 // @Accept json
 // @Produce json
-// @Param limit query int false "Limit number of brand models to return"
+// @Param limit query int false "Limit number of models to return"
 // @Param page query int false "Page number"
-// @Param search query string false "Search string to filter brand models or brands by name"
-// @Success 200 {object} dtos.BrandModelResult "List of brand models with pagination info"
+// @Param search query string false "Search string to filter models or brands by name or body types by name"
+// @Success 200 {object} dtos.ModelResult "List of models with pagination info"
 // @Failure 400 {object} string "Bad request"
 // @Failure 500 {object} string "Internal server error"
 // @Router /brand/get-models [get]
@@ -434,22 +434,22 @@ func (h *BrandHandler) v1GetModels(w http.ResponseWriter, r *http.Request) shttp
 		page = 1
 	}
 
-	brandModels, err := h.service.GetBrandModels(r.Context(), limit, page, search)
+	brandModels, err := h.service.GetModels(r.Context(), limit, page, search)
 	if err != nil {
-		h.logger.Error("unable to get brand models", err)
+		h.logger.Error("unable to get models", err)
 		return shttp.InternalServerError.SetData(err.Error())
 	}
 	return shttp.Success.SetData(brandModels)
 }
 
-// v1UpdateBrandModel
-// @Summary Update an existing brand model
-// @Description Updates brand model details by ID
-// @Tags Brand Model
+// v1UpdateModel
+// @Summary Update an existing model
+// @Description Updates model details by ID
+// @Tags Model
 // @Accept json
 // @Produce json
-// @Param brand body dtos.UpdateBrandModelReq true "Brand Model data with ID"
-// @Success 200 {object} map[string]int64 "Returns updated brand model ID"
+// @Param brand body dtos.UpdateModelReq true "Model data with ID"
+// @Success 200 {object} map[string]int64 "Returns updated model ID"
 // @Failure 400 {object} string "Bad request"
 // @Failure 422 {object} string "Unprocessable entity"
 // @Failure 500 {object} string "Internal server error"
@@ -462,16 +462,16 @@ func (h *BrandHandler) v1UpdateModel(w http.ResponseWriter, r *http.Request) sht
 	}
 	defer r.Body.Close()
 
-	var modelDTO dtos.UpdateBrandModelReq
+	var modelDTO dtos.UpdateModelReq
 	errData := json.Unmarshal(body, &modelDTO)
 	if errData != nil {
 		h.logger.Error("unable to unmarshal request body", errData)
 		return shttp.UnprocessableEntity.SetData(errData.Error())
 	}
 
-	id, err := h.service.UpdateBrandModel(r.Context(), modelDTO)
+	id, err := h.service.UpdateModel(r.Context(), modelDTO)
 	if err != nil {
-		h.logger.Error("unable to update brand model", err)
+		h.logger.Error("unable to update model", err)
 		return shttp.InternalServerError.SetData(err.Error())
 	}
 	return shttp.Success.SetData(map[string]interface{}{
@@ -479,16 +479,16 @@ func (h *BrandHandler) v1UpdateModel(w http.ResponseWriter, r *http.Request) sht
 	})
 }
 
-// v1DeleteBrandModel
-// @Summary Delete a brand model
-// @Description Deletes a brand model by ID
-// @Tags Brand Model
+// v1DeleteModel
+// @Summary Delete model
+// @Description Deletes model by ID
+// @Tags Model
 // @Accept json
 // @Produce json
-// @Param id query int true "Brand Model ID to delete"
-// @Success 200 {object} string "brand model deleted successfully"
+// @Param id query int true "Model ID to delete"
+// @Success 200 {object} string "Model deleted successfully"
 // @Failure 400 {object} string "Bad request"
-// @Failure 404 {object} string "Brand Model not found"
+// @Failure 404 {object} string "Model not found"
 // @Failure 500 {object} string "Internal server error"
 // @Router /brand/delete-model [delete]
 func (h *BrandHandler) v1DeleteModel(w http.ResponseWriter, r *http.Request) shttp.Response {
@@ -503,11 +503,11 @@ func (h *BrandHandler) v1DeleteModel(w http.ResponseWriter, r *http.Request) sht
 		return shttp.BadRequest.SetData("invalid brand model ID")
 	}
 
-	err = h.service.DeleteBrandModel(r.Context(), id)
+	err = h.service.DeleteModel(r.Context(), id)
 	if err != nil {
-		h.logger.Error("unable to delete brand model", err)
+		h.logger.Error("unable to delete model", err)
 		return shttp.InternalServerError.SetData(err.Error())
 	}
 
-	return shttp.Success.SetData("brand model deleted successfully")
+	return shttp.Success.SetData("Model deleted successfully")
 }
