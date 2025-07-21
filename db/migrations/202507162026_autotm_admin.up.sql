@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS brands (
                 "updated_at" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS brand_category (
+CREATE TABLE IF NOT EXISTS brand_categories (
                 "brand_id" INTEGER NOT NULL,
                 "category" category_type NOT NULL,
                 PRIMARY KEY (brand_id, category),
@@ -107,7 +107,7 @@ DROP TABLE IF EXISTS regions;
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS roles;
 DROP TABLE IF EXISTS models;
-DROP TABLE IF EXISTS brand_category;
+DROP TABLE IF EXISTS brand_categories;
 DROP TABLE IF EXISTS brands;
 DROP TABLE IF EXISTS body_types;
 DROP TYPE IF EXISTS category_type;
