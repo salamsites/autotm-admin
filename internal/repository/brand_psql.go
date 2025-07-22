@@ -55,7 +55,7 @@ func (r *BrandPsqlRepository) GetBodyType(ctx context.Context, limit, page int64
 	defer rows.Close()
 	for rows.Next() {
 		var bodyType models.BodyType
-		if err = rows.Scan(&bodyType.ID, &bodyType.Name, &bodyType.ImagePath); err != nil {
+		if err = rows.Scan(&bodyType.ID, &bodyType.Name, &bodyType.Category, &bodyType.ImagePath); err != nil {
 			r.logger.Errorf("get body types scan err : %v", err)
 			return nil, 0, err
 		}
@@ -299,14 +299,15 @@ func (r *BrandPsqlRepository) GetModels(ctx context.Context, limit, page int64, 
 
 	query := `
 		SELECT 
-		    bm.id, bm.name, b.logo_path, bm.brand_id, b.name,
-		    bm.body_type_id, bt.name
-		FROM models bm
-			LEFT JOIN brands b ON bm.brand_id = b.id
-			LEFT JOIN body_types bt ON bt.id = b.body_type_id
-		WHERE  b.category = $1 AND 
-		    ( bm.name ILIKE '%' || $2 || '%' OR b.name ILIKE '%' || $2 || '%' OR bt.name ILIKE '%' || $2 || '%' )
-		ORDER BY bm.created_at DESC
+		    m.id, m.name, b.logo_path, m.brand_id, b.name,
+		    m.body_type_id, bt.name
+		FROM models m
+			LEFT JOIN brands b ON m.brand_id = b.id
+		    LEFT JOIN brand_categories bc ON bc.brand_id = b.id
+			LEFT JOIN body_types bt ON bt.id = m.body_type_id
+		WHERE  bc.category = $1 AND 
+		    ( m.name ILIKE '%' || $2 || '%' OR b.name ILIKE '%' || $2 || '%' OR bt.name ILIKE '%' || $2 || '%' )
+		ORDER BY m.created_at DESC
 		LIMIT $3 OFFSET $4;
 	`
 
@@ -329,12 +330,13 @@ func (r *BrandPsqlRepository) GetModels(ctx context.Context, limit, page int64, 
 
 	queryCount := `
 		SELECT 
-			COUNT(bm.id) 
-		FROM models bm
-			LEFT JOIN brands b ON bm.brand_id = b.id
-			LEFT JOIN body_types bt ON bt.id = b.body_type_id
-		WHERE  b.category = $1 AND 
-		    ( bm.name ILIKE '%' || $2 || '%' OR b.name ILIKE '%' || $2 || '%' OR bt.name ILIKE '%' || $2 || '%' )
+			COUNT(m.id) 
+		FROM models m
+			LEFT JOIN brands b ON m.brand_id = b.id
+		    LEFT JOIN brand_categories bc ON bc.brand_id = b.id
+			LEFT JOIN body_types bt ON bt.id = m.body_type_id
+		WHERE  bc.category = $1 AND 
+		    ( m.name ILIKE '%' || $2 || '%' OR b.name ILIKE '%' || $2 || '%' OR bt.name ILIKE '%' || $2 || '%' )
 		`
 	errCount := r.client.QueryRow(ctx, queryCount, category, search).Scan(&count)
 	if errCount != nil {
