@@ -39,7 +39,9 @@ func (s *BrandService) CreateBodyType(ctx context.Context, bodyType dtos.CreateB
 	}
 
 	newBodyType := models.BodyType{
-		Name:      bodyType.Name,
+		NameTM:    bodyType.NameTM,
+		NameEN:    bodyType.NameEN,
+		NameRU:    bodyType.NameRU,
 		ImagePath: bodyType.ImagePath,
 		Category:  bodyType.Category,
 	}
@@ -68,7 +70,9 @@ func (s *BrandService) GetBodyType(ctx context.Context, limit, page int64, categ
 	for _, b := range bodyTypes {
 		dtoBodyTypes = append(dtoBodyTypes, dtos.BodyType{
 			ID:        b.ID,
-			Name:      b.Name,
+			NameTM:    b.NameTM,
+			NameEN:    b.NameEN,
+			NameRU:    b.NameRU,
 			ImagePath: b.ImagePath,
 			Category:  b.Category,
 		})
@@ -102,7 +106,9 @@ func (s *BrandService) UpdateBodyType(ctx context.Context, bodyType dtos.UpdateB
 
 	newBodyType := models.BodyType{
 		ID:        bodyType.ID,
-		Name:      bodyType.Name,
+		NameTM:    bodyType.NameTM,
+		NameEN:    bodyType.NameEN,
+		NameRU:    bodyType.NameRU,
 		ImagePath: bodyType.ImagePath,
 		Category:  bodyType.Category,
 	}

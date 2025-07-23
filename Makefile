@@ -36,15 +36,13 @@ test:
 DB_URL := postgres://autotm:autotm@127.0.0.1:5432/autotm_admin?sslmode=disable
 
 migrate_create:
-	$(shell go env GOPATH)/bin/migrate create -ext sql -dir db/migrations -seq init_autotm_admin
+	goose -dir db/migrations create init_autotm_admin sql
 
 migrate_up:
-	$(shell go env GOPATH)/bin/migrate -path db/migrations -database "$(DB_URL)" up
+	goose -dir db/migrations postgres "$(DB_URL)" up
 
 migrate_down:
-	$(shell go env GOPATH)/bin/migrate -path db/migrations -database "$(DB_URL)" down
+	goose -dir db/migrations postgres "$(DB_URL)" down
 
-migrate_fix:
-	@VERSION=$$(psql "$(DB_URL)" -Atc "SELECT version FROM schema_migrations ORDER BY version DESC LIMIT 1;"); \
-	echo "Automatic version: $$VERSION"; \
-	$(shell go env GOPATH)/bin/migrate -path db/migrations -database "$(DB_URL)" force $$VERSION
+migrate_status:
+	goose -dir db/migrations postgres "$(DB_URL)" status

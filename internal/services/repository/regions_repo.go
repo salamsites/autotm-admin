@@ -6,6 +6,7 @@ import (
 )
 
 type RegionsService interface {
+	// Regions
 	CreateRegion(ctx context.Context, region dtos.CreateRegionReq) (int64, error)
 	GetAllRegions(ctx context.Context, limit, page int64, search string) (dtos.RegionResult, error)
 	UpdateRegion(ctx context.Context, region dtos.UpdateRegionReq) (int64, error)

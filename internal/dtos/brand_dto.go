@@ -1,21 +1,27 @@
 package dtos
 
 type CreateBodyTypeReq struct {
-	Name      string `json:"name" binding:"required"`
+	NameTM    string `json:"name_tm"`
+	NameEN    string `json:"name_en"`
+	NameRU    string `json:"name_ru"`
 	ImagePath string `json:"image_path"`
 	Category  string `json:"category"`
 }
 
 type UpdateBodyTypeReq struct {
 	ID        int64  `json:"id"`
-	Name      string `json:"name"`
+	NameTM    string `json:"name_tm"`
+	NameEN    string `json:"name_en"`
+	NameRU    string `json:"name_ru"`
 	ImagePath string `json:"image_path"`
 	Category  string `json:"category"`
 }
 
 type BodyType struct {
 	ID        int64  `json:"id"`
-	Name      string `json:"name"`
+	NameTM    string `json:"name_tm"`
+	NameEN    string `json:"name_en"`
+	NameRU    string `json:"name_ru"`
 	ImagePath string `json:"image_path"`
 	Category  string `json:"category"`
 }

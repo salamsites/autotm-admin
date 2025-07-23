@@ -19,7 +19,9 @@ CREATE TYPE category_type AS ENUM ('auto', 'moto', 'truck');
 
 CREATE TABLE IF NOT EXISTS body_types (
             "id" SERIAL PRIMARY KEY,
-            "name" CHARACTER VARYING(255) NOT NULL,
+            "name_tm" CHARACTER VARYING(255) NOT NULL,
+            "name_ru" CHARACTER VARYING(255) NOT NULL,
+            "name_en" CHARACTER VARYING(255) NOT NULL,
             "image_path" CHARACTER VARYING(255),
             "category" category_type,
             "created_at" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,

@@ -22,9 +22,9 @@ func NewBrandPsqlRepository(logger *slog.Logger, client spsql.Client) *BrandPsql
 func (r *BrandPsqlRepository) CreateBodyType(ctx context.Context, bodyType models.BodyType) (int64, error) {
 	var id int64
 
-	query := ` INSERT INTO body_types (name, image_path, category) VALUES ($1, $2, $3) RETURNING id `
+	query := ` INSERT INTO body_types (name_tm, name_en, name_ru, image_path, category) VALUES ($1, $2, $3, $4, $5) RETURNING id `
 
-	err := r.client.QueryRow(ctx, query, bodyType.Name, bodyType.ImagePath, bodyType.Category).Scan(&id)
+	err := r.client.QueryRow(ctx, query, bodyType.NameTM, bodyType.NameEN, bodyType.NameRU, bodyType.ImagePath, bodyType.Category).Scan(&id)
 	if err != nil {
 		r.logger.Errorf("Error creating body type: %s", err.Error())
 		return id, err
@@ -40,9 +40,10 @@ func (r *BrandPsqlRepository) GetBodyType(ctx context.Context, limit, page int64
 
 	query := `
 			SELECT 
-				id, name, category, image_path
+				id, name_tm, name_en, name_ru, category, image_path
             FROM body_types
-			WHERE category = $1 AND name ILIKE '%' || $2 || '%'
+			WHERE category = $1 AND 
+			    (name_tm ILIKE '%' || $2 || '%' OR name_en ILIKE '%' || $2 || '%' OR name_ru ILIKE '%' || $2 || '%')
 			ORDER BY created_at DESC
 			LIMIT $3 OFFSET $4;
 		`
@@ -55,7 +56,7 @@ func (r *BrandPsqlRepository) GetBodyType(ctx context.Context, limit, page int64
 	defer rows.Close()
 	for rows.Next() {
 		var bodyType models.BodyType
-		if err = rows.Scan(&bodyType.ID, &bodyType.Name, &bodyType.Category, &bodyType.ImagePath); err != nil {
+		if err = rows.Scan(&bodyType.ID, &bodyType.NameTM, &bodyType.NameEN, &bodyType.NameRU, &bodyType.Category, &bodyType.ImagePath); err != nil {
 			r.logger.Errorf("get body types scan err : %v", err)
 			return nil, 0, err
 		}
@@ -66,7 +67,8 @@ func (r *BrandPsqlRepository) GetBodyType(ctx context.Context, limit, page int64
 			SELECT 
 			    COUNT(*) 
 			FROM body_types 
-			WHERE category = $1 AND name ILIKE '%' || $2 || '%'
+			WHERE category = $1 AND 
+				(name_tm ILIKE '%' || $2 || '%' OR name_en ILIKE '%' || $2 || '%' OR name_ru ILIKE '%' || $2 || '%')	
 		`
 	errCount := r.client.QueryRow(ctx, queryCount, category, search).Scan(&count)
 	if errCount != nil {
@@ -81,12 +83,12 @@ func (r *BrandPsqlRepository) GetBodyTypeByID(ctx context.Context, id int64) (mo
 
 	query := `
 		SELECT
-			id, name, image_path, category
+			id, name_tm, name_en, name_ru, image_path, category
 		FROM body_types
 		WHERE id = $1
 		`
 
-	err := r.client.QueryRow(ctx, query, id).Scan(&bodyType.ID, &bodyType.Name, &bodyType.ImagePath, &bodyType.Category)
+	err := r.client.QueryRow(ctx, query, id).Scan(&bodyType.ID, &bodyType.NameTM, &bodyType.NameEN, &bodyType.NameRU, &bodyType.ImagePath, &bodyType.Category)
 	if err != nil {
 		r.logger.Errorf("get body type by id query err : %v", err)
 		return bodyType, err
@@ -99,11 +101,11 @@ func (r *BrandPsqlRepository) UpdateBodyType(ctx context.Context, bodyType model
 
 	query := `
 		UPDATE body_types SET 
-		    name = $1, image_path = $2, category = $3, updated_at = NOW()
-		WHERE id = $4
+		    name_tm = $1, name_en = $2, name_ru = $3, image_path = $4, category = $5, updated_at = NOW()
+		WHERE id = $6
 		RETURNING id
 	`
-	err := r.client.QueryRow(ctx, query, bodyType.Name, bodyType.ImagePath, bodyType.Category, bodyType.ID).Scan(&bodyTypeID)
+	err := r.client.QueryRow(ctx, query, bodyType.NameTM, bodyType.NameEN, bodyType.NameRU, bodyType.ImagePath, bodyType.Category, bodyType.ID).Scan(&bodyTypeID)
 	if err != nil {
 		r.logger.Errorf("update body types err: %v", err)
 		return bodyTypeID, err

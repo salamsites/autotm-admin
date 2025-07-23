@@ -2,7 +2,9 @@ package models
 
 type BodyType struct {
 	ID        int64
-	Name      string
+	NameTM    string
+	NameEN    string
+	NameRU    string
 	ImagePath string
 	Category  string
 }

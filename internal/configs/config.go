@@ -12,7 +12,6 @@ type Config struct {
 	Listen   Listen  `yaml:"listen"`
 	Swagger  Swagger `yaml:"swagger"`
 	Storage  Storage `yaml:"storage"`
-	Psql     Psql    `yaml:"psql"`
 	Log      Log     `yaml:"log"`
 	FilePath string  `yaml:"file_path"`
 	Auth     Auth    `yaml:"auth"`
@@ -71,7 +70,7 @@ func GetConfig() *Config {
 
 		instance = &Config{}
 
-		if err := cleanenv.ReadConfig(pathConfig, instance); err != nil {
+		if err = cleanenv.ReadConfig(pathConfig, instance); err != nil {
 			help, _ := cleanenv.GetDescription(instance, nil)
 			fmt.Println(help)
 			fmt.Println(err)

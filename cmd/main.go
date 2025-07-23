@@ -64,7 +64,9 @@ func main() {
 	)
 
 	if cfg.Storage.Psql.Migration {
-		migrations.RunMigrations(logger, dsn)
+		if err = migrations.RunMigrations(logger, dsn); err != nil {
+			logger.Fatalf("Failed to apply migrations: %v", err)
+		}
 	} else {
 		logger.Info("Migration flag is disabled; skipping migrations.")
 	}
