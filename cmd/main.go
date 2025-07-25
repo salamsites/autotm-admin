@@ -6,7 +6,6 @@ import (
 	"autotm-admin/internal/handlers"
 	"autotm-admin/internal/migrations"
 	"context"
-	"fmt"
 	_ "github.com/lib/pq"
 	"github.com/rs/cors"
 	slog "github.com/salamsites/package-log"
@@ -55,16 +54,8 @@ func main() {
 	logger.Info("psql client connected")
 
 	// Run db migrations
-	dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
-		cfg.Storage.Psql.Username,
-		cfg.Storage.Psql.Password,
-		cfg.Storage.Psql.Host,
-		cfg.Storage.Psql.Port,
-		cfg.Storage.Psql.Database,
-	)
-
 	if cfg.Storage.Psql.Migration {
-		if err = migrations.RunMigrations(logger, dsn); err != nil {
+		if err = migrations.RunMigrations(logger, psqlClient.StdDB()); err != nil {
 			logger.Fatalf("Failed to apply migrations: %v", err)
 		}
 	} else {
