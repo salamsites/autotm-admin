@@ -38,6 +38,7 @@ func (s *AutoStoreService) CreateAutoStore(ctx context.Context, autoStore dtos.C
 		StoreName:   autoStore.StoreName,
 		Images:      autoStore.Images,
 		LogoPath:    autoStore.LogoPath,
+		Address:     autoStore.Address,
 		RegionID:    autoStore.RegionID,
 		CityID:      autoStore.CityID,
 	}
@@ -108,16 +109,23 @@ func (s *AutoStoreService) GetAutoStores(ctx context.Context, limit, page int64,
 	for _, autoStore := range autoStores {
 		user := userMap[autoStore.UserID]
 		dtoAutoStores = append(dtoAutoStores, dtos.AutoStore{
-			ID:          autoStore.ID,
-			PhoneNumber: autoStore.PhoneNumber,
-			Email:       autoStore.Email,
-			StoreName:   autoStore.StoreName,
-			Images:      autoStore.Images,
-			LogoPath:    autoStore.LogoPath,
-			RegionID:    autoStore.RegionID,
-			CityID:      autoStore.CityID,
-			UserID:      autoStore.UserID,
-			UserName:    user.FullName,
+			ID:           autoStore.ID,
+			PhoneNumber:  autoStore.PhoneNumber,
+			Email:        autoStore.Email,
+			StoreName:    autoStore.StoreName,
+			Images:       autoStore.Images,
+			LogoPath:     autoStore.LogoPath,
+			Address:      autoStore.Address,
+			CityID:       autoStore.CityID,
+			CityNameTM:   autoStore.CityNameTM,
+			CityNameEN:   autoStore.CityNameEN,
+			CityNameRU:   autoStore.CityNameRU,
+			RegionID:     autoStore.RegionID,
+			RegionNameTM: autoStore.RegionNameTM,
+			RegionNameEN: autoStore.RegionNameEN,
+			RegionNameRU: autoStore.RegionNameRU,
+			UserID:       autoStore.UserID,
+			UserName:     user.FullName,
 		})
 	}
 

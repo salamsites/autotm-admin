@@ -26,19 +26,23 @@ type UpdateAutoStoreReq struct {
 }
 
 type AutoStore struct {
-	ID          int64    `json:"id"`
-	UserID      int64    `json:"user_id"`
-	PhoneNumber string   `json:"phone_number"`
-	Email       string   `json:"email"`
-	StoreName   string   `json:"store_name"`
-	Images      []string `json:"images"`
-	LogoPath    string   `json:"logo_path"`
-	RegionID    int64    `json:"region_id"`
-	CityID      int64    `json:"city_id"`
-	Address     string   `json:"address"`
-	CityName    string   `json:"city_name"`
-	RegionName  string   `json:"region_name"`
-	UserName    *string  `json:"user_name"`
+	ID           int64    `json:"id"`
+	UserID       int64    `json:"user_id"`
+	PhoneNumber  string   `json:"phone_number"`
+	Email        string   `json:"email"`
+	StoreName    string   `json:"store_name"`
+	Images       []string `json:"images"`
+	LogoPath     string   `json:"logo_path"`
+	RegionID     int64    `json:"region_id"`
+	CityID       int64    `json:"city_id"`
+	Address      string   `json:"address"`
+	CityNameTM   string   `json:"city_name_tm"`
+	CityNameEN   string   `json:"city_name_en"`
+	CityNameRU   string   `json:"city_name_ru"`
+	RegionNameTM string   `json:"region_name_tm"`
+	RegionNameEN string   `json:"region_name_en"`
+	RegionNameRU string   `json:"region_name_ru"`
+	UserName     *string  `json:"user_name"`
 }
 
 type AutoStoresResult struct {

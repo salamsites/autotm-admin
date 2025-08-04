@@ -58,11 +58,14 @@ func (r *AutoStorePsqlRepository) GetAutoStores(ctx context.Context, limit, page
 
 	query := `
 			SELECT
-				id, user_id, phone_number, email, store_name, 
-				images, logo_path, address, city_id, region_id
-           FROM auto_stores
-		   WHERE store_name ILIKE '%' || @search || '%'
-		   ORDER BY created_at DESC
+				ast.id, ast.user_id, ast.phone_number, ast.email, ast.store_name, 
+				ast.images, ast.logo_path, ast.address, ast.city_id, c.name_tm,
+				c.name_en, c.name_ru, ast.region_id, r.name_tm, r.name_en, r.name_ru
+           FROM auto_stores ast
+           LEFT JOIN cities c ON c.id = ast.city_id
+           LEFT JOIN regions r on r.id = ast.region_id
+		   WHERE ast.store_name ILIKE '%' || @search || '%'
+		   ORDER BY ast.created_at DESC
 		   LIMIT @limit OFFSET @page
 		`
 
@@ -91,7 +94,13 @@ func (r *AutoStorePsqlRepository) GetAutoStores(ctx context.Context, limit, page
 			&store.LogoPath,
 			&store.Address,
 			&store.CityID,
+			&store.CityNameTM,
+			&store.CityNameEN,
+			&store.CityNameRU,
 			&store.RegionID,
+			&store.RegionNameTM,
+			&store.RegionNameEN,
+			&store.RegionNameRU,
 		)
 		if err != nil {
 			r.logger.Errorf("Error scanning auto-store: %s", err)
@@ -149,7 +158,7 @@ func (r *AutoStorePsqlRepository) DeleteAutoStore(ctx context.Context, id models
 	query := ` DELETE FROM auto_stores WHERE id = @id `
 
 	args := pgx.NamedArgs{
-		"id": id,
+		"id": id.ID,
 	}
 	_, err := r.client.Exec(ctx, query, args)
 	if err != nil {
