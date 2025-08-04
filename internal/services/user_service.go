@@ -30,7 +30,6 @@ func (s *UserService) GetUsers(ctx context.Context, limit, page int64, search st
 	searchParam := url.QueryEscape(search)
 
 	urlUser := fmt.Sprintf("%s/users/get-users?limit=%d&page=%d&search=%s", s.cfg.UserServiceURL, limit, page, searchParam)
-	s.logger.Infof("Calling URL: %s", urlUser)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, urlUser, nil)
 	if err != nil {
