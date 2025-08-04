@@ -21,11 +21,10 @@ type ID struct {
 }
 
 type Model struct {
-	ID           int64
-	Name         string
-	LogoPath     string
-	BrandID      int64
-	BrandName    string
-	BodyTypeID   int64
-	BodyTypeName string
+	ID        int64
+	Name      string
+	LogoPath  string
+	BrandID   int64
+	BrandName string
+	Category  string
 }

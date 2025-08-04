@@ -46,28 +46,38 @@ func (h *SliderHandler) SliderRegisterRoutes(r chi.Router) {
 // @Failure 500 {object} string "Internal server error"
 // @Router /sliders/create-slider [post]
 func (h *SliderHandler) v1CreateSlider(w http.ResponseWriter, r *http.Request) shttp.Response {
+	var result shttp.Result
+	result.Status = false
+
 	body, errBody := io.ReadAll(r.Body)
 	if errBody != nil {
+		result.Message = errBody.Error()
 		h.logger.Error("unable to read request body", errBody)
-		return shttp.BadRequest.SetData(errBody.Error())
+		return shttp.BadRequest.SetData(result)
 	}
 	defer r.Body.Close()
 
 	var sliderDTO dtos.CreateSliderReq
 	errData := json.Unmarshal(body, &sliderDTO)
 	if errData != nil {
+		result.Message = errData.Error()
 		h.logger.Error("unable to unmarshal request body", errData)
-		return shttp.UnprocessableEntity.SetData(errData.Error())
+		return shttp.UnprocessableEntity.SetData(result)
 	}
 
 	id, err := h.service.CreateSlider(r.Context(), sliderDTO)
 	if err != nil {
+		result.Message = err.Error()
 		h.logger.Error("unable to create slider", err)
-		return shttp.InternalServerError.SetData(err.Error())
+		return shttp.InternalServerError.SetData(result)
 	}
-	return shttp.Success.SetData(map[string]interface{}{
+
+	result.Status = true
+	result.Message = "Slider created"
+	result.Data = map[string]interface{}{
 		"id": id,
-	})
+	}
+	return shttp.Success.SetData(result)
 }
 
 // v1GetSliders
@@ -79,11 +89,14 @@ func (h *SliderHandler) v1CreateSlider(w http.ResponseWriter, r *http.Request) s
 // @Param limit query int false "Limit number of sliders to return"
 // @Param page query int false "Page number"
 // @Param platform query string false "Platform string to filter sliders"
-// @Success 200 {object} dtos.SliderResult "List of sliders with pagination info"
+// @Success 200 {object} dtos.SliderResult "List of sliders with pagination info successfully"
 // @Failure 400 {object} string "Bad request"
 // @Failure 500 {object} string "Internal server error"
 // @Router /sliders/get-sliders [get]
 func (h *SliderHandler) v1GetAllSliders(w http.ResponseWriter, r *http.Request) shttp.Response {
+	var result shttp.Result
+	result.Status = false
+
 	limitStr := r.URL.Query().Get("limit")
 	pageStr := r.URL.Query().Get("page")
 	platform := r.URL.Query().Get("platform")
@@ -99,10 +112,15 @@ func (h *SliderHandler) v1GetAllSliders(w http.ResponseWriter, r *http.Request) 
 
 	sliders, err := h.service.GetAllSliders(r.Context(), limit, page, platform)
 	if err != nil {
+		result.Message = err.Error()
 		h.logger.Error("unable to get sliders", err)
-		return shttp.InternalServerError.SetData(err.Error())
+		return shttp.InternalServerError.SetData(result)
 	}
-	return shttp.Success.SetData(sliders)
+
+	result.Status = true
+	result.Message = "List of sliders with pagination info successfully"
+	result.Data = sliders
+	return shttp.Success.SetData(result)
 }
 
 // v1UpdateSlider handler
@@ -118,28 +136,38 @@ func (h *SliderHandler) v1GetAllSliders(w http.ResponseWriter, r *http.Request) 
 // @Failure 500 {object} string "Internal server error"
 // @Router /sliders/update-slider [put]
 func (h *SliderHandler) v1UpdateSlider(w http.ResponseWriter, r *http.Request) shttp.Response {
+	var result shttp.Result
+	result.Status = false
+
 	body, errBody := io.ReadAll(r.Body)
 	if errBody != nil {
+		result.Message = errBody.Error()
 		h.logger.Error("unable to read request body", errBody)
-		return shttp.BadRequest.SetData(errBody.Error())
+		return shttp.BadRequest.SetData(result)
 	}
 	defer r.Body.Close()
 
 	var sliderDTO dtos.UpdateSliderReq
 	errData := json.Unmarshal(body, &sliderDTO)
 	if errData != nil {
+		result.Message = errData.Error()
 		h.logger.Error("unable to unmarshal request body", errData)
-		return shttp.UnprocessableEntity.SetData(errData.Error())
+		return shttp.UnprocessableEntity.SetData(result)
 	}
 
 	id, err := h.service.UpdateSlider(r.Context(), sliderDTO)
 	if err != nil {
+		result.Message = err.Error()
 		h.logger.Error("unable to update slider", err)
-		return shttp.InternalServerError.SetData(err.Error())
+		return shttp.InternalServerError.SetData(result)
 	}
-	return shttp.Success.SetData(map[string]interface{}{
+
+	result.Status = true
+	result.Message = "Slider updated Successfully"
+	result.Data = map[string]interface{}{
 		"id": id,
-	})
+	}
+	return shttp.Success.SetData(result)
 }
 
 // v1DeleteSlider
@@ -155,22 +183,30 @@ func (h *SliderHandler) v1UpdateSlider(w http.ResponseWriter, r *http.Request) s
 // @Failure 500 {object} string "Internal server error"
 // @Router /sliders/delete-slider [delete]
 func (h *SliderHandler) v1DeleteSlider(w http.ResponseWriter, r *http.Request) shttp.Response {
+	var result shttp.Result
+	result.Status = false
+
 	idStr := r.URL.Query().Get("id")
 	if idStr == "" {
-		return shttp.BadRequest.SetData("missing slider ID")
+		result.Message = "missing slider ID"
+		return shttp.BadRequest.SetData(result)
 	}
 
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
+		result.Message = err.Error()
 		h.logger.Error("invalid slider ID", err)
-		return shttp.BadRequest.SetData("invalid slider ID")
+		return shttp.BadRequest.SetData(result)
 	}
 
 	err = h.service.DeleteSlider(r.Context(), id)
 	if err != nil {
+		result.Message = err.Error()
 		h.logger.Error("unable to delete slider", err)
-		return shttp.InternalServerError.SetData(err.Error())
+		return shttp.InternalServerError.SetData(result)
 	}
 
-	return shttp.Success.SetData("slider deleted successfully")
+	result.Status = true
+	result.Message = "Slider deleted Successfully"
+	return shttp.Success.SetData(result)
 }

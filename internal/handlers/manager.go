@@ -14,11 +14,13 @@ import (
 )
 
 const (
-	baseURL     = "/api/v1/autotm-admin"
-	brandURL    = baseURL + "/brand"
-	settingsURL = baseURL + "/settings"
-	regionsURL  = baseURL + "/regions"
-	slidersURL  = baseURL + "/sliders"
+	baseURL      = "/api/v1/autotm-admin"
+	filesURL     = baseURL + "/files"
+	brandURL     = baseURL + "/brand"
+	settingsURL  = baseURL + "/settings"
+	regionsURL   = baseURL + "/regions"
+	slidersURL   = baseURL + "/sliders"
+	autoStoreURL = baseURL + "/auto-store"
 )
 
 func Manager(logger *slog.Logger, clientPsql spsql.Client, cfg *configs.Config) chi.Router {
@@ -27,6 +29,12 @@ func Manager(logger *slog.Logger, clientPsql spsql.Client, cfg *configs.Config) 
 	r.Use(middleware.Recoverer)
 
 	newMiddleware := shttp.NewMiddleware(logger, cfg.Auth.JwtRegistration, nil)
+
+	r.Route(filesURL, func(subRouter chi.Router) {
+		filesService := services.NewFilesService(logger)
+		filesHandler := http.NewFilesHandler(logger, newMiddleware, filesService)
+		filesHandler.FilesRegisterRoutes(subRouter)
+	})
 
 	r.Route(brandURL, func(subRouter chi.Router) {
 		brandRepo := repository.NewBrandPsqlRepository(logger, clientPsql)
@@ -58,6 +66,14 @@ func Manager(logger *slog.Logger, clientPsql spsql.Client, cfg *configs.Config) 
 		sliderService := services.NewSlidersService(logger, sliderRepo)
 		sliderHandler := http.NewSliderHandler(logger, newMiddleware, sliderService)
 		sliderHandler.SliderRegisterRoutes(subRouter)
+	})
+
+	r.Route(autoStoreURL, func(subRouter chi.Router) {
+		autoStoreRepo := repository.NewAutoStorePsqlRepository(logger, clientPsql)
+		userService := services.NewUserService(cfg, logger)
+		autoStoreService := services.NewAutoStoreService(logger, autoStoreRepo, userService)
+		autoStoreHandler := http.NewAutoStoreHandler(logger, newMiddleware, autoStoreService)
+		autoStoreHandler.AutoStoreRegisterRoutes(subRouter)
 	})
 
 	return r

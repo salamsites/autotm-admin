@@ -1,5 +1,8 @@
 package dtos
 
+type ID struct {
+	ID int64 `json:"id"`
+}
 type CreateBodyTypeReq struct {
 	NameTM    string `json:"name_tm"`
 	NameEN    string `json:"name_en"`
@@ -55,26 +58,25 @@ type BrandResult struct {
 }
 
 type CreateModelReq struct {
-	Name       string `json:"name"`
-	BrandID    int64  `json:"brand_id"`
-	BodyTypeID int64  `json:"body_type_id"`
+	Name     string `json:"name"`
+	BrandID  int64  `json:"brand_id"`
+	Category string `json:"category"`
 }
 
 type UpdateModelReq struct {
-	ID         int64  `json:"id"`
-	Name       string `json:"name"`
-	BrandID    int64  `json:"brand_id"`
-	BodyTypeID int64  `json:"body_type_id"`
+	ID       int64  `json:"id"`
+	Name     string `json:"name"`
+	BrandID  int64  `json:"brand_id"`
+	Category string `json:"category"`
 }
 
 type Model struct {
-	ID           int64  `json:"id"`
-	Name         string `json:"name"`
-	LogoPath     string `json:"logo_path"`
-	BrandID      int64  `json:"brand_id"`
-	BrandName    string `json:"brand_name"`
-	BodyTypeID   int64  `json:"body_type_id"`
-	BodyTypeName string `json:"body_type_name"`
+	ID        int64  `json:"id"`
+	Name      string `json:"name"`
+	LogoPath  string `json:"logo_path"`
+	BrandID   int64  `json:"brand_id"`
+	BrandName string `json:"brand_name"`
+	Category  string `json:"category"`
 }
 
 type ModelResult struct {

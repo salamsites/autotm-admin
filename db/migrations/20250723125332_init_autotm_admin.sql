@@ -34,16 +34,12 @@ CREATE TABLE IF NOT EXISTS models (
                 "id" SERIAL PRIMARY KEY,
                 "name" CHARACTER VARYING(255) NOT NULL,
                 "brand_id" INTEGER NOT NULL,
-                "body_type_id" INTEGER NOT NULL,
+                "category" category_type NOT NULL,
                 "created_at" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
                 "updated_at" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
                 CONSTRAINT brand_id_fk
                     FOREIGN KEY (brand_id)
                         REFERENCES brands(id)
-                           ON UPDATE CASCADE ON DELETE CASCADE,
-                CONSTRAINT body_type_id_fk
-                    FOREIGN KEY (body_type_id)
-                        REFERENCES body_types(id)
                            ON UPDATE CASCADE ON DELETE CASCADE
 );
 
@@ -57,7 +53,7 @@ CREATE TABLE IF NOT EXISTS roles (
 
 CREATE TABLE IF NOT EXISTS users (
                 "id" SERIAL PRIMARY KEY,
-                "username" CHARACTER VARYING(255) NOT NULL UNIQUE,
+                "username" CHARACTER VARYING(255) NOT NULL,
                 "login" CHARACTER VARYING(255) NOT NULL UNIQUE,
                 "password" TEXT NOT NULL,
                 "role_id" INTEGER,
@@ -102,6 +98,29 @@ CREATE TABLE IF NOT EXISTS sliders (
                 "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS auto_stores (
+                "id" SERIAL PRIMARY KEY,
+                "user_id" BIGINT,
+                "phone_number" CHARACTER VARYING(255),
+                "email" CHARACTER VARYING(255),
+                "store_name" CHARACTER VARYING(255) NOT NULL,
+                "images" TEXT[],
+                "logo_path" CHARACTER VARYING(255),
+                "region_id" INTEGER,
+                "city_id" INTEGER,
+                "address" TEXT,
+                "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                CONSTRAINT region_id_fk
+                    FOREIGN KEY (region_id)
+                    REFERENCES regions(id)
+                        ON UPDATE CASCADE ON DELETE SET NULL,
+                CONSTRAINT city_id_fk
+                    FOREIGN KEY (city_id)
+                        REFERENCES cities(id)
+                            ON UPDATE CASCADE ON DELETE SET NULL
+);
+
 
 -- +goose Down
 DROP TABLE IF EXISTS sliders;
@@ -114,3 +133,4 @@ DROP TABLE IF EXISTS brand_categories;
 DROP TABLE IF EXISTS brands;
 DROP TABLE IF EXISTS body_types;
 DROP TYPE IF EXISTS category_type;
+DROP TABLE IF EXISTS auto_stores;

@@ -7,7 +7,6 @@ import (
 	"autotm-admin/internal/repository/storage"
 	"context"
 	slog "github.com/salamsites/package-log"
-	"mime/multipart"
 )
 
 type BrandService struct {
@@ -22,20 +21,12 @@ func NewBrandService(logger *slog.Logger, repo storage.BrandRepository) *BrandSe
 	}
 }
 
-func (s *BrandService) UploadImage(file multipart.File, header *multipart.FileHeader) (string, error) {
-	imagePath, err := helpers.UploadImage(file, header)
-	if err != nil {
-		s.logger.Errorf("upload image err: %v", err)
-		return imagePath, err
-	}
-	return imagePath, nil
-}
-
-func (s *BrandService) CreateBodyType(ctx context.Context, bodyType dtos.CreateBodyTypeReq) (int64, error) {
+func (s *BrandService) CreateBodyType(ctx context.Context, bodyType dtos.CreateBodyTypeReq) (dtos.ID, error) {
+	var id dtos.ID
 	validate := helpers.GetValidator()
 	if err := validate.Struct(bodyType); err != nil {
 		s.logger.Errorf("validate err: %v", err)
-		return 0, err
+		return id, err
 	}
 
 	newBodyType := models.BodyType{
@@ -49,9 +40,11 @@ func (s *BrandService) CreateBodyType(ctx context.Context, bodyType dtos.CreateB
 	bodyTypeID, err := s.repo.CreateBodyType(ctx, newBodyType)
 	if err != nil {
 		s.logger.Errorf("create err: %v", err)
-		return bodyTypeID, err
+		return id, err
 	}
-	return bodyTypeID, nil
+
+	id.ID = bodyTypeID
+	return id, nil
 }
 
 func (s *BrandService) GetBodyType(ctx context.Context, limit, page int64, category, search string) (dtos.BodyTypeResult, error) {
@@ -85,17 +78,18 @@ func (s *BrandService) GetBodyType(ctx context.Context, limit, page int64, categ
 	return result, nil
 }
 
-func (s *BrandService) UpdateBodyType(ctx context.Context, bodyType dtos.UpdateBodyTypeReq) (int64, error) {
+func (s *BrandService) UpdateBodyType(ctx context.Context, bodyType dtos.UpdateBodyTypeReq) (dtos.ID, error) {
+	var id dtos.ID
 	validate := helpers.GetValidator()
 	if err := validate.Struct(bodyType); err != nil {
 		s.logger.Errorf("validate err: %v", err)
-		return 0, err
+		return id, err
 	}
 
 	oldBodyType, err := s.repo.GetBodyTypeByID(ctx, bodyType.ID)
 	if err != nil {
 		s.logger.Errorf("get old body types err: %v", err)
-		return 0, err
+		return id, err
 	}
 
 	if oldBodyType.ImagePath != bodyType.ImagePath && oldBodyType.ImagePath != "" {
@@ -116,9 +110,11 @@ func (s *BrandService) UpdateBodyType(ctx context.Context, bodyType dtos.UpdateB
 	bodyTypeID, err := s.repo.UpdateBodyType(ctx, newBodyType)
 	if err != nil {
 		s.logger.Errorf("update body types err: %v", err)
-		return bodyTypeID, err
+		return id, err
 	}
-	return bodyTypeID, nil
+
+	id.ID = bodyTypeID
+	return id, nil
 }
 
 func (s *BrandService) DeleteBodyType(ctx context.Context, id int64) error {
@@ -146,11 +142,12 @@ func (s *BrandService) DeleteBodyType(ctx context.Context, id int64) error {
 	return nil
 }
 
-func (s *BrandService) CreateBrand(ctx context.Context, brand dtos.CreateBrandReq) (int64, error) {
+func (s *BrandService) CreateBrand(ctx context.Context, brand dtos.CreateBrandReq) (dtos.ID, error) {
+	var id dtos.ID
 	validate := helpers.GetValidator()
 	if err := validate.Struct(brand); err != nil {
 		s.logger.Errorf("validate err: %v", err)
-		return 0, err
+		return id, err
 	}
 
 	newBrand := models.Brand{
@@ -162,9 +159,11 @@ func (s *BrandService) CreateBrand(ctx context.Context, brand dtos.CreateBrandRe
 	brandID, err := s.repo.CreateBrand(ctx, newBrand)
 	if err != nil {
 		s.logger.Errorf("create err: %v", err)
-		return brandID, err
+		return id, err
 	}
-	return brandID, nil
+
+	id.ID = brandID
+	return id, nil
 }
 
 func (s *BrandService) GetBrands(ctx context.Context, limit, page int64, category, search string) (dtos.BrandResult, error) {
@@ -196,37 +195,41 @@ func (s *BrandService) GetBrands(ctx context.Context, limit, page int64, categor
 	return result, nil
 }
 
-func (s *BrandService) UpdateBrand(ctx context.Context, brand dtos.UpdateBrandReq) (int64, error) {
+func (s *BrandService) UpdateBrand(ctx context.Context, brand dtos.UpdateBrandReq) (dtos.ID, error) {
+	var id dtos.ID
 	validate := helpers.GetValidator()
 	if err := validate.Struct(brand); err != nil {
 		s.logger.Errorf("validate err: %v", err)
-		return 0, err
+		return id, err
 	}
 
 	oldBrand, err := s.repo.GetBrandByID(ctx, brand.ID)
 	if err != nil {
 		s.logger.Errorf("get old brand err: %v", err)
-		return 0, err
+		return id, err
 	}
 
 	if oldBrand.LogoPath != brand.LogoPath && oldBrand.LogoPath != "" {
-		if err := helpers.DeleteImage(oldBrand.LogoPath); err != nil {
-			s.logger.Errorf("delete old logo path err: %v", err)
+		if errPath := helpers.DeleteImage(oldBrand.LogoPath); errPath != nil {
+			s.logger.Errorf("delete old logo path err: %v", errPath)
 		}
 	}
 
 	newBrand := models.Brand{
-		ID:       brand.ID,
-		Name:     brand.Name,
-		LogoPath: brand.LogoPath,
+		ID:         brand.ID,
+		Name:       brand.Name,
+		LogoPath:   brand.LogoPath,
+		Categories: brand.Categories,
 	}
 
 	brandID, err := s.repo.UpdateBrand(ctx, newBrand)
 	if err != nil {
 		s.logger.Errorf("update brand err: %v", err)
-		return brandID, err
+		return id, err
 	}
-	return brandID, nil
+
+	id.ID = brandID
+	return id, nil
 }
 
 func (s *BrandService) DeleteBrandCategory(ctx context.Context, id int64, category string) error {
@@ -255,25 +258,28 @@ func (s *BrandService) DeleteBrandCategory(ctx context.Context, id int64, catego
 	return nil
 }
 
-func (s *BrandService) CreateModel(ctx context.Context, model dtos.CreateModelReq) (int64, error) {
+func (s *BrandService) CreateModel(ctx context.Context, model dtos.CreateModelReq) (dtos.ID, error) {
+	var id dtos.ID
 	validate := helpers.GetValidator()
 	if err := validate.Struct(model); err != nil {
 		s.logger.Errorf("validate err: %v", err)
-		return 0, err
+		return id, err
 	}
 
 	newModel := models.Model{
-		Name:       model.Name,
-		BrandID:    model.BrandID,
-		BodyTypeID: model.BodyTypeID,
+		Name:     model.Name,
+		BrandID:  model.BrandID,
+		Category: model.Category,
 	}
 
 	modelID, err := s.repo.CreateModel(ctx, newModel)
 	if err != nil {
 		s.logger.Errorf("create model err: %v", err)
-		return modelID, err
+		return id, err
 	}
-	return modelID, nil
+
+	id.ID = modelID
+	return id, nil
 }
 
 func (s *BrandService) GetModels(ctx context.Context, limit, page int64, category, search string) (dtos.ModelResult, error) {
@@ -291,13 +297,12 @@ func (s *BrandService) GetModels(ctx context.Context, limit, page int64, categor
 	var dtoModels []dtos.Model
 	for _, b := range brandModels {
 		dtoModels = append(dtoModels, dtos.Model{
-			ID:           b.ID,
-			Name:         b.Name,
-			LogoPath:     b.LogoPath,
-			BrandID:      b.BrandID,
-			BrandName:    b.BrandName,
-			BodyTypeID:   b.BodyTypeID,
-			BodyTypeName: b.BodyTypeName,
+			ID:        b.ID,
+			Name:      b.Name,
+			LogoPath:  b.LogoPath,
+			BrandID:   b.BrandID,
+			BrandName: b.BrandName,
+			Category:  b.Category,
 		})
 	}
 
@@ -308,26 +313,28 @@ func (s *BrandService) GetModels(ctx context.Context, limit, page int64, categor
 	return result, nil
 }
 
-func (s *BrandService) UpdateModel(ctx context.Context, model dtos.UpdateModelReq) (int64, error) {
+func (s *BrandService) UpdateModel(ctx context.Context, model dtos.UpdateModelReq) (dtos.ID, error) {
+	var id dtos.ID
 	validate := helpers.GetValidator()
 	if err := validate.Struct(model); err != nil {
 		s.logger.Errorf("validate err: %v", err)
-		return 0, err
+		return id, err
 	}
 
 	newModel := models.Model{
-		ID:         model.ID,
-		Name:       model.Name,
-		BrandID:    model.BrandID,
-		BodyTypeID: model.BodyTypeID,
+		ID:       model.ID,
+		Name:     model.Name,
+		BrandID:  model.BrandID,
+		Category: model.Category,
 	}
 
-	brandID, err := s.repo.UpdateModel(ctx, newModel)
+	modelID, err := s.repo.UpdateModel(ctx, newModel)
 	if err != nil {
 		s.logger.Errorf("update model err: %v", err)
-		return brandID, err
+		return id, err
 	}
-	return brandID, nil
+	id.ID = modelID
+	return id, nil
 }
 
 func (s *BrandService) DeleteModel(ctx context.Context, id int64) error {

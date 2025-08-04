@@ -8,13 +8,14 @@ import (
 )
 
 type Config struct {
-	IsDebug  *bool   `yaml:"is_debug" env-required:"true"`
-	Listen   Listen  `yaml:"listen"`
-	Swagger  Swagger `yaml:"swagger"`
-	Storage  Storage `yaml:"storage"`
-	Log      Log     `yaml:"log"`
-	FilePath string  `yaml:"file_path"`
-	Auth     Auth    `yaml:"auth"`
+	IsDebug        *bool   `yaml:"is_debug" env-required:"true"`
+	Listen         Listen  `yaml:"listen"`
+	Swagger        Swagger `yaml:"swagger"`
+	Storage        Storage `yaml:"storage"`
+	Log            Log     `yaml:"log"`
+	FilePath       string  `yaml:"file_path"`
+	Auth           Auth    `yaml:"auth"`
+	UserServiceURL string  `yaml:"user_service"`
 }
 
 type Auth struct {

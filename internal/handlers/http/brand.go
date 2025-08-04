@@ -27,8 +27,6 @@ func NewBrandHandler(logger *slog.Logger, middleware *shttp.Middleware, service 
 }
 
 func (h *BrandHandler) BrandRegisterRoutes(r chi.Router) {
-	r.Method("POST", "/upload-image", h.middleware.Base(h.v1UploadImage))
-
 	// Body Type
 	r.Method("POST", "/create-body-type", h.middleware.Base(h.v1CreateBodyType))
 	r.Method("GET", "/get-body-types", h.middleware.Base(h.v1GetBodyTypes))
@@ -48,34 +46,6 @@ func (h *BrandHandler) BrandRegisterRoutes(r chi.Router) {
 	r.Method("DELETE", "/delete-model", h.middleware.Base(h.v1DeleteModel))
 }
 
-// v1UploadImage
-// @Summary Upload an image
-// @Description Uploads an image file and returns the file path
-// @Tags Upload Image
-// @Accept multipart/form-data
-// @Produce json
-// @Param image formData file true "Image file to upload"
-// @Success 200 "Returns the uploaded image path Successfully"
-// @Failure 400 {object} string "Bad request"
-// @Failure 500 {object} string "Internal server error"
-// @Router /brand/upload-image [post]
-func (h *BrandHandler) v1UploadImage(w http.ResponseWriter, r *http.Request) shttp.Response {
-	file, fileHeader, err := r.FormFile("image")
-	if err != nil {
-		h.logger.Error("unable to get uploaded file", err)
-		return shttp.BadRequest.SetData(err.Error())
-	}
-	defer file.Close()
-
-	imagePath, err := h.service.UploadImage(file, fileHeader)
-	if err != nil {
-		h.logger.Error("unable to upload image error", err)
-		return shttp.InternalServerError.SetData(err.Error())
-	}
-
-	return shttp.Success.SetData(imagePath)
-}
-
 // v1CreateBodyType
 // @Summary Create a new body type
 // @Description Creates a new body type with the given name, category and image path
@@ -83,34 +53,42 @@ func (h *BrandHandler) v1UploadImage(w http.ResponseWriter, r *http.Request) sht
 // @Accept json
 // @Produce json
 // @Param brand body dtos.CreateBodyTypeReq true "Body Type data"
-// @Success 200 {object} map[string]int64 "Returns created bodyType ID"
+// @Success 200 {object} dtos.ID "Returns created bodyType ID"
 // @Failure 400 {object} string "Bad request"
 // @Failure 422 {object} string "Unprocessable entity"
 // @Failure 500 {object} string "Internal server error"
 // @Router /brand/create-body-type [post]
 func (h *BrandHandler) v1CreateBodyType(w http.ResponseWriter, r *http.Request) shttp.Response {
+	var result shttp.Result
+	result.Status = false
+
 	body, errBody := io.ReadAll(r.Body)
 	if errBody != nil {
+		result.Message = errBody.Error()
 		h.logger.Error("unable to read request body", errBody)
-		return shttp.BadRequest.SetData(errBody.Error())
+		return shttp.BadRequest.SetData(result)
 	}
 	defer r.Body.Close()
 
 	var bodyTypeDTO dtos.CreateBodyTypeReq
 	errData := json.Unmarshal(body, &bodyTypeDTO)
 	if errData != nil {
+		result.Message = errData.Error()
 		h.logger.Error("unable to unmarshal request body", errData)
-		return shttp.UnprocessableEntity.SetData(errData.Error())
+		return shttp.UnprocessableEntity.SetData(result)
 	}
 
 	id, err := h.service.CreateBodyType(r.Context(), bodyTypeDTO)
 	if err != nil {
+		result.Message = err.Error()
 		h.logger.Error("unable to create body type", err)
-		return shttp.InternalServerError.SetData(err.Error())
+		return shttp.InternalServerError.SetData(result)
 	}
-	return shttp.Success.SetData(map[string]interface{}{
-		"id": id,
-	})
+
+	result.Status = true
+	result.Message = "Body Type Create Successfully"
+	result.Data = id
+	return shttp.Success.SetData(result)
 }
 
 // v1GetBodyTypes
@@ -128,9 +106,13 @@ func (h *BrandHandler) v1CreateBodyType(w http.ResponseWriter, r *http.Request) 
 // @Failure 500 {object} string "Internal server error"
 // @Router /brand/get-body-types [get]
 func (h *BrandHandler) v1GetBodyTypes(w http.ResponseWriter, r *http.Request) shttp.Response {
+	var result shttp.Result
+	result.Status = false
+
 	category := r.URL.Query().Get("category")
 	if category == "" {
-		return shttp.BadRequest.SetData("category parameter is required")
+		result.Message = "category is required"
+		return shttp.BadRequest.SetData(result)
 	}
 	limitStr := r.URL.Query().Get("limit")
 	pageStr := r.URL.Query().Get("page")
@@ -147,10 +129,15 @@ func (h *BrandHandler) v1GetBodyTypes(w http.ResponseWriter, r *http.Request) sh
 
 	brands, err := h.service.GetBodyType(r.Context(), limit, page, category, search)
 	if err != nil {
+		result.Message = err.Error()
 		h.logger.Error("unable to get body types", err)
-		return shttp.InternalServerError.SetData(err.Error())
+		return shttp.InternalServerError.SetData(result)
 	}
-	return shttp.Success.SetData(brands)
+
+	result.Status = true
+	result.Message = "Body Types Get Successfully"
+	result.Data = brands
+	return shttp.Success.SetData(result)
 }
 
 // v1UpdateBodyType handler
@@ -160,34 +147,42 @@ func (h *BrandHandler) v1GetBodyTypes(w http.ResponseWriter, r *http.Request) sh
 // @Accept json
 // @Produce json
 // @Param brand body dtos.UpdateBodyTypeReq true "Body Type data with ID"
-// @Success 200 {object} map[string]int64 "Returns updated body Type ID"
+// @Success 200 {object} dtos.ID "Returns updated body Type ID"
 // @Failure 400 {object} string "Bad request"
 // @Failure 422 {object} string "Unprocessable entity"
 // @Failure 500 {object} string "Internal server error"
 // @Router /brand/update-body-type [put]
 func (h *BrandHandler) v1UpdateBodyType(w http.ResponseWriter, r *http.Request) shttp.Response {
+	var result shttp.Result
+	result.Status = false
+
 	body, errBody := io.ReadAll(r.Body)
 	if errBody != nil {
+		result.Message = errBody.Error()
 		h.logger.Error("unable to read request body", errBody)
-		return shttp.BadRequest.SetData(errBody.Error())
+		return shttp.BadRequest.SetData(result)
 	}
 	defer r.Body.Close()
 
 	var bodyTypeDTO dtos.UpdateBodyTypeReq
 	errData := json.Unmarshal(body, &bodyTypeDTO)
 	if errData != nil {
+		result.Message = errData.Error()
 		h.logger.Error("unable to unmarshal request body ", errData)
-		return shttp.UnprocessableEntity.SetData(errData.Error())
+		return shttp.UnprocessableEntity.SetData(result)
 	}
 
 	id, err := h.service.UpdateBodyType(r.Context(), bodyTypeDTO)
 	if err != nil {
+		result.Message = err.Error()
 		h.logger.Error("unable to update body type ", err)
-		return shttp.InternalServerError.SetData(err.Error())
+		return shttp.InternalServerError.SetData(result)
 	}
-	return shttp.Success.SetData(map[string]interface{}{
-		"id": id,
-	})
+
+	result.Status = true
+	result.Message = "Body Type Update Successfully"
+	result.Data = id
+	return shttp.Success.SetData(result)
 }
 
 // v1DeleteBodyType
@@ -203,24 +198,32 @@ func (h *BrandHandler) v1UpdateBodyType(w http.ResponseWriter, r *http.Request) 
 // @Failure 500 {object} string "Internal server error"
 // @Router /brand/delete-body-type [delete]
 func (h *BrandHandler) v1DeleteBodyType(w http.ResponseWriter, r *http.Request) shttp.Response {
+	var result shttp.Result
+	result.Status = false
+
 	idStr := r.URL.Query().Get("id")
 	if idStr == "" {
-		return shttp.BadRequest.SetData("missing body type ID")
+		result.Message = "id is required"
+		return shttp.BadRequest.SetData(result)
 	}
 
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
+		result.Message = err.Error()
 		h.logger.Error("invalid body type ID", err)
-		return shttp.BadRequest.SetData("invalid body type ID")
+		return shttp.BadRequest.SetData(result)
 	}
 
 	err = h.service.DeleteBodyType(r.Context(), id)
 	if err != nil {
+		result.Message = err.Error()
 		h.logger.Error("unable to delete body type", err)
-		return shttp.InternalServerError.SetData(err.Error())
+		return shttp.InternalServerError.SetData(result)
 	}
 
-	return shttp.Success.SetData("body type deleted successfully")
+	result.Status = true
+	result.Message = "Body Type deleted successfully"
+	return shttp.Success.SetData(result)
 }
 
 // v1CreateBrand
@@ -230,34 +233,42 @@ func (h *BrandHandler) v1DeleteBodyType(w http.ResponseWriter, r *http.Request) 
 // @Accept json
 // @Produce json
 // @Param brand body dtos.CreateBrandReq true "Brand data"
-// @Success 200 {object} map[string]int64 "Returns created brand ID"
+// @Success 200 {object} dtos.ID "Returns created brand ID"
 // @Failure 400 {object} string "Bad request"
 // @Failure 422 {object} string "Unprocessable entity"
 // @Failure 500 {object} string "Internal server error"
 // @Router /brand/create-brand [post]
 func (h *BrandHandler) v1CreateBrand(w http.ResponseWriter, r *http.Request) shttp.Response {
+	var result shttp.Result
+	result.Status = false
+
 	body, errBody := io.ReadAll(r.Body)
 	if errBody != nil {
+		result.Message = errBody.Error()
 		h.logger.Error("unable to read request body", errBody)
-		return shttp.BadRequest.SetData(errBody.Error())
+		return shttp.BadRequest.SetData(result)
 	}
 	defer r.Body.Close()
 
 	var brandDTO dtos.CreateBrandReq
 	errData := json.Unmarshal(body, &brandDTO)
 	if errData != nil {
+		result.Message = errData.Error()
 		h.logger.Error("unable to unmarshal request body", errData)
-		return shttp.UnprocessableEntity.SetData(errData.Error())
+		return shttp.UnprocessableEntity.SetData(result)
 	}
 
 	id, err := h.service.CreateBrand(r.Context(), brandDTO)
 	if err != nil {
+		result.Message = err.Error()
 		h.logger.Error("unable to create brand", err)
-		return shttp.InternalServerError.SetData(err.Error())
+		return shttp.InternalServerError.SetData(result)
 	}
-	return shttp.Success.SetData(map[string]interface{}{
-		"id": id,
-	})
+
+	result.Status = true
+	result.Message = "Brand Create Successfully"
+	result.Data = id
+	return shttp.Success.SetData(result)
 }
 
 // v1GetBrands
@@ -275,9 +286,13 @@ func (h *BrandHandler) v1CreateBrand(w http.ResponseWriter, r *http.Request) sht
 // @Failure 500 {object} string "Internal server error"
 // @Router /brand/get-brands [get]
 func (h *BrandHandler) v1GetBrands(w http.ResponseWriter, r *http.Request) shttp.Response {
+	var result shttp.Result
+	result.Status = false
+
 	category := r.URL.Query().Get("category")
 	if category == "" {
-		return shttp.BadRequest.SetData("category parameter is required")
+		result.Message = "category is required"
+		return shttp.BadRequest.SetData(result)
 	}
 	limitStr := r.URL.Query().Get("limit")
 	pageStr := r.URL.Query().Get("page")
@@ -294,10 +309,15 @@ func (h *BrandHandler) v1GetBrands(w http.ResponseWriter, r *http.Request) shttp
 
 	brands, err := h.service.GetBrands(r.Context(), limit, page, category, search)
 	if err != nil {
+		result.Message = err.Error()
 		h.logger.Error("unable to get brands", err)
-		return shttp.InternalServerError.SetData(err.Error())
+		return shttp.InternalServerError.SetData(result)
 	}
-	return shttp.Success.SetData(brands)
+
+	result.Status = true
+	result.Message = "Get Brands Successfully"
+	result.Data = brands
+	return shttp.Success.SetData(result)
 }
 
 // v1UpdateBrand handler
@@ -307,34 +327,42 @@ func (h *BrandHandler) v1GetBrands(w http.ResponseWriter, r *http.Request) shttp
 // @Accept json
 // @Produce json
 // @Param brand body dtos.UpdateBrandReq true "Brand data with ID"
-// @Success 200 {object} map[string]int64 "Returns updated brand ID"
+// @Success 200 {object} dtos.ID "Returns updated brand ID"
 // @Failure 400 {object} string "Bad request"
 // @Failure 422 {object} string "Unprocessable entity"
 // @Failure 500 {object} string "Internal server error"
 // @Router /brand/update-brand [put]
 func (h *BrandHandler) v1UpdateBrand(w http.ResponseWriter, r *http.Request) shttp.Response {
+	var result shttp.Result
+	result.Status = false
+
 	body, errBody := io.ReadAll(r.Body)
 	if errBody != nil {
+		result.Message = errBody.Error()
 		h.logger.Error("unable to read request body", errBody)
-		return shttp.BadRequest.SetData(errBody.Error())
+		return shttp.BadRequest.SetData(result)
 	}
 	defer r.Body.Close()
 
 	var brandDTO dtos.UpdateBrandReq
 	errData := json.Unmarshal(body, &brandDTO)
 	if errData != nil {
+		result.Message = errData.Error()
 		h.logger.Error("unable to unmarshal request body", errData)
-		return shttp.UnprocessableEntity.SetData(errData.Error())
+		return shttp.UnprocessableEntity.SetData(result)
 	}
 
 	id, err := h.service.UpdateBrand(r.Context(), brandDTO)
 	if err != nil {
+		result.Message = err.Error()
 		h.logger.Error("unable to update brand", err)
-		return shttp.InternalServerError.SetData(err.Error())
+		return shttp.InternalServerError.SetData(result)
 	}
-	return shttp.Success.SetData(map[string]interface{}{
-		"id": id,
-	})
+
+	result.Status = true
+	result.Message = "Brand Update Successfully"
+	result.Data = id
+	return shttp.Success.SetData(result)
 }
 
 // v1DeleteBrand
@@ -351,28 +379,37 @@ func (h *BrandHandler) v1UpdateBrand(w http.ResponseWriter, r *http.Request) sht
 // @Failure 500 {object} string "Internal server error"
 // @Router /brand/delete-brand [delete]
 func (h *BrandHandler) v1DeleteBrandCategory(w http.ResponseWriter, r *http.Request) shttp.Response {
+	var result shttp.Result
+	result.Status = false
+
 	category := r.URL.Query().Get("category")
 	if category == "" {
-		return shttp.BadRequest.SetData("missing brand category")
+		result.Message = "category is required"
+		return shttp.BadRequest.SetData(result)
 	}
 	idStr := r.URL.Query().Get("id")
 	if idStr == "" {
-		return shttp.BadRequest.SetData("missing brand ID")
+		result.Message = "id is required"
+		return shttp.BadRequest.SetData(result)
 	}
 
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
+		result.Message = err.Error()
 		h.logger.Error("invalid brand ID", err)
-		return shttp.BadRequest.SetData("invalid brand ID")
+		return shttp.BadRequest.SetData(result)
 	}
 
 	err = h.service.DeleteBrandCategory(r.Context(), id, category)
 	if err != nil {
+		result.Message = err.Error()
 		h.logger.Error("unable to delete brand", err)
-		return shttp.InternalServerError.SetData(err.Error())
+		return shttp.InternalServerError.SetData(result)
 	}
 
-	return shttp.Success.SetData("brand deleted successfully")
+	result.Status = true
+	result.Message = "Brand deleted successfully"
+	return shttp.Success.SetData(result)
 }
 
 // v1CreateModel
@@ -382,34 +419,42 @@ func (h *BrandHandler) v1DeleteBrandCategory(w http.ResponseWriter, r *http.Requ
 // @Accept json
 // @Produce json
 // @Param brand body dtos.CreateModelReq true "Model data"
-// @Success 200 {object} map[string]int64 "Returns created model ID"
+// @Success 200 {object} dtos.ID "Returns created model ID"
 // @Failure 400 {object} string "Bad request"
 // @Failure 422 {object} string "Unprocessable entity"
 // @Failure 500 {object} string "Internal server error"
 // @Router /brand/create-model [post]
 func (h *BrandHandler) v1CreateModel(w http.ResponseWriter, r *http.Request) shttp.Response {
+	var result shttp.Result
+	result.Status = false
+
 	body, errBody := io.ReadAll(r.Body)
 	if errBody != nil {
+		result.Message = errBody.Error()
 		h.logger.Error("unable to read request body", errBody)
-		return shttp.BadRequest.SetData(errBody.Error())
+		return shttp.BadRequest.SetData(result)
 	}
 	defer r.Body.Close()
 
 	var modelDTO dtos.CreateModelReq
 	errData := json.Unmarshal(body, &modelDTO)
 	if errData != nil {
+		result.Message = errData.Error()
 		h.logger.Error("unable to unmarshal request body", errData)
-		return shttp.UnprocessableEntity.SetData(errData.Error())
+		return shttp.UnprocessableEntity.SetData(result)
 	}
 
 	id, err := h.service.CreateModel(r.Context(), modelDTO)
 	if err != nil {
+		result.Message = err.Error()
 		h.logger.Error("unable to create model", err)
-		return shttp.InternalServerError.SetData(err.Error())
+		return shttp.InternalServerError.SetData(result)
 	}
-	return shttp.Success.SetData(map[string]interface{}{
-		"id": id,
-	})
+
+	result.Status = true
+	result.Message = "Model Create Successfully"
+	result.Data = id
+	return shttp.Success.SetData(result)
 }
 
 // v1GetModels
@@ -427,9 +472,13 @@ func (h *BrandHandler) v1CreateModel(w http.ResponseWriter, r *http.Request) sht
 // @Failure 500 {object} string "Internal server error"
 // @Router /brand/get-models [get]
 func (h *BrandHandler) v1GetModels(w http.ResponseWriter, r *http.Request) shttp.Response {
+	var result shttp.Result
+	result.Status = false
+
 	category := r.URL.Query().Get("category")
 	if category == "" {
-		return shttp.BadRequest.SetData("missing brand category")
+		result.Message = "category is required"
+		return shttp.BadRequest.SetData(result)
 	}
 	limitStr := r.URL.Query().Get("limit")
 	pageStr := r.URL.Query().Get("page")
@@ -446,10 +495,15 @@ func (h *BrandHandler) v1GetModels(w http.ResponseWriter, r *http.Request) shttp
 
 	brandModels, err := h.service.GetModels(r.Context(), limit, page, category, search)
 	if err != nil {
+		result.Message = err.Error()
 		h.logger.Error("unable to get models", err)
-		return shttp.InternalServerError.SetData(err.Error())
+		return shttp.InternalServerError.SetData(result)
 	}
-	return shttp.Success.SetData(brandModels)
+
+	result.Status = true
+	result.Message = "Models Get Successfully"
+	result.Data = brandModels
+	return shttp.Success.SetData(result)
 }
 
 // v1UpdateModel
@@ -459,34 +513,42 @@ func (h *BrandHandler) v1GetModels(w http.ResponseWriter, r *http.Request) shttp
 // @Accept json
 // @Produce json
 // @Param brand body dtos.UpdateModelReq true "Model data with ID"
-// @Success 200 {object} map[string]int64 "Returns updated model ID"
+// @Success 200 {object} dtos.ID "Returns updated model ID"
 // @Failure 400 {object} string "Bad request"
 // @Failure 422 {object} string "Unprocessable entity"
 // @Failure 500 {object} string "Internal server error"
 // @Router /brand/update-model [put]
 func (h *BrandHandler) v1UpdateModel(w http.ResponseWriter, r *http.Request) shttp.Response {
+	var result shttp.Result
+	result.Status = false
+
 	body, errBody := io.ReadAll(r.Body)
 	if errBody != nil {
+		result.Message = errBody.Error()
 		h.logger.Error("unable to read request body", errBody)
-		return shttp.BadRequest.SetData(errBody.Error())
+		return shttp.BadRequest.SetData(result)
 	}
 	defer r.Body.Close()
 
 	var modelDTO dtos.UpdateModelReq
 	errData := json.Unmarshal(body, &modelDTO)
 	if errData != nil {
+		result.Message = errData.Error()
 		h.logger.Error("unable to unmarshal request body", errData)
-		return shttp.UnprocessableEntity.SetData(errData.Error())
+		return shttp.UnprocessableEntity.SetData(result)
 	}
 
 	id, err := h.service.UpdateModel(r.Context(), modelDTO)
 	if err != nil {
+		result.Message = err.Error()
 		h.logger.Error("unable to update model", err)
-		return shttp.InternalServerError.SetData(err.Error())
+		return shttp.InternalServerError.SetData(result)
 	}
-	return shttp.Success.SetData(map[string]interface{}{
-		"id": id,
-	})
+
+	result.Status = true
+	result.Message = "Model Update Successfully"
+	result.Data = id
+	return shttp.Success.SetData(result)
 }
 
 // v1DeleteModel
@@ -502,22 +564,30 @@ func (h *BrandHandler) v1UpdateModel(w http.ResponseWriter, r *http.Request) sht
 // @Failure 500 {object} string "Internal server error"
 // @Router /brand/delete-model [delete]
 func (h *BrandHandler) v1DeleteModel(w http.ResponseWriter, r *http.Request) shttp.Response {
+	var result shttp.Result
+	result.Status = false
+
 	idStr := r.URL.Query().Get("id")
 	if idStr == "" {
-		return shttp.BadRequest.SetData("missing brand model ID")
+		result.Message = "id is required"
+		return shttp.BadRequest.SetData(result)
 	}
 
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
+		result.Message = err.Error()
 		h.logger.Error("invalid brand model ID", err)
-		return shttp.BadRequest.SetData("invalid brand model ID")
+		return shttp.BadRequest.SetData(result)
 	}
 
 	err = h.service.DeleteModel(r.Context(), id)
 	if err != nil {
+		result.Message = err.Error()
 		h.logger.Error("unable to delete model", err)
-		return shttp.InternalServerError.SetData(err.Error())
+		return shttp.InternalServerError.SetData(result)
 	}
 
-	return shttp.Success.SetData("Model deleted successfully")
+	result.Status = true
+	result.Message = "Model Deleted Successfully"
+	return shttp.Success.SetData(result)
 }

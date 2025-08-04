@@ -42,6 +42,22 @@ func (s *SettingsService) CreateRole(ctx context.Context, role dtos.CreateRoleRe
 	return roleID, nil
 }
 
+func (s *SettingsService) GetRoleByID(ctx context.Context, roleID int64) (dtos.Role, error) {
+	role, err := s.repo.GetRoleByID(ctx, roleID)
+	if err != nil {
+		s.logger.Errorf("get err: %v", err)
+		return dtos.Role{}, err
+	}
+
+	result := dtos.Role{
+		ID:   role.ID,
+		Name: role.Name,
+		Role: role.Role,
+	}
+
+	return result, nil
+}
+
 func (s *SettingsService) GetAllRoles(ctx context.Context, limit, page int64, search string) (dtos.RoleResult, error) {
 	offset := (page - 1) * limit
 	if page <= 0 {

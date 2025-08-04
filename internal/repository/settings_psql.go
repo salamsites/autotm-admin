@@ -3,6 +3,7 @@ package repository
 import (
 	"autotm-admin/internal/models"
 	"context"
+	"github.com/jackc/pgx/v5"
 	slog "github.com/salamsites/package-log"
 	spsql "github.com/salamsites/package-psql"
 )
@@ -30,6 +31,28 @@ func (r *SettingsPsqlRepository) CreateRole(ctx context.Context, role models.Rol
 		return id, err
 	}
 	return id, nil
+}
+
+func (r *SettingsPsqlRepository) GetRoleByID(ctx context.Context, roleID int64) (models.Role, error) {
+	var role models.Role
+
+	query := `
+		SELECT
+            id, name, role
+        FROM roles
+		WHERE id = @id
+    `
+
+	args := pgx.NamedArgs{
+		"id": roleID,
+	}
+	err := r.client.QueryRow(ctx, query, args).Scan(&role.ID, &role.Name, &role.Role)
+	if err != nil {
+		r.logger.Errorf("get role err: %v", err)
+		return role, err
+	}
+
+	return role, nil
 }
 
 func (r *SettingsPsqlRepository) GetAllRoles(ctx context.Context, limit, page int64, search string) ([]models.Role, int64, error) {

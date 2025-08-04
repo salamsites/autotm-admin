@@ -28,6 +28,7 @@ func NewSettingsHandler(logger *slog.Logger, middleware *shttp.Middleware, servi
 
 func (h *SettingsHandler) SettingsRegisterRoutes(r chi.Router) {
 	r.Method("POST", "/create-role", h.middleware.Base(h.v1CreateRole))
+	r.Method("GET", "/get-role-by-id", h.middleware.Base(h.v1GetRoleById))
 	r.Method("GET", "/get-roles", h.middleware.Base(h.v1GetAllRoles))
 	r.Method("PUT", "/update-role", h.middleware.Base(h.v1UpdateRole))
 	r.Method("DELETE", "/delete-role", h.middleware.Base(h.v1DeleteRole))
@@ -52,28 +53,80 @@ func (h *SettingsHandler) SettingsRegisterRoutes(r chi.Router) {
 // @Failure 500 {object} string "Internal server error"
 // @Router /settings/create-role [post]
 func (h *SettingsHandler) v1CreateRole(w http.ResponseWriter, r *http.Request) shttp.Response {
+	var result shttp.Result
+	result.Status = false
+
 	body, errBody := io.ReadAll(r.Body)
 	if errBody != nil {
+		result.Message = errBody.Error()
 		h.logger.Error("unable to read request body", errBody)
-		return shttp.BadRequest.SetData(errBody.Error())
+		return shttp.BadRequest.SetData(result)
 	}
 	defer r.Body.Close()
 
 	var roleDTO dtos.CreateRoleReq
 	errData := json.Unmarshal(body, &roleDTO)
 	if errData != nil {
+		result.Message = errData.Error()
 		h.logger.Error("unable to unmarshal request body", errData)
-		return shttp.UnprocessableEntity.SetData(errData.Error())
+		return shttp.UnprocessableEntity.SetData(result)
 	}
 
 	id, err := h.service.CreateRole(r.Context(), roleDTO)
 	if err != nil {
+		result.Message = err.Error()
 		h.logger.Error("unable to create role", err)
-		return shttp.InternalServerError.SetData(err.Error())
+		return shttp.InternalServerError.SetData(result)
 	}
-	return shttp.Success.SetData(map[string]interface{}{
+
+	result.Status = true
+	result.Message = "Successfully created role"
+	result.Data = map[string]interface{}{
 		"id": id,
-	})
+	}
+	return shttp.Success.SetData(result)
+}
+
+// v1GetRoleById
+// @Summary Get role by id
+// @Description Get role by ID
+// @Tags Role
+// @Accept json
+// @Produce json
+// @Param id query int true "Role ID to get"
+// @Success 200 {object} dtos.Role "Successfully get role by id"
+// @Failure 400 {object} string "Bad request"
+// @Failure 404 {object} string "Brand not found"
+// @Failure 500 {object} string "Internal server error"
+// @Router /settings/get-role-by-id [get]
+func (h *SettingsHandler) v1GetRoleById(w http.ResponseWriter, r *http.Request) shttp.Response {
+	var result shttp.Result
+	result.Status = false
+
+	idStr := r.URL.Query().Get("id")
+	if idStr == "" {
+		result.Message = "id is required"
+		return shttp.BadRequest.SetData(result)
+	}
+
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		result.Message = err.Error()
+		h.logger.Error("invalid role ID", err)
+		return shttp.BadRequest.SetData(result)
+	}
+
+	role, err := h.service.GetRoleByID(r.Context(), id)
+	if err != nil {
+		result.Message = err.Error()
+		h.logger.Error("unable to get role", err)
+		return shttp.InternalServerError.SetData(result)
+	}
+
+	result.Status = true
+	result.Message = "Successfully retrieved role"
+	result.Data = role
+	return shttp.Success.SetData(result)
 }
 
 // v1GetAllRoles
@@ -85,11 +138,14 @@ func (h *SettingsHandler) v1CreateRole(w http.ResponseWriter, r *http.Request) s
 // @Param limit query int false "Limit number of roles to return"
 // @Param page query int false "Page number"
 // @Param search query string false "Search string to filter roles by name"
-// @Success 200 {object} dtos.RoleResult "List of roles with pagination info"
+// @Success 200 {object} dtos.RoleResult "List of roles with pagination info Successfully"
 // @Failure 400 {object} string "Bad request"
 // @Failure 500 {object} string "Internal server error"
 // @Router /settings/get-roles [get]
 func (h *SettingsHandler) v1GetAllRoles(w http.ResponseWriter, r *http.Request) shttp.Response {
+	var result shttp.Result
+	result.Status = false
+
 	limitStr := r.URL.Query().Get("limit")
 	pageStr := r.URL.Query().Get("page")
 	search := r.URL.Query().Get("search")
@@ -105,10 +161,15 @@ func (h *SettingsHandler) v1GetAllRoles(w http.ResponseWriter, r *http.Request) 
 
 	roles, err := h.service.GetAllRoles(r.Context(), limit, page, search)
 	if err != nil {
+		result.Message = err.Error()
 		h.logger.Error("unable to get roles", err)
-		return shttp.InternalServerError.SetData(err.Error())
+		return shttp.InternalServerError.SetData(result)
 	}
-	return shttp.Success.SetData(roles)
+
+	result.Status = true
+	result.Message = "List of roles with pagination info Successfully"
+	result.Data = roles
+	return shttp.Success.SetData(result)
 }
 
 // v1UpdateRole handler
@@ -124,28 +185,38 @@ func (h *SettingsHandler) v1GetAllRoles(w http.ResponseWriter, r *http.Request) 
 // @Failure 500 {object} string "Internal server error"
 // @Router /settings/update-role [put]
 func (h *SettingsHandler) v1UpdateRole(w http.ResponseWriter, r *http.Request) shttp.Response {
+	var result shttp.Result
+	result.Status = false
+
 	body, errBody := io.ReadAll(r.Body)
 	if errBody != nil {
+		result.Message = errBody.Error()
 		h.logger.Error("unable to read request body", errBody)
-		return shttp.BadRequest.SetData(errBody.Error())
+		return shttp.BadRequest.SetData(result)
 	}
 	defer r.Body.Close()
 
 	var roleDTO dtos.UpdateRoleReq
 	errData := json.Unmarshal(body, &roleDTO)
 	if errData != nil {
+		result.Message = errData.Error()
 		h.logger.Error("unable to unmarshal request body", errData)
-		return shttp.UnprocessableEntity.SetData(errData.Error())
+		return shttp.UnprocessableEntity.SetData(result)
 	}
 
 	id, err := h.service.UpdateRole(r.Context(), roleDTO)
 	if err != nil {
+		result.Message = err.Error()
 		h.logger.Error("unable to update role", err)
-		return shttp.InternalServerError.SetData(err.Error())
+		return shttp.InternalServerError.SetData(result)
 	}
-	return shttp.Success.SetData(map[string]interface{}{
+
+	result.Status = true
+	result.Message = "Successfully updated role"
+	result.Data = map[string]interface{}{
 		"id": id,
-	})
+	}
+	return shttp.Success.SetData(result)
 }
 
 // v1DeleteRole
@@ -155,30 +226,38 @@ func (h *SettingsHandler) v1UpdateRole(w http.ResponseWriter, r *http.Request) s
 // @Accept json
 // @Produce json
 // @Param id query int true "Role ID to delete"
-// @Success 200 {object} string "Role deleted successfully"
+// @Success 200 {object} string "Successfully deleted role"
 // @Failure 400 {object} string "Bad request"
 // @Failure 404 {object} string "Brand not found"
 // @Failure 500 {object} string "Internal server error"
 // @Router /settings/delete-role [delete]
 func (h *SettingsHandler) v1DeleteRole(w http.ResponseWriter, r *http.Request) shttp.Response {
+	var result shttp.Result
+	result.Status = false
+
 	idStr := r.URL.Query().Get("id")
 	if idStr == "" {
-		return shttp.BadRequest.SetData("missing role ID")
+		result.Message = "id is required"
+		return shttp.BadRequest.SetData(result)
 	}
 
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
+		result.Message = err.Error()
 		h.logger.Error("invalid role ID", err)
-		return shttp.BadRequest.SetData("invalid role ID")
+		return shttp.BadRequest.SetData(result)
 	}
 
 	err = h.service.DeleteRole(r.Context(), id)
 	if err != nil {
+		result.Message = err.Error()
 		h.logger.Error("unable to delete role", err)
-		return shttp.InternalServerError.SetData(err.Error())
+		return shttp.InternalServerError.SetData(result)
 	}
 
-	return shttp.Success.SetData("role deleted successfully")
+	result.Status = true
+	result.Message = "Successfully deleted role"
+	return shttp.Success.SetData(result)
 }
 
 // v1CreateUser
@@ -194,28 +273,38 @@ func (h *SettingsHandler) v1DeleteRole(w http.ResponseWriter, r *http.Request) s
 // @Failure 500 {object} string "Internal server error"
 // @Router /settings/create-user [post]
 func (h *SettingsHandler) v1CreateUser(w http.ResponseWriter, r *http.Request) shttp.Response {
+	var result shttp.Result
+	result.Status = false
+
 	body, errBody := io.ReadAll(r.Body)
 	if errBody != nil {
+		result.Message = errBody.Error()
 		h.logger.Error("unable to read request body", errBody)
-		return shttp.BadRequest.SetData(errBody.Error())
+		return shttp.BadRequest.SetData(result)
 	}
 	defer r.Body.Close()
 
 	var userDTO dtos.CreateUserReq
 	errData := json.Unmarshal(body, &userDTO)
 	if errData != nil {
+		result.Message = errData.Error()
 		h.logger.Error("unable to unmarshal request body", errData)
-		return shttp.UnprocessableEntity.SetData(errData.Error())
+		return shttp.UnprocessableEntity.SetData(result)
 	}
 
 	id, err := h.service.CreateUser(r.Context(), userDTO)
 	if err != nil {
+		result.Message = err.Error()
 		h.logger.Error("unable to create user", err)
-		return shttp.InternalServerError.SetData(err.Error())
+		return shttp.InternalServerError.SetData(result)
 	}
-	return shttp.Success.SetData(map[string]interface{}{
+
+	result.Status = true
+	result.Message = "Successfully created user"
+	result.Data = map[string]interface{}{
 		"id": id,
-	})
+	}
+	return shttp.Success.SetData(result)
 }
 
 // v1GetAllUsers
@@ -227,11 +316,14 @@ func (h *SettingsHandler) v1CreateUser(w http.ResponseWriter, r *http.Request) s
 // @Param limit query int false "Limit number of users to return"
 // @Param page query int false "Page number"
 // @Param search query string false "Search string to filter users by name or login or roles by name"
-// @Success 200 {object} dtos.UserResult "List of users with pagination info"
+// @Success 200 {object} dtos.UserResult "List of users with pagination info Successfully"
 // @Failure 400 {object} string "Bad request"
 // @Failure 500 {object} string "Internal server error"
 // @Router /settings/get-users [get]
 func (h *SettingsHandler) v1GetAllUsers(w http.ResponseWriter, r *http.Request) shttp.Response {
+	var result shttp.Result
+	result.Status = false
+
 	limitStr := r.URL.Query().Get("limit")
 	pageStr := r.URL.Query().Get("page")
 	search := r.URL.Query().Get("search")
@@ -247,10 +339,15 @@ func (h *SettingsHandler) v1GetAllUsers(w http.ResponseWriter, r *http.Request) 
 
 	users, err := h.service.GetAllUsers(r.Context(), limit, page, search)
 	if err != nil {
+		result.Message = err.Error()
 		h.logger.Error("unable to get users", err)
-		return shttp.InternalServerError.SetData(err.Error())
+		return shttp.InternalServerError.SetData(result)
 	}
-	return shttp.Success.SetData(users)
+
+	result.Status = true
+	result.Message = "List of users with pagination info Successfully"
+	result.Data = users
+	return shttp.Success.SetData(result)
 }
 
 // v1UpdateUser handler
@@ -266,28 +363,38 @@ func (h *SettingsHandler) v1GetAllUsers(w http.ResponseWriter, r *http.Request) 
 // @Failure 500 {object} string "Internal server error"
 // @Router /settings/update-user [put]
 func (h *SettingsHandler) v1UpdateUser(w http.ResponseWriter, r *http.Request) shttp.Response {
+	var result shttp.Result
+	result.Status = false
+
 	body, errBody := io.ReadAll(r.Body)
 	if errBody != nil {
+		result.Message = errBody.Error()
 		h.logger.Error("unable to read request body", errBody)
-		return shttp.BadRequest.SetData(errBody.Error())
+		return shttp.BadRequest.SetData(result)
 	}
 	defer r.Body.Close()
 
 	var userDTO dtos.UpdateUserReq
 	errData := json.Unmarshal(body, &userDTO)
 	if errData != nil {
+		result.Message = errData.Error()
 		h.logger.Error("unable to unmarshal request body", errData)
-		return shttp.UnprocessableEntity.SetData(errData.Error())
+		return shttp.UnprocessableEntity.SetData(result)
 	}
 
 	id, err := h.service.UpdateUser(r.Context(), userDTO)
 	if err != nil {
+		result.Message = err.Error()
 		h.logger.Error("unable to update user", err)
-		return shttp.InternalServerError.SetData(err.Error())
+		return shttp.InternalServerError.SetData(result)
 	}
-	return shttp.Success.SetData(map[string]interface{}{
+
+	result.Status = true
+	result.Message = "Successfully updated user"
+	result.Data = map[string]interface{}{
 		"id": id,
-	})
+	}
+	return shttp.Success.SetData(result)
 }
 
 // v1DeleteUser
@@ -297,28 +404,36 @@ func (h *SettingsHandler) v1UpdateUser(w http.ResponseWriter, r *http.Request) s
 // @Accept json
 // @Produce json
 // @Param id query int true "User ID to delete"
-// @Success 200 {object} string "User deleted successfully"
+// @Success 200 {object} string "Successfully deleted user"
 // @Failure 400 {object} string "Bad request"
 // @Failure 404 {object} string "Brand not found"
 // @Failure 500 {object} string "Internal server error"
 // @Router /settings/delete-user [delete]
 func (h *SettingsHandler) v1DeleteUser(w http.ResponseWriter, r *http.Request) shttp.Response {
+	var result shttp.Result
+	result.Status = false
+
 	idStr := r.URL.Query().Get("id")
 	if idStr == "" {
+		result.Message = "id is required"
 		return shttp.BadRequest.SetData("missing user ID")
 	}
 
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
+		result.Message = err.Error()
 		h.logger.Error("invalid role ID", err)
-		return shttp.BadRequest.SetData("invalid user ID")
+		return shttp.BadRequest.SetData(result)
 	}
 
 	err = h.service.DeleteRole(r.Context(), id)
 	if err != nil {
+		result.Message = err.Error()
 		h.logger.Error("unable to delete user", err)
-		return shttp.InternalServerError.SetData(err.Error())
+		return shttp.InternalServerError.SetData(result)
 	}
 
-	return shttp.Success.SetData("user deleted successfully")
+	result.Status = true
+	result.Message = "Successfully deleted user"
+	return shttp.Success.SetData(result)
 }

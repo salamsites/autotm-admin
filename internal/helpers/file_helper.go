@@ -72,7 +72,15 @@ func UploadImage(file multipart.File, header *multipart.FileHeader) (string, err
 		return "", fmt.Errorf("fail to copy file: %v", err)
 	}
 
-	if ext != ".webp" {
+	imageExts := map[string]bool{
+		".jpg":  true,
+		".jpeg": true,
+		".png":  true,
+		".bmp":  true,
+		".gif":  true,
+	}
+
+	if imageExts[ext] {
 		webpFilename := strings.TrimSuffix(fileName, ext) + ".webp"
 		webpFullPath := filepath.Join(dirPath, webpFilename)
 

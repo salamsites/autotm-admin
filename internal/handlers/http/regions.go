@@ -52,28 +52,38 @@ func (h *RegionsHandler) RegionsRegisterRoutes(r chi.Router) {
 // @Failure 500 {object} string "Internal server error"
 // @Router /regions/create-region [post]
 func (h *RegionsHandler) v1CreateRegion(w http.ResponseWriter, r *http.Request) shttp.Response {
+	var result shttp.Result
+	result.Status = false
+
 	body, errBody := io.ReadAll(r.Body)
 	if errBody != nil {
+		result.Message = errBody.Error()
 		h.logger.Error("unable to read request body", errBody)
-		return shttp.BadRequest.SetData(errBody.Error())
+		return shttp.BadRequest.SetData(result)
 	}
 	defer r.Body.Close()
 
 	var regionDTO dtos.CreateRegionReq
 	errData := json.Unmarshal(body, &regionDTO)
 	if errData != nil {
+		result.Message = errData.Error()
 		h.logger.Error("unable to unmarshal request body", errData)
-		return shttp.UnprocessableEntity.SetData(errData.Error())
+		return shttp.UnprocessableEntity.SetData(result)
 	}
 
 	id, err := h.service.CreateRegion(r.Context(), regionDTO)
 	if err != nil {
+		result.Message = err.Error()
 		h.logger.Error("unable to create region", err)
-		return shttp.InternalServerError.SetData(err.Error())
+		return shttp.InternalServerError.SetData(result)
 	}
-	return shttp.Success.SetData(map[string]interface{}{
+
+	result.Status = true
+	result.Message = "Returns created region ID"
+	result.Data = map[string]interface{}{
 		"id": id,
-	})
+	}
+	return shttp.Success.SetData(result)
 }
 
 // v1GetAllRegions
@@ -85,11 +95,14 @@ func (h *RegionsHandler) v1CreateRegion(w http.ResponseWriter, r *http.Request) 
 // @Param limit query int false "Limit number of regions to return"
 // @Param page query int false "Page number"
 // @Param search query string false "Search string to filter regions by name"
-// @Success 200 {object} dtos.RegionResult "List of regions with pagination info"
+// @Success 200 {object} dtos.RegionResult "List of regions with pagination info Successfully"
 // @Failure 400 {object} string "Bad request"
 // @Failure 500 {object} string "Internal server error"
 // @Router /regions/get-regions [get]
 func (h *RegionsHandler) v1GetAllRegions(w http.ResponseWriter, r *http.Request) shttp.Response {
+	var result shttp.Result
+	result.Status = false
+
 	limitStr := r.URL.Query().Get("limit")
 	pageStr := r.URL.Query().Get("page")
 	search := r.URL.Query().Get("search")
@@ -103,12 +116,17 @@ func (h *RegionsHandler) v1GetAllRegions(w http.ResponseWriter, r *http.Request)
 		page = 1
 	}
 
-	roles, err := h.service.GetAllRegions(r.Context(), limit, page, search)
+	regions, err := h.service.GetAllRegions(r.Context(), limit, page, search)
 	if err != nil {
+		result.Message = err.Error()
 		h.logger.Error("unable to get regions", err)
-		return shttp.InternalServerError.SetData(err.Error())
+		return shttp.InternalServerError.SetData(result)
 	}
-	return shttp.Success.SetData(roles)
+
+	result.Status = true
+	result.Message = "List of regions with pagination info Successfully"
+	result.Data = regions
+	return shttp.Success.SetData(result)
 }
 
 // v1UpdateRegion handler
@@ -124,28 +142,38 @@ func (h *RegionsHandler) v1GetAllRegions(w http.ResponseWriter, r *http.Request)
 // @Failure 500 {object} string "Internal server error"
 // @Router /regions/update-region [put]
 func (h *RegionsHandler) v1UpdateRegion(w http.ResponseWriter, r *http.Request) shttp.Response {
+	var result shttp.Result
+	result.Status = false
+
 	body, errBody := io.ReadAll(r.Body)
 	if errBody != nil {
+		result.Message = errBody.Error()
 		h.logger.Error("unable to read request body", errBody)
-		return shttp.BadRequest.SetData(errBody.Error())
+		return shttp.BadRequest.SetData(result)
 	}
 	defer r.Body.Close()
 
 	var regionDTO dtos.UpdateRegionReq
 	errData := json.Unmarshal(body, &regionDTO)
 	if errData != nil {
+		result.Message = errData.Error()
 		h.logger.Error("unable to unmarshal request body", errData)
-		return shttp.UnprocessableEntity.SetData(errData.Error())
+		return shttp.UnprocessableEntity.SetData(result)
 	}
 
 	id, err := h.service.UpdateRegion(r.Context(), regionDTO)
 	if err != nil {
+		result.Message = err.Error()
 		h.logger.Error("unable to update region", err)
-		return shttp.InternalServerError.SetData(err.Error())
+		return shttp.InternalServerError.SetData(result)
 	}
-	return shttp.Success.SetData(map[string]interface{}{
+
+	result.Status = true
+	result.Message = "Returns updated region ID"
+	result.Data = map[string]interface{}{
 		"id": id,
-	})
+	}
+	return shttp.Success.SetData(result)
 }
 
 // v1DeleteRegion
@@ -161,24 +189,32 @@ func (h *RegionsHandler) v1UpdateRegion(w http.ResponseWriter, r *http.Request) 
 // @Failure 500 {object} string "Internal server error"
 // @Router /regions/delete-region [delete]
 func (h *RegionsHandler) v1DeleteRegion(w http.ResponseWriter, r *http.Request) shttp.Response {
+	var result shttp.Result
+	result.Status = false
+
 	idStr := r.URL.Query().Get("id")
 	if idStr == "" {
-		return shttp.BadRequest.SetData("missing region ID")
+		result.Message = "id is required"
+		return shttp.BadRequest.SetData(result)
 	}
 
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
+		result.Message = err.Error()
 		h.logger.Error("invalid region ID", err)
-		return shttp.BadRequest.SetData("invalid region ID")
+		return shttp.BadRequest.SetData(result)
 	}
 
 	err = h.service.DeleteRegion(r.Context(), id)
 	if err != nil {
+		result.Message = err.Error()
 		h.logger.Error("unable to delete region", err)
-		return shttp.InternalServerError.SetData(err.Error())
+		return shttp.InternalServerError.SetData(result)
 	}
 
-	return shttp.Success.SetData("region deleted successfully")
+	result.Status = true
+	result.Message = "region deleted successfully"
+	return shttp.Success.SetData(result)
 }
 
 // v1CreateCity
@@ -194,28 +230,38 @@ func (h *RegionsHandler) v1DeleteRegion(w http.ResponseWriter, r *http.Request) 
 // @Failure 500 {object} string "Internal server error"
 // @Router /regions/create-city [post]
 func (h *RegionsHandler) v1CreateCity(w http.ResponseWriter, r *http.Request) shttp.Response {
+	var result shttp.Result
+	result.Status = false
+
 	body, errBody := io.ReadAll(r.Body)
 	if errBody != nil {
+		result.Message = errBody.Error()
 		h.logger.Error("unable to read request body", errBody)
-		return shttp.BadRequest.SetData(errBody.Error())
+		return shttp.BadRequest.SetData(result)
 	}
 	defer r.Body.Close()
 
 	var cityDTO dtos.CreateCityReq
 	errData := json.Unmarshal(body, &cityDTO)
 	if errData != nil {
+		result.Message = errData.Error()
 		h.logger.Error("unable to unmarshal request body", errData)
-		return shttp.UnprocessableEntity.SetData(errData.Error())
+		return shttp.UnprocessableEntity.SetData(result)
 	}
 
 	id, err := h.service.CreateCity(r.Context(), cityDTO)
 	if err != nil {
+		result.Message = err.Error()
 		h.logger.Error("unable to create city", err)
-		return shttp.InternalServerError.SetData(err.Error())
+		return shttp.InternalServerError.SetData(result)
 	}
-	return shttp.Success.SetData(map[string]interface{}{
+
+	result.Status = true
+	result.Message = "Returns created city ID"
+	result.Data = map[string]interface{}{
 		"id": id,
-	})
+	}
+	return shttp.Success.SetData(result)
 }
 
 // v1GetAllCities
@@ -227,11 +273,14 @@ func (h *RegionsHandler) v1CreateCity(w http.ResponseWriter, r *http.Request) sh
 // @Param limit query int false "Limit number of cities to return"
 // @Param page query int false "Page number"
 // @Param search query string false "Search string to filter cities by name"
-// @Success 200 {object} dtos.CityResult "List of cities with pagination info"
+// @Success 200 {object} dtos.CityResult "List of cities with pagination info Successfully"
 // @Failure 400 {object} string "Bad request"
 // @Failure 500 {object} string "Internal server error"
 // @Router /regions/get-cities [get]
 func (h *RegionsHandler) v1GetAllCities(w http.ResponseWriter, r *http.Request) shttp.Response {
+	var result shttp.Result
+	result.Status = false
+
 	limitStr := r.URL.Query().Get("limit")
 	pageStr := r.URL.Query().Get("page")
 	search := r.URL.Query().Get("search")
@@ -245,12 +294,17 @@ func (h *RegionsHandler) v1GetAllCities(w http.ResponseWriter, r *http.Request) 
 		page = 1
 	}
 
-	roles, err := h.service.GetAllCities(r.Context(), limit, page, search)
+	cities, err := h.service.GetAllCities(r.Context(), limit, page, search)
 	if err != nil {
+		result.Message = err.Error()
 		h.logger.Error("unable to get cities", err)
-		return shttp.InternalServerError.SetData(err.Error())
+		return shttp.InternalServerError.SetData(result)
 	}
-	return shttp.Success.SetData(roles)
+
+	result.Status = true
+	result.Message = "List of cities with pagination info Successfully"
+	result.Data = cities
+	return shttp.Success.SetData(result)
 }
 
 // v1UpdateCity handler
@@ -266,28 +320,38 @@ func (h *RegionsHandler) v1GetAllCities(w http.ResponseWriter, r *http.Request) 
 // @Failure 500 {object} string "Internal server error"
 // @Router /regions/update-city [put]
 func (h *RegionsHandler) v1UpdateCity(w http.ResponseWriter, r *http.Request) shttp.Response {
+	var result shttp.Result
+	result.Status = false
+
 	body, errBody := io.ReadAll(r.Body)
 	if errBody != nil {
+		result.Message = errBody.Error()
 		h.logger.Error("unable to read request body", errBody)
-		return shttp.BadRequest.SetData(errBody.Error())
+		return shttp.BadRequest.SetData(result)
 	}
 	defer r.Body.Close()
 
 	var cityDTO dtos.UpdateCityReq
 	errData := json.Unmarshal(body, &cityDTO)
 	if errData != nil {
+		result.Message = errData.Error()
 		h.logger.Error("unable to unmarshal request body", errData)
-		return shttp.UnprocessableEntity.SetData(errData.Error())
+		return shttp.UnprocessableEntity.SetData(result)
 	}
 
 	id, err := h.service.UpdateCity(r.Context(), cityDTO)
 	if err != nil {
+		result.Message = err.Error()
 		h.logger.Error("unable to update city", err)
-		return shttp.InternalServerError.SetData(err.Error())
+		return shttp.InternalServerError.SetData(result)
 	}
-	return shttp.Success.SetData(map[string]interface{}{
+
+	result.Status = true
+	result.Message = "Returns updated city ID"
+	result.Data = map[string]interface{}{
 		"id": id,
-	})
+	}
+	return shttp.Success.SetData(result)
 }
 
 // v1DeleteCity
@@ -303,22 +367,30 @@ func (h *RegionsHandler) v1UpdateCity(w http.ResponseWriter, r *http.Request) sh
 // @Failure 500 {object} string "Internal server error"
 // @Router /regions/delete-city [delete]
 func (h *RegionsHandler) v1DeleteCity(w http.ResponseWriter, r *http.Request) shttp.Response {
+	var result shttp.Result
+	result.Status = false
+
 	idStr := r.URL.Query().Get("id")
 	if idStr == "" {
-		return shttp.BadRequest.SetData("missing city ID")
+		result.Message = "id is required"
+		return shttp.BadRequest.SetData(result)
 	}
 
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
+		result.Message = err.Error()
 		h.logger.Error("invalid city ID", err)
-		return shttp.BadRequest.SetData("invalid city ID")
+		return shttp.BadRequest.SetData(result)
 	}
 
 	err = h.service.DeleteCity(r.Context(), id)
 	if err != nil {
+		result.Message = err.Error()
 		h.logger.Error("unable to delete city", err)
-		return shttp.InternalServerError.SetData(err.Error())
+		return shttp.InternalServerError.SetData(result)
 	}
 
-	return shttp.Success.SetData("city deleted successfully")
+	result.Status = true
+	result.Message = "City deleted successfully"
+	return shttp.Success.SetData(result)
 }

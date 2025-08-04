@@ -227,13 +227,13 @@ func (r *BrandPsqlRepository) UpdateBrand(ctx context.Context, brand models.Bran
 	errUpdate := r.client.QueryRow(ctx, query, brand.Name, brand.LogoPath, brand.ID).Scan(&id)
 	if errUpdate != nil {
 		r.logger.Errorf("update brand err: %v", err)
-		return id, errUpdate
+		return 0, errUpdate
 	}
 
 	_, err = tx.Exec(ctx, `DELETE FROM brand_categories WHERE brand_id = $1`, brand.ID)
 	if err != nil {
 		r.logger.Errorf("delete old brand_category err: %v", err)
-		return id, err
+		return 0, err
 	}
 
 	for _, category := range brand.Categories {
@@ -243,11 +243,12 @@ func (r *BrandPsqlRepository) UpdateBrand(ctx context.Context, brand models.Bran
 		)
 		if err != nil {
 			r.logger.Errorf("update brand_categorys err: %v", err)
+			return 0, err
 		}
 	}
 	err = tx.Commit(ctx)
 	if err != nil {
-		return id, err
+		return 0, err
 	}
 
 	return id, nil
@@ -283,9 +284,9 @@ func (r *BrandPsqlRepository) DeleteBrandCategory(ctx context.Context, id models
 func (r *BrandPsqlRepository) CreateModel(ctx context.Context, model models.Model) (int64, error) {
 	var id int64
 
-	query := ` INSERT INTO models (name, brand_id, body_type_id) VALUES ($1, $2, $3) RETURNING id `
+	query := ` INSERT INTO models (name, brand_id, category) VALUES ($1, $2, $3) RETURNING id `
 
-	err := r.client.QueryRow(ctx, query, model.Name, model.BrandID, model.BodyTypeID).Scan(&id)
+	err := r.client.QueryRow(ctx, query, model.Name, model.BrandID, model.Category).Scan(&id)
 	if err != nil {
 		r.logger.Errorf("create model err : %v", err)
 		return id, err
@@ -302,13 +303,11 @@ func (r *BrandPsqlRepository) GetModels(ctx context.Context, limit, page int64, 
 	query := `
 		SELECT 
 		    m.id, m.name, b.logo_path, m.brand_id, b.name,
-		    m.body_type_id, bt.name
+		    m.category
 		FROM models m
 			LEFT JOIN brands b ON m.brand_id = b.id
-		    LEFT JOIN brand_categories bc ON bc.brand_id = b.id
-			LEFT JOIN body_types bt ON bt.id = m.body_type_id
-		WHERE  bc.category = $1 AND 
-		    ( m.name ILIKE '%' || $2 || '%' OR b.name ILIKE '%' || $2 || '%' OR bt.name ILIKE '%' || $2 || '%' )
+		WHERE  m.category = $1 AND 
+		    ( m.name ILIKE '%' || $2 || '%' OR b.name ILIKE '%' || $2 || '%' )
 		ORDER BY m.created_at DESC
 		LIMIT $3 OFFSET $4;
 	`
@@ -322,7 +321,7 @@ func (r *BrandPsqlRepository) GetModels(ctx context.Context, limit, page int64, 
 	for rows.Next() {
 		var brandModel models.Model
 		if err = rows.Scan(&brandModel.ID, &brandModel.Name, &brandModel.LogoPath,
-			&brandModel.BrandID, &brandModel.BrandName, &brandModel.BodyTypeID, &brandModel.BodyTypeName,
+			&brandModel.BrandID, &brandModel.BrandName, &brandModel.Category,
 		); err != nil {
 			r.logger.Errorf("get models scan err : %v", err)
 			return nil, 0, err
@@ -335,10 +334,8 @@ func (r *BrandPsqlRepository) GetModels(ctx context.Context, limit, page int64, 
 			COUNT(m.id) 
 		FROM models m
 			LEFT JOIN brands b ON m.brand_id = b.id
-		    LEFT JOIN brand_categories bc ON bc.brand_id = b.id
-			LEFT JOIN body_types bt ON bt.id = m.body_type_id
-		WHERE  bc.category = $1 AND 
-		    ( m.name ILIKE '%' || $2 || '%' OR b.name ILIKE '%' || $2 || '%' OR bt.name ILIKE '%' || $2 || '%' )
+		WHERE  m.category = $1 AND 
+		    ( m.name ILIKE '%' || $2 || '%' OR b.name ILIKE '%' || $2 || '%' )
 		`
 	errCount := r.client.QueryRow(ctx, queryCount, category, search).Scan(&count)
 	if errCount != nil {
@@ -353,11 +350,11 @@ func (r *BrandPsqlRepository) UpdateModel(ctx context.Context, model models.Mode
 
 	query := `
 		UPDATE models SET 
-		    name = $1, brand_id = $2, body_type_id = $3, updated_at = NOW()
+		    name = $1, brand_id = $2, category = $3, updated_at = NOW()
 		WHERE id = $4
 		RETURNING id;
 	`
-	err := r.client.QueryRow(ctx, query, model.Name, model.BrandID, model.BodyTypeID, model.ID).Scan(&id)
+	err := r.client.QueryRow(ctx, query, model.Name, model.BrandID, model.Category, model.ID).Scan(&id)
 	if err != nil {
 		r.logger.Errorf("update brand model err: %v", err)
 		return id, err

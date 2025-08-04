@@ -73,7 +73,7 @@ CREATE TABLE IF NOT EXISTS roles (
 
 CREATE TABLE IF NOT EXISTS users (
             "id" SERIAL PRIMARY KEY,
-            "username" CHARACTER VARYING(255) NOT NULL UNIQUE,
+            "username" CHARACTER VARYING(255) NOT NULL,
             "login" CHARACTER VARYING(255) NOT NULL UNIQUE,
             "password" TEXT NOT NULL,
             "role_id" INTEGER,
@@ -117,4 +117,27 @@ CREATE TABLE IF NOT EXISTS sliders (
             "platform" CHARACTER VARYING(100) NOT NULL,
             "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS auto_stores (
+        "id" SERIAL PRIMARY KEY,
+        "user_id" BIGINT,
+        "phone_number" CHARACTER VARYING(255),
+        "email" CHARACTER VARYING(255),
+        "store_name" CHARACTER VARYING(255) NOT NULL,
+        "images" TEXT[],
+        "logo_path" CHARACTER VARYING(255),
+        "region_id" INTEGER,
+        "city_id" INTEGER,
+        "address" TEXT,
+        "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT region_id_fk
+            FOREIGN KEY (region_id)
+                REFERENCES regions(id)
+                    ON UPDATE CASCADE ON DELETE SET NULL,
+        CONSTRAINT city_id_fk
+            FOREIGN KEY (city_id)
+                REFERENCES cities(id)
+                    ON UPDATE CASCADE ON DELETE SET NULL
 );

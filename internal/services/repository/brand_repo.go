@@ -3,27 +3,24 @@ package repository
 import (
 	"autotm-admin/internal/dtos"
 	"context"
-	"mime/multipart"
 )
 
 type BrandService interface {
-	UploadImage(file multipart.File, header *multipart.FileHeader) (string, error)
-
 	// Body Type
-	CreateBodyType(ctx context.Context, bodyType dtos.CreateBodyTypeReq) (int64, error)
+	CreateBodyType(ctx context.Context, bodyType dtos.CreateBodyTypeReq) (dtos.ID, error)
 	GetBodyType(ctx context.Context, limit, page int64, category, search string) (dtos.BodyTypeResult, error)
-	UpdateBodyType(ctx context.Context, bodyType dtos.UpdateBodyTypeReq) (int64, error)
+	UpdateBodyType(ctx context.Context, bodyType dtos.UpdateBodyTypeReq) (dtos.ID, error)
 	DeleteBodyType(ctx context.Context, id int64) error
 
 	// Brand
-	CreateBrand(ctx context.Context, brand dtos.CreateBrandReq) (int64, error)
+	CreateBrand(ctx context.Context, brand dtos.CreateBrandReq) (dtos.ID, error)
 	GetBrands(ctx context.Context, limit, page int64, category, search string) (dtos.BrandResult, error)
-	UpdateBrand(ctx context.Context, brand dtos.UpdateBrandReq) (int64, error)
+	UpdateBrand(ctx context.Context, brand dtos.UpdateBrandReq) (dtos.ID, error)
 	DeleteBrandCategory(ctx context.Context, id int64, category string) error
 
 	// Model
-	CreateModel(ctx context.Context, model dtos.CreateModelReq) (int64, error)
+	CreateModel(ctx context.Context, model dtos.CreateModelReq) (dtos.ID, error)
 	GetModels(ctx context.Context, limit, page int64, category, search string) (dtos.ModelResult, error)
-	UpdateModel(ctx context.Context, model dtos.UpdateModelReq) (int64, error)
+	UpdateModel(ctx context.Context, model dtos.UpdateModelReq) (dtos.ID, error)
 	DeleteModel(ctx context.Context, id int64) error
 }
