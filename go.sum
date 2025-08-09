@@ -136,6 +136,8 @@ github.com/salamsites/minio-pkg v0.0.0-20250807120235-b9af3f3e6a6c h1:S5+bxeLyfV
 github.com/salamsites/minio-pkg v0.0.0-20250807120235-b9af3f3e6a6c/go.mod h1:aj27AVdF7+JrqovX2cKnsTGFpJdklHhTnwMNurSgmIQ=
 github.com/salamsites/minio-pkg v0.0.0-20250808121355-9fe09eb72cf5 h1:5PyUE8GjYY1OXDaFaHzDjuPPNE3+ROetB2OkvfQLTeg=
 github.com/salamsites/minio-pkg v0.0.0-20250808121355-9fe09eb72cf5/go.mod h1:aj27AVdF7+JrqovX2cKnsTGFpJdklHhTnwMNurSgmIQ=
+github.com/salamsites/minio-pkg v0.0.0-20250808132742-db687158f907 h1:mQ/UPCaWdX2YmFaBxp2s83+YlNx2kAOtG4aeLBQvRbg=
+github.com/salamsites/minio-pkg v0.0.0-20250808132742-db687158f907/go.mod h1:aj27AVdF7+JrqovX2cKnsTGFpJdklHhTnwMNurSgmIQ=
 github.com/salamsites/package-http v0.0.0-20250724095748-af777bca5d95 h1:rzTuj+x8+x/pXKE2X405W+V+VZQhqaVRP6KtFWYKzlI=
 github.com/salamsites/package-http v0.0.0-20250724095748-af777bca5d95/go.mod h1:bpyVsJnICo2TGpLLj+OwdRGc2T4KYneOTy2F9c1rDNA=
 github.com/salamsites/package-log v0.0.0-20250628121054-1ce73c511e2c h1:Z+m5Q4xirsyKFqrWO+hG4mFCAJqUzLQ7mPtNuJsDJXk=

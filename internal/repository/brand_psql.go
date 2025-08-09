@@ -225,7 +225,7 @@ func (r *BrandPsqlRepository) UpdateBrand(ctx context.Context, brand models.Bran
 		WHERE id = $4
 		RETURNING id
 	`
-	errUpdate := r.client.QueryRow(ctx, query, brand.Name, brand.LogoPath, brand.UploadId, brand.ID).Scan(&id)
+	errUpdate := tx.QueryRow(ctx, query, brand.Name, brand.LogoPath, brand.UploadId, brand.ID).Scan(&id)
 	if errUpdate != nil {
 		r.logger.Errorf("update brand err: %v", err)
 		return 0, errUpdate

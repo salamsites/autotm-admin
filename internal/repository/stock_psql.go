@@ -3,6 +3,7 @@ package repository
 import (
 	"autotm-admin/internal/models"
 	"context"
+
 	"github.com/jackc/pgx/v5"
 	slog "github.com/salamsites/package-log"
 	spsql "github.com/salamsites/package-psql"
@@ -48,6 +49,26 @@ func (r *StockPsqlRepository) CreateStock(ctx context.Context, stock models.Stoc
 		return id, err
 	}
 	return id, nil
+}
+
+func (r *StockPsqlRepository) UpdateStockImages(ctx context.Context, stockID int64, images []string) error {
+	query := `UPDATE stocks SET images = $1 WHERE id = $2`
+	_, err := r.client.Exec(ctx, query, images, stockID)
+	if err != nil {
+		r.logger.Errorf("update images err: %v", err)
+		return err
+	}
+	return nil
+}
+
+func (r *StockPsqlRepository) UpdateStockLogo(ctx context.Context, stockID int64, logo string) error {
+	query := `UPDATE stocks SET logo = $1 WHERE id = $2`
+	_, err := r.client.Exec(ctx, query, logo, stockID)
+	if err != nil {
+		r.logger.Errorf("update logo err: %v", err)
+		return err
+	}
+	return nil
 }
 
 func (r *StockPsqlRepository) GetStocks(ctx context.Context, limit, page int64, search string) ([]models.Stock, int64, error) {

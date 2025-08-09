@@ -14,7 +14,7 @@ require (
 	github.com/lib/pq v1.10.9
 	github.com/pressly/goose/v3 v3.24.3
 	github.com/rs/cors v1.11.1
-	github.com/salamsites/minio-pkg v0.0.0-20250808121355-9fe09eb72cf5
+	github.com/salamsites/minio-pkg v0.0.0-20250808132742-db687158f907
 	github.com/salamsites/package-http v0.0.0-20250724095748-af777bca5d95
 	github.com/salamsites/package-log v0.0.0-20250628121054-1ce73c511e2c
 	github.com/salamsites/package-psql v0.0.0-20250714142024-3891c784ed5d

@@ -129,8 +129,6 @@ CREATE TABLE IF NOT EXISTS stocks (
                     "store_name" CHARACTER VARYING(255),
                     "images" TEXT[],
                     "logo" CHARACTER VARYING(255),
-                    "province" VARCHAR(255),
-                    "city" VARCHAR(255),
                     "region_id" INTEGER,
                     "city_id" INTEGER,
                     "address" TEXT,

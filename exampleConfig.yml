@@ -1,18 +1,18 @@
 is_debug: true
 listen:
   type: port
-  port: :8080
+  port: :2030
   bind_ip: 0.0.0.0
 swagger:
   version: 1.0
   service_name: AutoTM-Admin.
   title: AutoTM-Admin
-  host: 127.0.0.1:8080
+  host: 127.0.0.1:2030
 storage:
   psql:
     host: 127.0.0.1
     port: 5432
-    database: autotm_admin
+    database: autotm
     username: autotm
     password: autotm
     pg_pool_max_conn: 400
@@ -25,3 +25,4 @@ auth:
   jwt_verify: verify!autm25tm#a?aa
   jwt_registration: registration!autm25tm#a?aa
 
+user_service: http://10.192.5.57:8002/autotm/user-service

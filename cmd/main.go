@@ -15,6 +15,7 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/rs/cors"
 	sminio "github.com/salamsites/minio-pkg"
+	files "github.com/salamsites/minio-pkg/client/files"
 	file "github.com/salamsites/minio-pkg/client/image"
 	slog "github.com/salamsites/package-log"
 	spsql "github.com/salamsites/package-psql"
@@ -65,16 +66,27 @@ func main() {
 		logger.Info("Migration flag is disabled; skipping migrations.")
 	}
 
-	minioFileClient, err := file.NewImageClient(sminio.Options{
+	minioImageClient, errImage := file.NewImageClient(sminio.Options{
 		Endpoint:        "10.192.1.127:9000",
 		AccessKeyID:     "minioadmin",
 		SecretAccessKey: "minioadmin",
 	})
-	if err != nil {
-		logger.Fatal(err)
+
+	if errImage != nil {
+		logger.Fatal(errImage)
 	}
 
-	router := handlers.Manager(logger, psqlClient, minioFileClient, cfg)
+	minioFileClient, errFile := files.NewFileClient(sminio.Options{
+		Endpoint:        "10.192.1.127:9000",
+		AccessKeyID:     "minioadmin",
+		SecretAccessKey: "minioadmin",
+	})
+
+	if errFile != nil {
+		logger.Fatal(errImage)
+	}
+
+	router := handlers.Manager(logger, psqlClient, minioImageClient, minioFileClient, cfg)
 
 	router.Get("/autotm-admin/swagger/*", httpSwagger.WrapHandler)
 

@@ -26,7 +26,7 @@ const (
 	usersURL    = baseURL + "/users"
 )
 
-func Manager(logger *slog.Logger, clientPsql spsql.Client, minioFileClient sminio.ImageClient, cfg *configs.Config) chi.Router {
+func Manager(logger *slog.Logger, clientPsql spsql.Client, minioImageClient sminio.ImageClient, minioFileClient sminio.FileClient, cfg *configs.Config) chi.Router {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
@@ -34,13 +34,13 @@ func Manager(logger *slog.Logger, clientPsql spsql.Client, minioFileClient smini
 	newMiddleware := shttp.NewMiddleware(logger, cfg.Auth.JwtRegistration, nil)
 
 	r.Route(filesURL, func(subRouter chi.Router) {
-		filesHandler := http.NewFilesHandler(logger, newMiddleware, minioFileClient)
+		filesHandler := http.NewFilesHandler(logger, newMiddleware, minioImageClient)
 		filesHandler.FilesRegisterRoutes(subRouter)
 	})
 
 	r.Route(brandURL, func(subRouter chi.Router) {
 		brandRepo := repository.NewBrandPsqlRepository(logger, clientPsql)
-		brandService := services.NewBrandService(logger, brandRepo, minioFileClient)
+		brandService := services.NewBrandService(logger, brandRepo, minioImageClient)
 		brandHandler := http.NewBrandHandler(logger, newMiddleware, brandService)
 		brandHandler.BrandRegisterRoutes(subRouter)
 	})
@@ -65,7 +65,7 @@ func Manager(logger *slog.Logger, clientPsql spsql.Client, minioFileClient smini
 
 	r.Route(slidersURL, func(subRouter chi.Router) {
 		sliderRepo := repository.NewSliderPsqlRepository(logger, clientPsql)
-		sliderService := services.NewSlidersService(logger, sliderRepo, minioFileClient)
+		sliderService := services.NewSlidersService(logger, sliderRepo, minioImageClient)
 		sliderHandler := http.NewSliderHandler(logger, newMiddleware, sliderService)
 		sliderHandler.SliderRegisterRoutes(subRouter)
 	})
@@ -73,7 +73,7 @@ func Manager(logger *slog.Logger, clientPsql spsql.Client, minioFileClient smini
 	r.Route(stocksURL, func(subRouter chi.Router) {
 		stockRepo := repository.NewStockPsqlRepository(logger, clientPsql)
 		stockService := services.NewStockService(logger, stockRepo)
-		stockHandler := http.NewStockHandler(logger, newMiddleware, stockService)
+		stockHandler := http.NewStockHandler(logger, newMiddleware, stockService, minioFileClient, minioImageClient)
 		stockHandler.StockRegisterRoutes(subRouter)
 	})
 

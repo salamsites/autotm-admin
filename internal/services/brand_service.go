@@ -192,6 +192,7 @@ func (s *BrandService) UpdateBrand(ctx context.Context, brand dtos.UpdateBrandRe
 		ID:         brand.ID,
 		Name:       brand.Name,
 		LogoPath:   brand.LogoPath,
+		UploadId:   brand.UploadId,
 		Categories: brand.Categories,
 	}
 
@@ -264,6 +265,7 @@ func (s *BrandService) GetModels(ctx context.Context, limit, page int64, categor
 			BrandID:   b.BrandID,
 			BrandName: b.BrandName,
 			Category:  b.Category,
+			UploadId:  b.UploadId,
 		})
 	}
 
