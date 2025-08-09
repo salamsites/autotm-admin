@@ -1,15 +1,15 @@
 CREATE ROLE autotm LOGIN PASSWORD 'autotm';
 
-CREATE DATABASE autotm_admin
+CREATE DATABASE autotm
        WITH
        OWNER = autotm
        ENCODING = 'UTF8'
        CONNECTION LIMIT = -1
        IS_TEMPLATE = False;
 
-GRANT ALL PRIVILEGES ON DATABASE autotm_admin TO postgres;
+GRANT ALL PRIVILEGES ON DATABASE autotm TO postgres;
 
-\c autotm_admin;
+\c autotm;
 
 SET client_encoding TO 'UTF-8';
 
@@ -22,8 +22,9 @@ CREATE TABLE IF NOT EXISTS body_types (
             "name_tm" CHARACTER VARYING(255) NOT NULL,
             "name_ru" CHARACTER VARYING(255) NOT NULL,
             "name_en" CHARACTER VARYING(255) NOT NULL,
-            "image_path" CHARACTER VARYING(255),
+            "image_path" JSONB,
             "category" category_type,
+            "upload_id" UUID,
             "created_at" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
             "updated_at" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -31,7 +32,8 @@ CREATE TABLE IF NOT EXISTS body_types (
 CREATE TABLE IF NOT EXISTS brands (
             "id" SERIAL PRIMARY KEY,
             "name" CHARACTER VARYING(255) NOT NULL,
-            "logo_path" CHARACTER VARYING(255),
+            "logo_path" JSONB,
+            "upload_id" UUID,
             "created_at" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
             "updated_at" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -119,25 +121,44 @@ CREATE TABLE IF NOT EXISTS sliders (
             "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS auto_stores (
-        "id" SERIAL PRIMARY KEY,
-        "user_id" BIGINT,
-        "phone_number" CHARACTER VARYING(255),
-        "email" CHARACTER VARYING(255),
-        "store_name" CHARACTER VARYING(255) NOT NULL,
-        "images" TEXT[],
-        "logo_path" CHARACTER VARYING(255),
-        "region_id" INTEGER,
-        "city_id" INTEGER,
-        "address" TEXT,
-        "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        CONSTRAINT region_id_fk
-            FOREIGN KEY (region_id)
-                REFERENCES regions(id)
-                    ON UPDATE CASCADE ON DELETE SET NULL,
-        CONSTRAINT city_id_fk
-            FOREIGN KEY (city_id)
-                REFERENCES cities(id)
-                    ON UPDATE CASCADE ON DELETE SET NULL
+CREATE TABLE IF NOT EXISTS stocks (
+                    "id" SERIAL PRIMARY KEY,
+                    "user_id" BIGINT,
+                    "phone_number" CHARACTER VARYING(255),
+                    "email" CHARACTER VARYING(255),
+                    "store_name" CHARACTER VARYING(255),
+                    "images" TEXT[],
+                    "logo" CHARACTER VARYING(255),
+                    "province" VARCHAR(255),
+                    "city" VARCHAR(255),
+                    "region_id" INTEGER,
+                    "city_id" INTEGER,
+                    "address" TEXT,
+                    "description" TEXT,
+                    "location" TEXT,
+                    "status" stock_status DEFAULT 'waiting',
+                    "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    CONSTRAINT user_id_fk
+                        FOREIGN KEY (user_id)
+                            REFERENCES users(id)
+                                ON UPDATE CASCADE ON DELETE SET NULL,
+                    CONSTRAINT region_id_fk
+                        FOREIGN KEY (region_id)
+                            REFERENCES regions(id)
+                                ON UPDATE CASCADE ON DELETE SET NULL,
+                    CONSTRAINT city_id_fk
+                        FOREIGN KEY (city_id)
+                            REFERENCES cities(id)
+                                ON UPDATE CASCADE ON DELETE SET NULL
+);
+
+
+CREATE TABLE IF NOT EXISTS descriptions (
+            "id" SERIAL PRIMARY KEY,
+            "name_tm" TEXT,
+            "name_en" TEXT,
+            "name_ru" TEXT,
+            "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

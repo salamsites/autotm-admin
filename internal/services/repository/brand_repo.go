@@ -23,4 +23,10 @@ type BrandService interface {
 	GetModels(ctx context.Context, limit, page int64, category, search string) (dtos.ModelResult, error)
 	UpdateModel(ctx context.Context, model dtos.UpdateModelReq) (dtos.ID, error)
 	DeleteModel(ctx context.Context, id int64) error
+
+	//Description
+	CreateDescription(ctx context.Context, description dtos.CreateDescription) (dtos.ID, error)
+	GetDescriptions(ctx context.Context, limit, page int64, search string) (dtos.DescriptionResult, error)
+	UpdateDescription(ctx context.Context, description dtos.UpdateDescription) (dtos.ID, error)
+	DeleteDescription(ctx context.Context, id int64) error
 }

@@ -6,16 +6,19 @@ import (
 	"autotm-admin/internal/handlers"
 	"autotm-admin/internal/migrations"
 	"context"
-	_ "github.com/lib/pq"
-	"github.com/rs/cors"
-	slog "github.com/salamsites/package-log"
-	spsql "github.com/salamsites/package-psql"
-	httpSwagger "github.com/swaggo/http-swagger/v2"
 	"log"
 	"net/http"
 	"os/signal"
 	"syscall"
 	"time"
+
+	_ "github.com/lib/pq"
+	"github.com/rs/cors"
+	sminio "github.com/salamsites/minio-pkg"
+	file "github.com/salamsites/minio-pkg/client/image"
+	slog "github.com/salamsites/package-log"
+	spsql "github.com/salamsites/package-psql"
+	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
 
 // @title AutoTM-Admin
@@ -61,12 +64,19 @@ func main() {
 	} else {
 		logger.Info("Migration flag is disabled; skipping migrations.")
 	}
-	router := handlers.Manager(logger, psqlClient, cfg)
+
+	minioFileClient, err := file.NewImageClient(sminio.Options{
+		Endpoint:        "10.192.1.127:9000",
+		AccessKeyID:     "minioadmin",
+		SecretAccessKey: "minioadmin",
+	})
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	router := handlers.Manager(logger, psqlClient, minioFileClient, cfg)
 
 	router.Get("/autotm-admin/swagger/*", httpSwagger.WrapHandler)
-
-	fileServer := http.FileServer(http.Dir(cfg.FilePath))
-	router.Handle("/uploads/*", http.StripPrefix("/uploads", fileServer))
 
 	c := cors.New(cors.Options{
 		AllowedOrigins:   []string{"*"},

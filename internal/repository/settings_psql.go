@@ -130,7 +130,7 @@ func (r *SettingsPsqlRepository) DeleteRole(ctx context.Context, id models.ID) e
 func (r *SettingsPsqlRepository) CreateUser(ctx context.Context, user models.User) (int64, error) {
 	var id int64
 
-	query := `INSERT INTO users (username, login, password, role_id) VALUES ($1, $2, $3, $4) RETURNING id`
+	query := `INSERT INTO admin_users (username, login, password, role_id) VALUES ($1, $2, $3, $4) RETURNING id`
 
 	err := r.client.QueryRow(ctx, query, user.Username, user.Login, user.Password, user.RoleID).Scan(&id)
 	if err != nil {
@@ -148,7 +148,7 @@ func (r *SettingsPsqlRepository) GetUserByLogin(ctx context.Context, login strin
 	query := `
 		SELECT
 			id, username, login, password, role_id
-		FROM users
+		FROM admin_users
 		WHERE login = $1
 		LIMIT 1
 	`
@@ -170,7 +170,7 @@ func (r *SettingsPsqlRepository) GetAllUsers(ctx context.Context, limit, page in
 		SELECT 
 		    u.id, u.username, u.login, u.password, 
 		    u.role_id, r.name AS role_name 
-		FROM users u
+		FROM admin_users u
 			LEFT JOIN roles r ON u.role_id = r.id
 		WHERE (u.username ILIKE '%' || $1 || '%' OR r.name ILIKE '%' || $1 || '%' OR u.login ILIKE '%' || $1 || '%')
 		ORDER BY u.created_at DESC
@@ -195,7 +195,7 @@ func (r *SettingsPsqlRepository) GetAllUsers(ctx context.Context, limit, page in
 	queryCount := `
 			SELECT 
 			    COUNT(u.id) 
-			FROM users u
+			FROM admin_users u
 				LEFT JOIN roles r ON u.role_id = r.id
 			WHERE (u.username ILIKE '%' || $1 || '%' OR r.name ILIKE '%' || $1 || '%' OR u.login ILIKE '%' || $1 || '%')
 		`
@@ -211,12 +211,12 @@ func (r *SettingsPsqlRepository) UpdateUser(ctx context.Context, user models.Use
 	var id int64
 
 	query := `
-		UPDATE users SET 
+		UPDATE admin_users SET 
 		    username = $1, login = $2, password = $3, role_id = $4, updated_at = NOW()
 		WHERE id = $5
 		RETURNING id
 	`
-	err := r.client.QueryRow(ctx, query, user.Username, user.Login, user.Password, user.RoleID).Scan(&id)
+	err := r.client.QueryRow(ctx, query, user.Username, user.Login, user.Password, user.RoleID, user.ID).Scan(&id)
 	if err != nil {
 		r.logger.Errorf("update user err: %v", err)
 		return id, err
@@ -225,7 +225,7 @@ func (r *SettingsPsqlRepository) UpdateUser(ctx context.Context, user models.Use
 }
 
 func (r *SettingsPsqlRepository) DeleteUser(ctx context.Context, id models.ID) error {
-	query := `DELETE FROM users WHERE id = $1`
+	query := `DELETE FROM admin_users WHERE id = $1`
 	_, err := r.client.Exec(ctx, query, id.ID)
 	if err != nil {
 		r.logger.Errorf("delete users err: %v", err)

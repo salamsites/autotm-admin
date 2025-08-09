@@ -44,6 +44,12 @@ func (h *BrandHandler) BrandRegisterRoutes(r chi.Router) {
 	r.Method("GET", "/get-models", h.middleware.Base(h.v1GetModels))
 	r.Method("PUT", "/update-model", h.middleware.Base(h.v1UpdateModel))
 	r.Method("DELETE", "/delete-model", h.middleware.Base(h.v1DeleteModel))
+
+	// Description
+	r.Method("POST", "/create-description", h.middleware.Base(h.v1CreateDescription))
+	r.Method("GET", "/get-descriptions", h.middleware.Base(h.v1GetDescriptions))
+	r.Method("PUT", "/update-description", h.middleware.Base(h.v1UpdateDescription))
+	r.Method("DELETE", "/delete-description", h.middleware.Base(h.v1DeleteDescription))
 }
 
 // v1CreateBodyType
@@ -589,5 +595,179 @@ func (h *BrandHandler) v1DeleteModel(w http.ResponseWriter, r *http.Request) sht
 
 	result.Status = true
 	result.Message = "Model Deleted Successfully"
+	return shttp.Success.SetData(result)
+}
+
+// v1CreateDescription
+// @Summary Create a new description
+// @Description Creates a new description with the given name
+// @Tags Description
+// @Accept json
+// @Produce json
+// @Param description body dtos.CreateDescription true "Description data"
+// @Success 200 {object} dtos.ID "Returns created description ID"
+// @Failure 400 {object} string "Bad request"
+// @Failure 422 {object} string "Unprocessable entity"
+// @Failure 500 {object} string "Internal server error"
+// @Router /brand/create-description [post]
+func (h *BrandHandler) v1CreateDescription(w http.ResponseWriter, r *http.Request) shttp.Response {
+	var result shttp.Result
+	result.Status = false
+
+	body, errBody := io.ReadAll(r.Body)
+	if errBody != nil {
+		result.Message = errBody.Error()
+		h.logger.Error("unable to read request body", errBody)
+		return shttp.BadRequest.SetData(result)
+	}
+	defer r.Body.Close()
+
+	var descriptionDTO dtos.CreateDescription
+	errData := json.Unmarshal(body, &descriptionDTO)
+	if errData != nil {
+		result.Message = errData.Error()
+		h.logger.Error("unable to unmarshal request body", errData)
+		return shttp.UnprocessableEntity.SetData(result)
+	}
+
+	id, err := h.service.CreateDescription(r.Context(), descriptionDTO)
+	if err != nil {
+		result.Message = err.Error()
+		h.logger.Error("unable to create body type", err)
+		return shttp.InternalServerError.SetData(result)
+	}
+
+	result.Status = true
+	result.Message = "Description Create Successfully"
+	result.Data = id
+	return shttp.Success.SetData(result)
+}
+
+// v1GetDescriptions
+// @Summary Get descriptions
+// @Description Get paginated list of descriptions filtered optional search string
+// @Tags Description
+// @Accept json
+// @Produce json
+// @Param limit query int false "Limit number of descriptions to return"
+// @Param page query int false "Page number"
+// @Param search query string false "Search string to filter descriptions by name"
+// @Success 200 {object} dtos.DescriptionResult "List of descriptions with pagination info"
+// @Failure 400 {object} string "Bad request"
+// @Failure 500 {object} string "Internal server error"
+// @Router /brand/get-descriptions [get]
+func (h *BrandHandler) v1GetDescriptions(w http.ResponseWriter, r *http.Request) shttp.Response {
+	var result shttp.Result
+	result.Status = false
+
+	limitStr := r.URL.Query().Get("limit")
+	pageStr := r.URL.Query().Get("page")
+	search := r.URL.Query().Get("search")
+
+	limit, err := strconv.ParseInt(limitStr, 10, 64)
+	if err != nil || limit <= 0 {
+		limit = 10
+	}
+	page, err := strconv.ParseInt(pageStr, 10, 64)
+	if err != nil || page <= 0 {
+		page = 1
+	}
+
+	descriptions, err := h.service.GetDescriptions(r.Context(), limit, page, search)
+	if err != nil {
+		result.Message = err.Error()
+		h.logger.Error("unable to get descriptions", err)
+		return shttp.InternalServerError.SetData(result)
+	}
+
+	result.Status = true
+	result.Message = "Descriptions Get Successfully"
+	result.Data = descriptions
+	return shttp.Success.SetData(result)
+}
+
+// v1UpdateDescription handler
+// @Summary Update an existing description
+// @Description Updates description details by ID
+// @Tags Description
+// @Accept json
+// @Produce json
+// @Param description body dtos.UpdateDescription true "Description data with ID"
+// @Success 200 {object} dtos.ID "Returns updated description ID"
+// @Failure 400 {object} string "Bad request"
+// @Failure 422 {object} string "Unprocessable entity"
+// @Failure 500 {object} string "Internal server error"
+// @Router /brand/update-description [put]
+func (h *BrandHandler) v1UpdateDescription(w http.ResponseWriter, r *http.Request) shttp.Response {
+	var result shttp.Result
+	result.Status = false
+
+	body, errBody := io.ReadAll(r.Body)
+	if errBody != nil {
+		result.Message = errBody.Error()
+		h.logger.Error("unable to read request body", errBody)
+		return shttp.BadRequest.SetData(result)
+	}
+	defer r.Body.Close()
+
+	var descriptionDTO dtos.UpdateDescription
+	errData := json.Unmarshal(body, &descriptionDTO)
+	if errData != nil {
+		result.Message = errData.Error()
+		h.logger.Error("unable to unmarshal request body ", errData)
+		return shttp.UnprocessableEntity.SetData(result)
+	}
+
+	id, err := h.service.UpdateDescription(r.Context(), descriptionDTO)
+	if err != nil {
+		result.Message = err.Error()
+		h.logger.Error("unable to update description ", err)
+		return shttp.InternalServerError.SetData(result)
+	}
+
+	result.Status = true
+	result.Message = "Description Update Successfully"
+	result.Data = id
+	return shttp.Success.SetData(result)
+}
+
+// v1DeleteDescription
+// @Summary Delete description
+// @Description Deletes description by ID
+// @Tags Description
+// @Accept json
+// @Produce json
+// @Param id query int true "Description ID to delete"
+// @Success 200 {object} string "Description deleted successfully"
+// @Failure 400 {object} string "Bad request"
+// @Failure 404 {object} string "Body Type not found"
+// @Failure 500 {object} string "Internal server error"
+// @Router /brand/delete-description [delete]
+func (h *BrandHandler) v1DeleteDescription(w http.ResponseWriter, r *http.Request) shttp.Response {
+	var result shttp.Result
+	result.Status = false
+
+	idStr := r.URL.Query().Get("id")
+	if idStr == "" {
+		result.Message = "id is required"
+		return shttp.BadRequest.SetData(result)
+	}
+
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		result.Message = err.Error()
+		h.logger.Error("invalid description ID", err)
+		return shttp.BadRequest.SetData(result)
+	}
+
+	err = h.service.DeleteDescription(r.Context(), id)
+	if err != nil {
+		result.Message = err.Error()
+		h.logger.Error("unable to delete description", err)
+		return shttp.InternalServerError.SetData(result)
+	}
+
+	result.Status = true
+	result.Message = "Description deleted successfully"
 	return shttp.Success.SetData(result)
 }

@@ -233,12 +233,22 @@ func (s *SettingsService) UpdateUser(ctx context.Context, user dtos.UpdateUserRe
 		s.logger.Errorf("validate err: %v", err)
 		return 0, err
 	}
+	var hashedPassword string
+
+	if user.Password != "" {
+		hp, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+		if err != nil {
+			s.logger.Errorf("hash err: %v", err)
+			return 0, err
+		}
+		hashedPassword = string(hp)
+	}
 
 	newUser := models.User{
 		ID:       user.ID,
 		Username: user.Username,
 		Login:    user.Login,
-		Password: user.Password,
+		Password: hashedPassword,
 		RoleID:   user.RoleID,
 	}
 

@@ -3,32 +3,34 @@ package http
 import (
 	"autotm-admin/internal/dtos"
 	"autotm-admin/internal/helpers"
-	"autotm-admin/internal/services/repository"
-	"encoding/json"
+	"fmt"
+	"net/http"
+
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
+	sminio "github.com/salamsites/minio-pkg"
+	"github.com/salamsites/minio-pkg/util"
 	shttp "github.com/salamsites/package-http"
 	slog "github.com/salamsites/package-log"
-	"io"
-	"net/http"
 )
 
 type FilesHandler struct {
-	logger     *slog.Logger
-	middleware *shttp.Middleware
-	service    repository.FilesService
+	logger          *slog.Logger
+	middleware      *shttp.Middleware
+	minioFileClient sminio.ImageClient
 }
 
-func NewFilesHandler(logger *slog.Logger, middleware *shttp.Middleware, service repository.FilesService) *FilesHandler {
+func NewFilesHandler(logger *slog.Logger, middleware *shttp.Middleware, minioFileClient sminio.ImageClient) *FilesHandler {
 	return &FilesHandler{
-		logger:     logger,
-		middleware: middleware,
-		service:    service,
+		logger:          logger,
+		middleware:      middleware,
+		minioFileClient: minioFileClient,
 	}
 }
 
 func (h *FilesHandler) FilesRegisterRoutes(r chi.Router) {
 	r.Method("POST", "/upload-image", h.middleware.Base(h.v1UploadImage))
-	r.Method("POST", "/delete-image", h.middleware.Base(h.v1DeleteImage))
+	r.Method("DELETE", "/delete-image", h.middleware.Base(h.v1DeleteImage))
 }
 
 // v1UploadImage
@@ -37,62 +39,55 @@ func (h *FilesHandler) FilesRegisterRoutes(r chi.Router) {
 // @Tags Files
 // @Accept multipart/form-data
 // @Produce json
-// @Param image formData file true "Image file(s) to upload (single or multiple)"
-// @Success 200 {object} dtos.ImagePath "Returns the uploaded image path(s)"
+// @Param image formData file true "Image file(s) to uploa	d (single or multiple)"
+// @Success 200 {object} dtos.UploadImage "Returns the uploaded image path(s)"
 // @Failure 400 {object} string "Bad request"
 // @Failure 500 {object} string "Internal server error"
 // @Router /files/upload-image [post]
 func (h *FilesHandler) v1UploadImage(w http.ResponseWriter, r *http.Request) shttp.Response {
-	if err := r.ParseMultipartForm(32 << 20); err != nil {
+	if err := r.ParseMultipartForm(50 << 20); err != nil {
 		h.logger.Error("failed to parse multipart form", err)
 		return shttp.BadRequest.SetData("Invalid form data")
 	}
-	formFiles := r.MultipartForm.File["image"]
 
-	if len(formFiles) == 0 {
-		h.logger.Error("failed to parse multipart form")
-		return shttp.BadRequest.SetData("No file(s) uploaded")
+	fileHeaders := r.MultipartForm.File["image"]
+	if len(fileHeaders) == 0 {
+		h.logger.Error("no file uploaded")
+		return shttp.BadRequest.SetData("No file uploaded")
 	}
 
-	var dto dtos.ImagePath
+	fileHeader := fileHeaders[0]
+	file, err := fileHeader.Open()
+	if err != nil {
+		h.logger.Error("failed to open uploaded file", err)
+		return shttp.BadRequest.SetData("Failed to open file")
+	}
+	defer file.Close()
 
-	for _, fileHeader := range formFiles {
-		file, err := fileHeader.Open()
-		if err != nil {
-			h.logger.Error("failed to open file for upload", err)
-			continue
+	uploadID := uuid.NewString()
+	path := fmt.Sprintf("%s", uploadID)
+
+	errUpload := h.minioFileClient.UploadImage(r.Context(), r, "image", path, helpers.FileSizes, util.FileBucket)
+	if errUpload.StatusCode != 0 {
+		h.logger.Error("failed to upload image", errUpload)
+		return shttp.InternalServerError.SetData(errUpload.Message)
+	}
+
+	sizeStrings := make([]string, 0, len(helpers.FileSizes))
+	for _, s := range helpers.FileSizes {
+		if s.Height == 0 {
+			sizeStrings = append(sizeStrings, fmt.Sprintf("%dx0", s.Width))
+		} else {
+			sizeStrings = append(sizeStrings, fmt.Sprintf("%dx%d", s.Width, s.Height))
 		}
-		defer file.Close()
-
-		imagePath, err := helpers.UploadImage(file, fileHeader)
-		if err != nil {
-			h.logger.Error("failed to upload image", err)
-			continue
-		}
-
-		dto.Images = append(dto.Images, imagePath)
 	}
 
-	if len(dto.Images) == 1 {
-		dto.ImagePath = dto.Images[0]
+	resp := dtos.UploadImage{
+		UploadID: uploadID,
+		Sizes:    sizeStrings,
 	}
-	//file, fileHeader, err := r.FormFile("image")
-	//if err != nil {
-	//	h.logger.Error("unable to get uploaded file", err)
-	//	return shttp.BadRequest.SetData(err.Error())
-	//}
-	//defer file.Close()
-	//
-	//imagePath, err := h.service.UploadImage(file, fileHeader)
-	//if err != nil {
-	//	h.logger.Error("unable to upload image error", err)
-	//	return shttp.InternalServerError.SetData(err.Error())
-	//}
 
-	if len(dto.Images) == 0 {
-		return shttp.InternalServerError.SetData("Failed to upload any images")
-	}
-	return shttp.Success.SetData(dto)
+	return shttp.Success.SetData(resp)
 }
 
 // v1DeleteImage
@@ -101,36 +96,22 @@ func (h *FilesHandler) v1UploadImage(w http.ResponseWriter, r *http.Request) sht
 // @Tags Files
 // @Accept json
 // @Produce json
-// @Param imagePath body dtos.ImagePath true "Image data"
-// @Success 200 {object} map[string]int64 "Returns deleted Image"
+// @Param upload_id query string true "Upload ID to delete"
+// @Success 200 {object} string "Returns deleted Image"
 // @Failure 400 {object} string "Bad request"
 // @Failure 422 {object} string "Unprocessable entity"
 // @Failure 500 {object} string "Internal server error"
-// @Router /files/delete-image [post]
+// @Router /files/delete-image [delete]
 func (h *FilesHandler) v1DeleteImage(w http.ResponseWriter, r *http.Request) shttp.Response {
-	body, errBody := io.ReadAll(r.Body)
-	if errBody != nil {
-		h.logger.Error("unable to read request body", errBody)
-		return shttp.BadRequest.SetData(errBody.Error())
-	}
-	defer r.Body.Close()
-
-	var imagePath dtos.ImagePath
-	errData := json.Unmarshal(body, &imagePath)
-	if errData != nil {
-		h.logger.Error("unable to unmarshal request body ", errData)
-		return shttp.UnprocessableEntity.SetData(errData.Error())
-	}
-	if imagePath.ImagePath == "" && len(imagePath.Images) == 0 {
-		h.logger.Error("no image paths provided to delete")
-		return shttp.BadRequest.SetData("No image paths provided")
+	idStr := r.URL.Query().Get("upload_id")
+	if idStr == "" {
+		return shttp.BadRequest.SetData("id is required")
 	}
 
-	err := h.service.DeleteImage(r.Context(), imagePath)
+	err := h.minioFileClient.RemoveImage(r.Context(), idStr, util.FileBucket)
 	if err != nil {
 		h.logger.Error("unable to delete image", err)
 		return shttp.InternalServerError.SetData(err.Error())
 	}
-
 	return shttp.Success.SetData("image deleted successfully")
 }

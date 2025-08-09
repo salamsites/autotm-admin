@@ -1,38 +1,38 @@
 package dtos
 
-type CreateAutoStoreReq struct {
+type CreateStockReq struct {
 	UserID      int64    `json:"user_id"`
 	PhoneNumber string   `json:"phone_number"`
 	Email       string   `json:"email"`
-	StoreName   string   `json:"store_name" binding:"required"`
+	StoreName   string   `json:"store_name"`
 	Images      []string `json:"images"`
-	LogoPath    string   `json:"logo_path"`
+	Logo        string   `json:"logo"`
 	RegionID    int64    `json:"region_id"`
 	CityID      int64    `json:"city_id"`
 	Address     string   `json:"address"`
 }
 
-type UpdateAutoStoreReq struct {
+type UpdateStockReq struct {
 	ID          int64    `json:"id"`
 	UserID      int64    `json:"user_id"`
 	PhoneNumber string   `json:"phone_number"`
 	Email       string   `json:"email"`
-	StoreName   string   `json:"store_name" binding:"required"`
+	StoreName   string   `json:"store_name"`
 	Images      []string `json:"images"`
-	LogoPath    string   `json:"logo_path"`
+	Logo        string   `json:"logo"`
 	RegionID    int64    `json:"region_id"`
 	CityID      int64    `json:"city_id"`
 	Address     string   `json:"address"`
 }
 
-type AutoStore struct {
+type Stock struct {
 	ID           int64    `json:"id"`
 	UserID       int64    `json:"user_id"`
 	PhoneNumber  string   `json:"phone_number"`
 	Email        string   `json:"email"`
 	StoreName    string   `json:"store_name"`
 	Images       []string `json:"images"`
-	LogoPath     string   `json:"logo_path"`
+	Logo         string   `json:"logo"`
 	RegionID     int64    `json:"region_id"`
 	CityID       int64    `json:"city_id"`
 	Address      string   `json:"address"`
@@ -42,20 +42,19 @@ type AutoStore struct {
 	RegionNameTM string   `json:"region_name_tm"`
 	RegionNameEN string   `json:"region_name_en"`
 	RegionNameRU string   `json:"region_name_ru"`
-	UserName     *string  `json:"user_name"`
+	UserName     string   `json:"user_name"`
 }
 
-type AutoStoresResult struct {
-	AutoStores []AutoStore `json:"auto_stores"`
-	Count      int64       `json:"count"`
+type StocksResult struct {
+	Stocks []Stock `json:"stocks"`
+	Count  int64   `json:"count"`
 }
 
 type GetUsers struct {
 	Id          int64   `json:"id"`
-	FullName    *string `json:"full_name"`
+	FullName    string  `json:"full_name"`
 	Email       *string `json:"email"`
 	PhoneNumber *string `json:"phone_number"`
-	Avatar      *string `json:"avatar"`
 }
 
 type GetUserResult struct {

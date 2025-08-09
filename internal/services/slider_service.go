@@ -6,18 +6,22 @@ import (
 	"autotm-admin/internal/models"
 	"autotm-admin/internal/repository/storage"
 	"context"
+
+	sminio "github.com/salamsites/minio-pkg"
 	slog "github.com/salamsites/package-log"
 )
 
 type SlidersService struct {
-	logger *slog.Logger
-	repo   storage.SlidersRepository
+	logger          *slog.Logger
+	repo            storage.SlidersRepository
+	minioFileClient sminio.ImageClient
 }
 
-func NewSlidersService(logger *slog.Logger, repo storage.SlidersRepository) *SlidersService {
+func NewSlidersService(logger *slog.Logger, repo storage.SlidersRepository, minioFileClient sminio.ImageClient) *SlidersService {
 	return &SlidersService{
-		logger: logger,
-		repo:   repo,
+		logger:          logger,
+		repo:            repo,
+		minioFileClient: minioFileClient,
 	}
 }
 
@@ -32,6 +36,9 @@ func (s *SlidersService) CreateSlider(ctx context.Context, slider dtos.CreateSli
 		ImagePathTM: slider.ImagePathTM,
 		ImagePathEN: slider.ImagePathEN,
 		ImagePathRU: slider.ImagePathRU,
+		UploadIdTM:  slider.UploadIdTM,
+		UploadIdEN:  slider.UploadIdEN,
+		UploadIdRU:  slider.UploadIdRU,
 		Platform:    slider.Platform,
 	}
 
@@ -63,6 +70,9 @@ func (s *SlidersService) GetAllSliders(ctx context.Context, limit, page int64, p
 			ImagePathEN: b.ImagePathEN,
 			ImagePathRU: b.ImagePathRU,
 			Platform:    b.Platform,
+			UploadIdTM:  b.UploadIdTM,
+			UploadIdEN:  b.UploadIdEN,
+			UploadIdRU:  b.UploadIdRU,
 		})
 	}
 
@@ -80,35 +90,14 @@ func (s *SlidersService) UpdateSlider(ctx context.Context, slider dtos.UpdateSli
 		return 0, err
 	}
 
-	oldSlider, err := s.repo.GetSliderByID(ctx, slider.ID)
-	if err != nil {
-		s.logger.Errorf("get old slider err: %v", err)
-		return 0, err
-	}
-
-	if oldSlider.ImagePathTM != slider.ImagePathTM && slider.ImagePathTM != "" {
-		if err = helpers.DeleteImage(oldSlider.ImagePathTM); err != nil {
-			s.logger.Errorf("delete old image path tm err: %v", err)
-		}
-	}
-
-	if oldSlider.ImagePathEN != slider.ImagePathEN && slider.ImagePathEN != "" {
-		if err = helpers.DeleteImage(oldSlider.ImagePathEN); err != nil {
-			s.logger.Errorf("delete old image path en err: %v", err)
-		}
-	}
-
-	if oldSlider.ImagePathRU != slider.ImagePathRU && slider.ImagePathRU != "" {
-		if err = helpers.DeleteImage(oldSlider.ImagePathRU); err != nil {
-			s.logger.Errorf("delete old image path ru err: %v", err)
-		}
-	}
-
 	newSlider := models.Slider{
 		ID:          slider.ID,
 		ImagePathTM: slider.ImagePathTM,
 		ImagePathEN: slider.ImagePathEN,
 		ImagePathRU: slider.ImagePathRU,
+		UploadIdTM:  slider.UploadIdTM,
+		UploadIdEN:  slider.UploadIdEN,
+		UploadIdRU:  slider.UploadIdRU,
 		Platform:    slider.Platform,
 	}
 
@@ -121,35 +110,11 @@ func (s *SlidersService) UpdateSlider(ctx context.Context, slider dtos.UpdateSli
 }
 
 func (s *SlidersService) DeleteSlider(ctx context.Context, id int64) error {
-	oldSlider, err := s.repo.GetSliderByID(ctx, id)
-	if err != nil {
-		s.logger.Errorf("get old slider err: %v", err)
-		return err
-	}
-
-	if oldSlider.ImagePathTM != "" {
-		if err = helpers.DeleteImage(oldSlider.ImagePathTM); err != nil {
-			s.logger.Errorf("delete old image path tm err: %v", err)
-		}
-	}
-
-	if oldSlider.ImagePathEN != "" {
-		if err = helpers.DeleteImage(oldSlider.ImagePathEN); err != nil {
-			s.logger.Errorf("delete old image path en err: %v", err)
-		}
-	}
-
-	if oldSlider.ImagePathRU != "" {
-		if err = helpers.DeleteImage(oldSlider.ImagePathRU); err != nil {
-			s.logger.Errorf("delete old image path ru err: %v", err)
-		}
-	}
-
 	deleteID := models.ID{
 		ID: id,
 	}
 
-	err = s.repo.DeleteSlider(ctx, deleteID)
+	err := s.repo.DeleteSlider(ctx, deleteID)
 	if err != nil {
 		s.logger.Errorf("delete slider err: %v", err)
 		return err

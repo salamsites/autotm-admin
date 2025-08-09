@@ -1,117 +1,50 @@
 package services
 
 import (
-	"autotm-admin/internal/configs"
 	"autotm-admin/internal/dtos"
-	"bytes"
+	"autotm-admin/internal/repository/storage"
 	"context"
-	"encoding/json"
-	"fmt"
+
 	slog "github.com/salamsites/package-log"
-	"io"
-	"net/http"
-	"net/url"
-	"time"
 )
 
 type UserService struct {
 	logger *slog.Logger
-	cfg    *configs.Config
+	repo   storage.UserRepository
 }
 
-func NewUserService(cfg *configs.Config, logger *slog.Logger) *UserService {
+func NewUserService(logger *slog.Logger, repo storage.UserRepository) *UserService {
 	return &UserService{
 		logger: logger,
-		cfg:    cfg,
+		repo:   repo,
 	}
 }
 
-func (s *UserService) GetUsers(ctx context.Context, limit, page int64, search string) ([]dtos.GetUsers, int64, error) {
-	searchParam := url.QueryEscape(search)
+func (s *UserService) GetUsersFromUserService(ctx context.Context, limit, page int64, search string) (dtos.GetUsersResult, error) {
+	offset := (page - 1) * limit
+	if page <= 0 {
+		page = 1
+		offset = 0
+	}
 
-	urlUser := fmt.Sprintf("%s/users/get-users?limit=%d&page=%d&search=%s", s.cfg.UserServiceURL, limit, page, searchParam)
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, urlUser, nil)
+	users, count, err := s.repo.GetUsersFromUserService(ctx, limit, offset, search)
 	if err != nil {
-		s.logger.Errorf("failed to build request: %v", err)
-		return nil, 0, err
+		s.logger.Errorf("get all users from user service err: %v", err)
+		return dtos.GetUsersResult{}, err
+	}
+	var dtoUsers []dtos.GetUser
+	for _, b := range users {
+		dtoUsers = append(dtoUsers, dtos.GetUser{
+			Id:          b.Id,
+			FullName:    b.FullName,
+			Email:       &b.Email,
+			PhoneNumber: &b.PhoneNumber,
+		})
 	}
 
-	client := &http.Client{
-		Timeout: 30 * time.Second,
+	result := dtos.GetUsersResult{
+		GetUsers: dtoUsers,
+		Count:    count,
 	}
-
-	resp, err := client.Do(req)
-	if err != nil {
-		s.logger.Errorf("http request failed: %v", err)
-		return nil, 0, err
-	}
-	defer resp.Body.Close()
-
-	bodyBytes, err := io.ReadAll(resp.Body)
-	if err != nil {
-		s.logger.Errorf("failed to read response body: %v", err)
-		return nil, 0, err
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		errMsg := fmt.Sprintf("unexpected status code: %d, body: %s", resp.StatusCode, string(bodyBytes))
-		s.logger.Error(errMsg)
-		return nil, 0, fmt.Errorf(errMsg)
-	}
-
-	var responseWrapper struct {
-		Data dtos.GetUserResult `json:"Data"`
-	}
-	if err = json.Unmarshal(bodyBytes, &responseWrapper); err != nil {
-		s.logger.Errorf("failed to decode response body: %v", err)
-		return nil, 0, err
-	}
-
-	users := responseWrapper.Data.Users
-	count := responseWrapper.Data.Count
-
-	return users, count, nil
-}
-
-func (s *UserService) GetUserByIds(ctx context.Context, ids dtos.GetUserByIDsReq) ([]dtos.GetUsers, error) {
-	urlUser := fmt.Sprintf("%s/users/get-by-ids", s.cfg.UserServiceURL)
-
-	body, err := json.Marshal(ids)
-	if err != nil {
-		s.logger.Errorf("failed to build request: %s", err)
-		return nil, err
-	}
-	req, err := http.NewRequestWithContext(ctx, "POST", urlUser, bytes.NewBuffer(body))
-	if err != nil {
-		s.logger.Errorf("failed to create request: %s", err)
-		return nil, err
-	}
-	req.Header.Set("Content-Type", "application/json")
-	client := http.Client{
-		Timeout: 30 * time.Second,
-	}
-	resp, err := client.Do(req)
-	if err != nil {
-		s.logger.Errorf("http request failed: %s", err)
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		s.logger.Errorf("unexpected status: %d", resp.StatusCode)
-		return nil, fmt.Errorf("users not found")
-	}
-
-	var result struct {
-		Data []dtos.GetUsers `json:"Data"`
-	}
-
-	if err = json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		s.logger.Errorf("failed to decode response: %s", err)
-		return nil, err
-	}
-
-	users := result.Data
-	return users, nil
+	return result, nil
 }

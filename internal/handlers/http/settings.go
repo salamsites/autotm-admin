@@ -426,7 +426,7 @@ func (h *SettingsHandler) v1DeleteUser(w http.ResponseWriter, r *http.Request) s
 		return shttp.BadRequest.SetData(result)
 	}
 
-	err = h.service.DeleteRole(r.Context(), id)
+	err = h.service.DeleteUser(r.Context(), id)
 	if err != nil {
 		result.Message = err.Error()
 		h.logger.Error("unable to delete user", err)

@@ -6,24 +6,27 @@ import (
 	"autotm-admin/internal/repository"
 	"autotm-admin/internal/services"
 	"context"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	sminio "github.com/salamsites/minio-pkg"
 	shttp "github.com/salamsites/package-http"
 	slog "github.com/salamsites/package-log"
 	spsql "github.com/salamsites/package-psql"
 )
 
 const (
-	baseURL      = "/api/v1/autotm-admin"
-	filesURL     = baseURL + "/files"
-	brandURL     = baseURL + "/brand"
-	settingsURL  = baseURL + "/settings"
-	regionsURL   = baseURL + "/regions"
-	slidersURL   = baseURL + "/sliders"
-	autoStoreURL = baseURL + "/auto-store"
+	baseURL     = "/api/v1/autotm-admin"
+	filesURL    = baseURL + "/files"
+	brandURL    = baseURL + "/brand"
+	settingsURL = baseURL + "/settings"
+	regionsURL  = baseURL + "/regions"
+	slidersURL  = baseURL + "/sliders"
+	stocksURL   = baseURL + "/stocks"
+	usersURL    = baseURL + "/users"
 )
 
-func Manager(logger *slog.Logger, clientPsql spsql.Client, cfg *configs.Config) chi.Router {
+func Manager(logger *slog.Logger, clientPsql spsql.Client, minioFileClient sminio.ImageClient, cfg *configs.Config) chi.Router {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
@@ -31,14 +34,13 @@ func Manager(logger *slog.Logger, clientPsql spsql.Client, cfg *configs.Config) 
 	newMiddleware := shttp.NewMiddleware(logger, cfg.Auth.JwtRegistration, nil)
 
 	r.Route(filesURL, func(subRouter chi.Router) {
-		filesService := services.NewFilesService(logger)
-		filesHandler := http.NewFilesHandler(logger, newMiddleware, filesService)
+		filesHandler := http.NewFilesHandler(logger, newMiddleware, minioFileClient)
 		filesHandler.FilesRegisterRoutes(subRouter)
 	})
 
 	r.Route(brandURL, func(subRouter chi.Router) {
 		brandRepo := repository.NewBrandPsqlRepository(logger, clientPsql)
-		brandService := services.NewBrandService(logger, brandRepo)
+		brandService := services.NewBrandService(logger, brandRepo, minioFileClient)
 		brandHandler := http.NewBrandHandler(logger, newMiddleware, brandService)
 		brandHandler.BrandRegisterRoutes(subRouter)
 	})
@@ -63,17 +65,23 @@ func Manager(logger *slog.Logger, clientPsql spsql.Client, cfg *configs.Config) 
 
 	r.Route(slidersURL, func(subRouter chi.Router) {
 		sliderRepo := repository.NewSliderPsqlRepository(logger, clientPsql)
-		sliderService := services.NewSlidersService(logger, sliderRepo)
+		sliderService := services.NewSlidersService(logger, sliderRepo, minioFileClient)
 		sliderHandler := http.NewSliderHandler(logger, newMiddleware, sliderService)
 		sliderHandler.SliderRegisterRoutes(subRouter)
 	})
 
-	r.Route(autoStoreURL, func(subRouter chi.Router) {
-		autoStoreRepo := repository.NewAutoStorePsqlRepository(logger, clientPsql)
-		userService := services.NewUserService(cfg, logger)
-		autoStoreService := services.NewAutoStoreService(logger, autoStoreRepo, userService)
-		autoStoreHandler := http.NewAutoStoreHandler(logger, newMiddleware, autoStoreService)
-		autoStoreHandler.AutoStoreRegisterRoutes(subRouter)
+	r.Route(stocksURL, func(subRouter chi.Router) {
+		stockRepo := repository.NewStockPsqlRepository(logger, clientPsql)
+		stockService := services.NewStockService(logger, stockRepo)
+		stockHandler := http.NewStockHandler(logger, newMiddleware, stockService)
+		stockHandler.StockRegisterRoutes(subRouter)
+	})
+
+	r.Route(usersURL, func(subRouter chi.Router) {
+		usersRepo := repository.NewUserPsqlRepository(logger, clientPsql)
+		usersService := services.NewUserService(logger, usersRepo)
+		usersHandler := http.NewUsersHandler(logger, newMiddleware, usersService)
+		usersHandler.UsersRegisterRoutes(subRouter)
 	})
 
 	return r

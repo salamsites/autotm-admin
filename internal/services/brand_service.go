@@ -6,18 +6,22 @@ import (
 	"autotm-admin/internal/models"
 	"autotm-admin/internal/repository/storage"
 	"context"
+
+	sminio "github.com/salamsites/minio-pkg"
 	slog "github.com/salamsites/package-log"
 )
 
 type BrandService struct {
-	logger *slog.Logger
-	repo   storage.BrandRepository
+	logger          *slog.Logger
+	repo            storage.BrandRepository
+	minioFileClient sminio.ImageClient
 }
 
-func NewBrandService(logger *slog.Logger, repo storage.BrandRepository) *BrandService {
+func NewBrandService(logger *slog.Logger, repo storage.BrandRepository, minioFileClient sminio.ImageClient) *BrandService {
 	return &BrandService{
-		logger: logger,
-		repo:   repo,
+		logger:          logger,
+		repo:            repo,
+		minioFileClient: minioFileClient,
 	}
 }
 
@@ -35,6 +39,7 @@ func (s *BrandService) CreateBodyType(ctx context.Context, bodyType dtos.CreateB
 		NameRU:    bodyType.NameRU,
 		ImagePath: bodyType.ImagePath,
 		Category:  bodyType.Category,
+		UploadId:  bodyType.UploadId,
 	}
 
 	bodyTypeID, err := s.repo.CreateBodyType(ctx, newBodyType)
@@ -67,6 +72,7 @@ func (s *BrandService) GetBodyType(ctx context.Context, limit, page int64, categ
 			NameEN:    b.NameEN,
 			NameRU:    b.NameRU,
 			ImagePath: b.ImagePath,
+			UploadId:  b.UploadId,
 			Category:  b.Category,
 		})
 	}
@@ -86,24 +92,13 @@ func (s *BrandService) UpdateBodyType(ctx context.Context, bodyType dtos.UpdateB
 		return id, err
 	}
 
-	oldBodyType, err := s.repo.GetBodyTypeByID(ctx, bodyType.ID)
-	if err != nil {
-		s.logger.Errorf("get old body types err: %v", err)
-		return id, err
-	}
-
-	if oldBodyType.ImagePath != bodyType.ImagePath && oldBodyType.ImagePath != "" {
-		if err = helpers.DeleteImage(oldBodyType.ImagePath); err != nil {
-			s.logger.Errorf("delete old image path err: %v", err)
-		}
-	}
-
 	newBodyType := models.BodyType{
 		ID:        bodyType.ID,
 		NameTM:    bodyType.NameTM,
 		NameEN:    bodyType.NameEN,
 		NameRU:    bodyType.NameRU,
 		ImagePath: bodyType.ImagePath,
+		UploadId:  bodyType.UploadId,
 		Category:  bodyType.Category,
 	}
 
@@ -118,23 +113,11 @@ func (s *BrandService) UpdateBodyType(ctx context.Context, bodyType dtos.UpdateB
 }
 
 func (s *BrandService) DeleteBodyType(ctx context.Context, id int64) error {
-	oldBodyType, err := s.repo.GetBodyTypeByID(ctx, id)
-	if err != nil {
-		s.logger.Errorf("get old body type err: %v", err)
-		return err
-	}
-
-	if oldBodyType.ImagePath != "" {
-		if err = helpers.DeleteImage(oldBodyType.ImagePath); err != nil {
-			s.logger.Errorf("delete old image path err: %v", err)
-		}
-	}
-
 	deleteID := models.ID{
 		ID: id,
 	}
 
-	err = s.repo.DeleteBodyType(ctx, deleteID)
+	err := s.repo.DeleteBodyType(ctx, deleteID)
 	if err != nil {
 		s.logger.Errorf("delete body type err: %v", err)
 		return err
@@ -153,6 +136,7 @@ func (s *BrandService) CreateBrand(ctx context.Context, brand dtos.CreateBrandRe
 	newBrand := models.Brand{
 		Name:       brand.Name,
 		LogoPath:   brand.LogoPath,
+		UploadId:   brand.UploadId,
 		Categories: brand.Categories,
 	}
 
@@ -184,6 +168,7 @@ func (s *BrandService) GetBrands(ctx context.Context, limit, page int64, categor
 			ID:         b.ID,
 			Name:       b.Name,
 			LogoPath:   b.LogoPath,
+			UploadId:   b.UploadId,
 			Categories: b.Categories,
 		})
 	}
@@ -201,18 +186,6 @@ func (s *BrandService) UpdateBrand(ctx context.Context, brand dtos.UpdateBrandRe
 	if err := validate.Struct(brand); err != nil {
 		s.logger.Errorf("validate err: %v", err)
 		return id, err
-	}
-
-	oldBrand, err := s.repo.GetBrandByID(ctx, brand.ID)
-	if err != nil {
-		s.logger.Errorf("get old brand err: %v", err)
-		return id, err
-	}
-
-	if oldBrand.LogoPath != brand.LogoPath && oldBrand.LogoPath != "" {
-		if errPath := helpers.DeleteImage(oldBrand.LogoPath); errPath != nil {
-			s.logger.Errorf("delete old logo path err: %v", errPath)
-		}
 	}
 
 	newBrand := models.Brand{
@@ -233,24 +206,12 @@ func (s *BrandService) UpdateBrand(ctx context.Context, brand dtos.UpdateBrandRe
 }
 
 func (s *BrandService) DeleteBrandCategory(ctx context.Context, id int64, category string) error {
-	oldBrand, err := s.repo.GetBrandByID(ctx, id)
-	if err != nil {
-		s.logger.Errorf("get old brand err: %v", err)
-		return err
-	}
-
-	if oldBrand.LogoPath != "" {
-		if err := helpers.DeleteImage(oldBrand.LogoPath); err != nil {
-			s.logger.Errorf("delete old logo path err: %v", err)
-		}
-	}
-
 	deleteID := models.ID{
 		ID:       id,
 		Category: category,
 	}
 
-	err = s.repo.DeleteBrandCategory(ctx, deleteID)
+	err := s.repo.DeleteBrandCategory(ctx, deleteID)
 	if err != nil {
 		s.logger.Errorf("delete brand err: %v", err)
 		return err
@@ -345,6 +306,97 @@ func (s *BrandService) DeleteModel(ctx context.Context, id int64) error {
 	err := s.repo.DeleteModel(ctx, deleteID)
 	if err != nil {
 		s.logger.Errorf("delete model err: %v", err)
+		return err
+	}
+	return nil
+}
+
+func (s *BrandService) CreateDescription(ctx context.Context, description dtos.CreateDescription) (dtos.ID, error) {
+	var id dtos.ID
+	validate := helpers.GetValidator()
+	if err := validate.Struct(description); err != nil {
+		s.logger.Errorf("validate err: %v", err)
+		return id, err
+	}
+
+	newDescription := models.Description{
+		NameTM: description.NameTM,
+		NameEN: description.NameEN,
+		NameRU: description.NameRU,
+	}
+
+	descriptionID, err := s.repo.CreateDescription(ctx, newDescription)
+	if err != nil {
+		s.logger.Errorf("create err: %v", err)
+		return id, err
+	}
+
+	id.ID = descriptionID
+	return id, nil
+}
+
+func (s *BrandService) GetDescriptions(ctx context.Context, limit, page int64, search string) (dtos.DescriptionResult, error) {
+	offset := (page - 1) * limit
+	if page <= 0 {
+		page = 1
+		offset = 0
+	}
+
+	descriptions, count, err := s.repo.GetDescriptions(ctx, limit, offset, search)
+	if err != nil {
+		s.logger.Errorf("get descriptions err: %v", err)
+		return dtos.DescriptionResult{}, err
+	}
+	var dtoDescriptions []dtos.Description
+	for _, b := range descriptions {
+		dtoDescriptions = append(dtoDescriptions, dtos.Description{
+			ID:     b.ID,
+			NameTM: b.NameTM,
+			NameEN: b.NameEN,
+			NameRU: b.NameRU,
+		})
+	}
+
+	result := dtos.DescriptionResult{
+		Descriptions: dtoDescriptions,
+		Count:        count,
+	}
+	return result, nil
+}
+
+func (s *BrandService) UpdateDescription(ctx context.Context, description dtos.UpdateDescription) (dtos.ID, error) {
+	var id dtos.ID
+	validate := helpers.GetValidator()
+	if err := validate.Struct(description); err != nil {
+		s.logger.Errorf("validate err: %v", err)
+		return id, err
+	}
+
+	newDescription := models.Description{
+		ID:     description.ID,
+		NameTM: description.NameTM,
+		NameEN: description.NameEN,
+		NameRU: description.NameRU,
+	}
+
+	descriptionID, err := s.repo.UpdateDescription(ctx, newDescription)
+	if err != nil {
+		s.logger.Errorf("update descriptions err: %v", err)
+		return id, err
+	}
+
+	id.ID = descriptionID
+	return id, nil
+}
+
+func (s *BrandService) DeleteDescription(ctx context.Context, id int64) error {
+	deleteID := models.ID{
+		ID: id,
+	}
+
+	err := s.repo.DeleteDescription(ctx, deleteID)
+	if err != nil {
+		s.logger.Errorf("delete description err: %v", err)
 		return err
 	}
 	return nil

@@ -6,6 +6,6 @@ import (
 )
 
 type UserService interface {
-	GetUsers(ctx context.Context, limit, page int64, search string) ([]dtos.GetUsers, int64, error)
-	GetUserByIds(ctx context.Context, ids dtos.GetUserByIDsReq) ([]dtos.GetUsers, error)
+	GetUsersFromUserService(ctx context.Context, limit, page int64, search string) (dtos.GetUsersResult, error)
+	//GetUserByIds(ctx context.Context, ids dtos.GetUserByIDsReq) ([]dtos.GetUsers, error)
 }

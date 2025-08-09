@@ -3,6 +3,7 @@ package repository
 import (
 	"autotm-admin/internal/models"
 	"context"
+
 	slog "github.com/salamsites/package-log"
 	spsql "github.com/salamsites/package-psql"
 )
@@ -22,9 +23,9 @@ func NewBrandPsqlRepository(logger *slog.Logger, client spsql.Client) *BrandPsql
 func (r *BrandPsqlRepository) CreateBodyType(ctx context.Context, bodyType models.BodyType) (int64, error) {
 	var id int64
 
-	query := ` INSERT INTO body_types (name_tm, name_en, name_ru, image_path, category) VALUES ($1, $2, $3, $4, $5) RETURNING id `
+	query := ` INSERT INTO body_types (name_tm, name_en, name_ru, image_path, category, upload_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id `
 
-	err := r.client.QueryRow(ctx, query, bodyType.NameTM, bodyType.NameEN, bodyType.NameRU, bodyType.ImagePath, bodyType.Category).Scan(&id)
+	err := r.client.QueryRow(ctx, query, bodyType.NameTM, bodyType.NameEN, bodyType.NameRU, bodyType.ImagePath, bodyType.Category, bodyType.UploadId).Scan(&id)
 	if err != nil {
 		r.logger.Errorf("Error creating body type: %s", err.Error())
 		return id, err
@@ -40,7 +41,7 @@ func (r *BrandPsqlRepository) GetBodyType(ctx context.Context, limit, page int64
 
 	query := `
 			SELECT 
-				id, name_tm, name_en, name_ru, category, image_path
+				id, name_tm, name_en, name_ru, category, image_path, upload_id
             FROM body_types
 			WHERE category = $1 AND 
 			    (name_tm ILIKE '%' || $2 || '%' OR name_en ILIKE '%' || $2 || '%' OR name_ru ILIKE '%' || $2 || '%')
@@ -56,7 +57,7 @@ func (r *BrandPsqlRepository) GetBodyType(ctx context.Context, limit, page int64
 	defer rows.Close()
 	for rows.Next() {
 		var bodyType models.BodyType
-		if err = rows.Scan(&bodyType.ID, &bodyType.NameTM, &bodyType.NameEN, &bodyType.NameRU, &bodyType.Category, &bodyType.ImagePath); err != nil {
+		if err = rows.Scan(&bodyType.ID, &bodyType.NameTM, &bodyType.NameEN, &bodyType.NameRU, &bodyType.Category, &bodyType.ImagePath, &bodyType.UploadId); err != nil {
 			r.logger.Errorf("get body types scan err : %v", err)
 			return nil, 0, err
 		}
@@ -83,12 +84,12 @@ func (r *BrandPsqlRepository) GetBodyTypeByID(ctx context.Context, id int64) (mo
 
 	query := `
 		SELECT
-			id, name_tm, name_en, name_ru, image_path, category
+			id, name_tm, name_en, name_ru, image_path, category, upload_id
 		FROM body_types
 		WHERE id = $1
 		`
 
-	err := r.client.QueryRow(ctx, query, id).Scan(&bodyType.ID, &bodyType.NameTM, &bodyType.NameEN, &bodyType.NameRU, &bodyType.ImagePath, &bodyType.Category)
+	err := r.client.QueryRow(ctx, query, id).Scan(&bodyType.ID, &bodyType.NameTM, &bodyType.NameEN, &bodyType.NameRU, &bodyType.ImagePath, &bodyType.Category, &bodyType.ImagePath, &bodyType.UploadId)
 	if err != nil {
 		r.logger.Errorf("get body type by id query err : %v", err)
 		return bodyType, err
@@ -101,11 +102,11 @@ func (r *BrandPsqlRepository) UpdateBodyType(ctx context.Context, bodyType model
 
 	query := `
 		UPDATE body_types SET 
-		    name_tm = $1, name_en = $2, name_ru = $3, image_path = $4, category = $5, updated_at = NOW()
-		WHERE id = $6
+		    name_tm = $1, name_en = $2, name_ru = $3, image_path = $4, category = $5, upload_id = $6, updated_at = NOW()
+		WHERE id = $7
 		RETURNING id
 	`
-	err := r.client.QueryRow(ctx, query, bodyType.NameTM, bodyType.NameEN, bodyType.NameRU, bodyType.ImagePath, bodyType.Category, bodyType.ID).Scan(&bodyTypeID)
+	err := r.client.QueryRow(ctx, query, bodyType.NameTM, bodyType.NameEN, bodyType.NameRU, bodyType.ImagePath, bodyType.Category, bodyType.UploadId, bodyType.ID).Scan(&bodyTypeID)
 	if err != nil {
 		r.logger.Errorf("update body types err: %v", err)
 		return bodyTypeID, err
@@ -132,9 +133,9 @@ func (r *BrandPsqlRepository) CreateBrand(ctx context.Context, brand models.Bran
 	}
 	defer tx.Rollback(ctx)
 
-	query := `INSERT INTO brands (name, logo_path) VALUES ($1, $2) RETURNING id`
+	query := `INSERT INTO brands (name, logo_path, upload_id) VALUES ($1, $2, $3) RETURNING id`
 
-	err = tx.QueryRow(ctx, query, brand.Name, brand.LogoPath).Scan(&brandID)
+	err = tx.QueryRow(ctx, query, brand.Name, brand.LogoPath, brand.UploadId).Scan(&brandID)
 	if err != nil {
 		r.logger.Errorf("create brand err: %v", err)
 		return brandID, err
@@ -167,7 +168,7 @@ func (r *BrandPsqlRepository) GetBrands(ctx context.Context, limit, page int64, 
 
 	query := `
 		SELECT 
-		    b.id, b.name, b.logo_path,
+		    b.id, b.name, b.logo_path, b.upload_id,
 		    ARRAY_AGG(bc.category) AS categories
 		FROM brands b
 		LEFT JOIN brand_categories bc ON bc.brand_id = b.id
@@ -186,7 +187,7 @@ func (r *BrandPsqlRepository) GetBrands(ctx context.Context, limit, page int64, 
 	defer rows.Close()
 	for rows.Next() {
 		var brand models.Brand
-		if err := rows.Scan(&brand.ID, &brand.Name, &brand.LogoPath, &brand.Categories); err != nil {
+		if err := rows.Scan(&brand.ID, &brand.Name, &brand.LogoPath, &brand.UploadId, &brand.Categories); err != nil {
 			r.logger.Errorf("get brands scan err : %v", err)
 			return nil, 0, err
 		}
@@ -220,11 +221,11 @@ func (r *BrandPsqlRepository) UpdateBrand(ctx context.Context, brand models.Bran
 
 	query := `
 		UPDATE brands SET 
-		    name = $1, logo_path = $2, updated_at = NOW()
-		WHERE id = $3
+		    name = $1, logo_path = $2, upload_id = $3, updated_at = NOW()
+		WHERE id = $4
 		RETURNING id
 	`
-	errUpdate := r.client.QueryRow(ctx, query, brand.Name, brand.LogoPath, brand.ID).Scan(&id)
+	errUpdate := r.client.QueryRow(ctx, query, brand.Name, brand.LogoPath, brand.UploadId, brand.ID).Scan(&id)
 	if errUpdate != nil {
 		r.logger.Errorf("update brand err: %v", err)
 		return 0, errUpdate
@@ -259,11 +260,11 @@ func (r *BrandPsqlRepository) GetBrandByID(ctx context.Context, id int64) (model
 
 	query := `
 		SELECT
-			id, name, logo_path
+			id, name, logo_path, upload_id
 		FROM brands
 		WHERE id = $1
 	`
-	err := r.client.QueryRow(ctx, query, id).Scan(&brand.ID, &brand.Name, &brand.LogoPath)
+	err := r.client.QueryRow(ctx, query, id).Scan(&brand.ID, &brand.Name, &brand.LogoPath, &brand.UploadId)
 	if err != nil {
 		r.logger.Errorf("get brand by id query err : %v", err)
 		return brand, err
@@ -302,8 +303,8 @@ func (r *BrandPsqlRepository) GetModels(ctx context.Context, limit, page int64, 
 
 	query := `
 		SELECT 
-		    m.id, m.name, b.logo_path, m.brand_id, b.name,
-		    m.category
+		    m.id, m.name, b.logo_path, b.upload_id, 
+		    m.brand_id, b.name, m.category
 		FROM models m
 			LEFT JOIN brands b ON m.brand_id = b.id
 		WHERE  m.category = $1 AND 
@@ -321,7 +322,7 @@ func (r *BrandPsqlRepository) GetModels(ctx context.Context, limit, page int64, 
 	for rows.Next() {
 		var brandModel models.Model
 		if err = rows.Scan(&brandModel.ID, &brandModel.Name, &brandModel.LogoPath,
-			&brandModel.BrandID, &brandModel.BrandName, &brandModel.Category,
+			&brandModel.UploadId, &brandModel.BrandID, &brandModel.BrandName, &brandModel.Category,
 		); err != nil {
 			r.logger.Errorf("get models scan err : %v", err)
 			return nil, 0, err
@@ -367,6 +368,92 @@ func (r *BrandPsqlRepository) DeleteModel(ctx context.Context, id models.ID) err
 	_, err := r.client.Exec(ctx, query, id.ID)
 	if err != nil {
 		r.logger.Errorf("delete model err: %v", err)
+		return err
+	}
+	return nil
+}
+
+func (r *BrandPsqlRepository) CreateDescription(ctx context.Context, description models.Description) (int64, error) {
+	var id int64
+
+	query := ` INSERT INTO descriptions (name_tm, name_en, name_ru) VALUES ($1, $2, $3) RETURNING id `
+
+	err := r.client.QueryRow(ctx, query, description.NameTM, description.NameEN, description.NameRU).Scan(&id)
+	if err != nil {
+		r.logger.Errorf("Error creating description: %s", err.Error())
+		return id, err
+	}
+	return id, nil
+}
+
+func (r *BrandPsqlRepository) GetDescriptions(ctx context.Context, limit, page int64, search string) ([]models.Description, int64, error) {
+	var (
+		descriptions []models.Description
+		count        int64
+	)
+
+	query := `
+			SELECT 
+				id, name_tm, name_en, name_ru
+            FROM descriptions
+			WHERE 
+			    (name_tm ILIKE '%' || $1 || '%' OR name_en ILIKE '%' || $1 || '%' OR name_ru ILIKE '%' || $1 || '%')
+			ORDER BY created_at DESC
+			LIMIT $2 OFFSET $3;
+		`
+
+	rows, err := r.client.Query(ctx, query, search, limit, page)
+	if err != nil {
+		r.logger.Errorf("get descriptions query err : %v", err)
+		return nil, 0, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var description models.Description
+		if err = rows.Scan(&description.ID, &description.NameTM, &description.NameEN, &description.NameRU); err != nil {
+			r.logger.Errorf("get descriptions scan err : %v", err)
+			return nil, 0, err
+		}
+		descriptions = append(descriptions, description)
+	}
+
+	queryCount := `
+			SELECT 
+			    COUNT(*) 
+			FROM descriptions 
+			WHERE
+				(name_tm ILIKE '%' || $1 || '%' OR name_en ILIKE '%' || $1 || '%' OR name_ru ILIKE '%' || $1 || '%')	
+		`
+	errCount := r.client.QueryRow(ctx, queryCount, search).Scan(&count)
+	if errCount != nil {
+		r.logger.Errorf("get descriptions count err : %v", err)
+		return nil, 0, err
+	}
+	return descriptions, count, nil
+}
+
+func (r *BrandPsqlRepository) UpdateDescription(ctx context.Context, description models.Description) (int64, error) {
+	var descriptionID int64
+
+	query := `
+		UPDATE descriptions SET 
+		    name_tm = $1, name_en = $2, name_ru = $3, updated_at = NOW()
+		WHERE id = $4
+		RETURNING id
+	`
+	err := r.client.QueryRow(ctx, query, description.NameTM, description.NameEN, description.NameRU, description.ID).Scan(&descriptionID)
+	if err != nil {
+		r.logger.Errorf("update descriptions err: %v", err)
+		return descriptionID, err
+	}
+	return descriptionID, nil
+}
+
+func (r *BrandPsqlRepository) DeleteDescription(ctx context.Context, id models.ID) error {
+	query := `DELETE FROM descriptions WHERE id = $1`
+	_, err := r.client.Exec(ctx, query, id.ID)
+	if err != nil {
+		r.logger.Errorf("delete descriptions err: %v", err)
 		return err
 	}
 	return nil

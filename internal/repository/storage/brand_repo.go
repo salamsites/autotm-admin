@@ -25,4 +25,10 @@ type BrandRepository interface {
 	GetModels(ctx context.Context, limit, page int64, category, search string) ([]models.Model, int64, error)
 	UpdateModel(ctx context.Context, model models.Model) (int64, error)
 	DeleteModel(ctx context.Context, id models.ID) error
+
+	//Description
+	CreateDescription(ctx context.Context, description models.Description) (int64, error)
+	GetDescriptions(ctx context.Context, limit, page int64, search string) ([]models.Description, int64, error)
+	UpdateDescription(ctx context.Context, description models.Description) (int64, error)
+	DeleteDescription(ctx context.Context, id models.ID) error
 }

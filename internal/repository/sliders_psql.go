@@ -3,6 +3,7 @@ package repository
 import (
 	"autotm-admin/internal/models"
 	"context"
+
 	slog "github.com/salamsites/package-log"
 	spsql "github.com/salamsites/package-psql"
 )
@@ -22,9 +23,14 @@ func NewSliderPsqlRepository(logger *slog.Logger, client spsql.Client) *SliderPs
 func (r *SliderPsqlRepository) CreateSlider(ctx context.Context, slider models.Slider) (int64, error) {
 	var id int64
 
-	query := `INSERT INTO sliders (image_path_tm, image_path_en, image_path_ru, platform) VALUES ($1, $2, $3, $4) RETURNING id`
+	query := `
+			INSERT INTO sliders 
+    			(image_path_tm, image_path_en, image_path_ru, upload_id_tm, upload_id_en, upload_id_ru, platform) 
+			VALUES ($1, $2, $3, $4, $5, $6, $7) 
+			RETURNING id
+		`
 
-	err := r.client.QueryRow(ctx, query, slider.ImagePathTM, slider.ImagePathEN, slider.ImagePathRU, slider.Platform).Scan(&id)
+	err := r.client.QueryRow(ctx, query, slider.ImagePathTM, slider.ImagePathEN, slider.ImagePathRU, slider.UploadIdTM, slider.UploadIdEN, slider.UploadIdRU, slider.Platform).Scan(&id)
 	if err != nil {
 		r.logger.Errorf("create err: %v", err)
 		return id, err
@@ -40,7 +46,8 @@ func (r *SliderPsqlRepository) GetAllSliders(ctx context.Context, limit, page in
 
 	query := `
 		SELECT 
-		    id, image_path_tm, image_path_en, image_path_ru, platform
+		    id, image_path_tm, image_path_en, image_path_ru, 
+		    upload_id_tm, upload_id_en, upload_id_ru, platform
 		FROM sliders
 		WHERE platform = $1
 		ORDER BY created_at DESC
@@ -55,7 +62,9 @@ func (r *SliderPsqlRepository) GetAllSliders(ctx context.Context, limit, page in
 	defer rows.Close()
 	for rows.Next() {
 		var slider models.Slider
-		if err = rows.Scan(&slider.ID, &slider.ImagePathTM, &slider.ImagePathEN, &slider.ImagePathRU, &slider.Platform); err != nil {
+		if err = rows.Scan(&slider.ID, &slider.ImagePathTM, &slider.ImagePathEN, &slider.ImagePathRU,
+			&slider.UploadIdTM, &slider.UploadIdEN, &slider.UploadIdRU, &slider.Platform,
+		); err != nil {
 			r.logger.Errorf("get sliders scan err : %v", err)
 			return nil, 0, err
 		}
@@ -81,11 +90,12 @@ func (r *SliderPsqlRepository) UpdateSlider(ctx context.Context, slider models.S
 
 	query := `
 		UPDATE sliders SET 
-		    image_path_tm = $1, image_path_en = $2, image_path_ru = $3, platform = $4, updated_at = NOW()
-		WHERE id = $5
+		    image_path_tm = $1, image_path_en = $2, image_path_ru = $3, platform = $4, 
+		    upload_id_tm = $5, upload_id_en = $6, upload_id_ru = $7, updated_at = NOW()
+		WHERE id = $8
 		RETURNING id;
 	`
-	err := r.client.QueryRow(ctx, query, slider.ImagePathTM, slider.ImagePathEN, slider.ImagePathRU, slider.Platform, slider.ID).Scan(&id)
+	err := r.client.QueryRow(ctx, query, slider.ImagePathTM, slider.ImagePathEN, slider.ImagePathRU, slider.Platform, slider.UploadIdTM, slider.UploadIdEN, slider.UploadIdRU, slider.ID).Scan(&id)
 	if err != nil {
 		r.logger.Errorf("update slider err: %v", err)
 		return id, err
@@ -108,11 +118,12 @@ func (r *SliderPsqlRepository) GetSliderByID(ctx context.Context, id int64) (mod
 
 	query := `
 		SELECT
-			id, image_path_tm, image_path_en, image_path_ru, platform
+			id, image_path_tm, image_path_en, image_path_ru, 
+			upload_id_tm, upload_id_en, upload_id_ru, platform
 		FROM sliders
 		WHERE id = $1
 	`
-	err := r.client.QueryRow(ctx, query, id).Scan(&slider.ID, &slider.ImagePathTM, &slider.ImagePathEN, &slider.ImagePathRU, &slider.Platform)
+	err := r.client.QueryRow(ctx, query, id).Scan(&slider.ID, &slider.ImagePathTM, &slider.ImagePathEN, &slider.ImagePathRU, &slider.UploadIdTM, &slider.UploadIdEN, &slider.UploadIdRU, &slider.Platform)
 	if err != nil {
 		r.logger.Errorf("get slider by id query err : %v", err)
 		return slider, err

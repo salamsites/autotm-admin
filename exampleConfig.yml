@@ -20,9 +20,8 @@ storage:
 log:
   path:   /home/user/Desktop/sada/autotm-admin/logs
   filename: autotm-admin.log
-file_path: //home/user/Desktop/sada/autotm-admin/uploads
+file_path: /home/user/Desktop/sada/autotm-admin/uploads
 auth:
   jwt_verify: verify!autm25tm#a?aa
   jwt_registration: registration!autm25tm#a?aa
 
-jwt_secret_key: secret_key123

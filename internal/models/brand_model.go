@@ -5,13 +5,15 @@ type BodyType struct {
 	NameTM    string
 	NameEN    string
 	NameRU    string
-	ImagePath string
+	ImagePath []string
 	Category  string
+	UploadId  string
 }
 type Brand struct {
 	ID         int64
 	Name       string
-	LogoPath   string
+	LogoPath   []string
+	UploadId   string
 	Categories []string
 }
 
@@ -23,8 +25,16 @@ type ID struct {
 type Model struct {
 	ID        int64
 	Name      string
-	LogoPath  string
+	LogoPath  []string
+	UploadId  string
 	BrandID   int64
 	BrandName string
 	Category  string
+}
+
+type Description struct {
+	ID     int64
+	NameTM string
+	NameEN string
+	NameRU string
 }

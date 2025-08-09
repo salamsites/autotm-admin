@@ -1,6 +1,6 @@
 package dtos
 
-type ImagePath struct {
-	ImagePath string   `json:"image_path"`
-	Images    []string `json:"images"`
+type UploadImage struct {
+	UploadID string   `json:"upload_id"`
+	Sizes    []string `json:"sizes"`
 }
