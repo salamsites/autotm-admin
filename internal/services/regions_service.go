@@ -6,6 +6,7 @@ import (
 	"autotm-admin/internal/models"
 	"autotm-admin/internal/repository/storage"
 	"context"
+
 	slog "github.com/salamsites/package-log"
 )
 
@@ -21,11 +22,12 @@ func NewRegionsService(logger *slog.Logger, repo storage.RegionsRepository) *Reg
 	}
 }
 
-func (s *RegionsService) CreateRegion(ctx context.Context, region dtos.CreateRegionReq) (int64, error) {
+func (s *RegionsService) CreateRegion(ctx context.Context, region dtos.CreateRegionReq) (dtos.ID, error) {
+	var id dtos.ID
 	validate := helpers.GetValidator()
 	if err := validate.Struct(region); err != nil {
 		s.logger.Errorf("validate err: %v", err)
-		return 0, err
+		return id, err
 	}
 
 	newRegion := models.Region{
@@ -37,9 +39,10 @@ func (s *RegionsService) CreateRegion(ctx context.Context, region dtos.CreateReg
 	regionID, err := s.repo.CreateRegion(ctx, newRegion)
 	if err != nil {
 		s.logger.Errorf("create err: %v", err)
-		return regionID, err
+		return id, err
 	}
-	return regionID, nil
+	id.ID = regionID
+	return id, nil
 }
 
 func (s *RegionsService) GetAllRegions(ctx context.Context, limit, page int64, search string) (dtos.RegionResult, error) {
@@ -71,11 +74,12 @@ func (s *RegionsService) GetAllRegions(ctx context.Context, limit, page int64, s
 	return result, nil
 }
 
-func (s *RegionsService) UpdateRegion(ctx context.Context, region dtos.UpdateRegionReq) (int64, error) {
+func (s *RegionsService) UpdateRegion(ctx context.Context, region dtos.UpdateRegionReq) (dtos.ID, error) {
+	var id dtos.ID
 	validate := helpers.GetValidator()
 	if err := validate.Struct(region); err != nil {
 		s.logger.Errorf("validate err: %v", err)
-		return 0, err
+		return id, err
 	}
 
 	newRegion := models.Region{
@@ -88,9 +92,10 @@ func (s *RegionsService) UpdateRegion(ctx context.Context, region dtos.UpdateReg
 	regionID, err := s.repo.UpdateRegion(ctx, newRegion)
 	if err != nil {
 		s.logger.Errorf("update region err: %v", err)
-		return regionID, err
+		return id, err
 	}
-	return regionID, nil
+	id.ID = regionID
+	return id, nil
 }
 
 func (s *RegionsService) DeleteRegion(ctx context.Context, id int64) error {
@@ -107,11 +112,12 @@ func (s *RegionsService) DeleteRegion(ctx context.Context, id int64) error {
 }
 
 // Cities
-func (s *RegionsService) CreateCity(ctx context.Context, city dtos.CreateCityReq) (int64, error) {
+func (s *RegionsService) CreateCity(ctx context.Context, city dtos.CreateCityReq) (dtos.ID, error) {
+	var id dtos.ID
 	validate := helpers.GetValidator()
 	if err := validate.Struct(city); err != nil {
 		s.logger.Errorf("validate err: %v", err)
-		return 0, err
+		return id, err
 	}
 
 	newCity := models.City{
@@ -124,9 +130,10 @@ func (s *RegionsService) CreateCity(ctx context.Context, city dtos.CreateCityReq
 	cityID, err := s.repo.CreateCity(ctx, newCity)
 	if err != nil {
 		s.logger.Errorf("create err: %v", err)
-		return cityID, err
+		return id, err
 	}
-	return cityID, nil
+	id.ID = cityID
+	return id, nil
 }
 
 func (s *RegionsService) GetAllCities(ctx context.Context, limit, page int64, search string) (dtos.CityResult, error) {
@@ -162,11 +169,12 @@ func (s *RegionsService) GetAllCities(ctx context.Context, limit, page int64, se
 	return result, nil
 }
 
-func (s *RegionsService) UpdateCity(ctx context.Context, city dtos.UpdateCityReq) (int64, error) {
+func (s *RegionsService) UpdateCity(ctx context.Context, city dtos.UpdateCityReq) (dtos.ID, error) {
+	var id dtos.ID
 	validate := helpers.GetValidator()
 	if err := validate.Struct(city); err != nil {
 		s.logger.Errorf("validate err: %v", err)
-		return 0, err
+		return id, err
 	}
 
 	newCity := models.City{
@@ -180,9 +188,10 @@ func (s *RegionsService) UpdateCity(ctx context.Context, city dtos.UpdateCityReq
 	cityID, err := s.repo.UpdateCity(ctx, newCity)
 	if err != nil {
 		s.logger.Errorf("update city err: %v", err)
-		return cityID, err
+		return id, err
 	}
-	return cityID, nil
+	id.ID = cityID
+	return id, nil
 }
 
 func (s *RegionsService) DeleteCity(ctx context.Context, id int64) error {

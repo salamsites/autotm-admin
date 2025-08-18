@@ -2,9 +2,10 @@ package configs
 
 import (
 	"fmt"
-	"github.com/ilyakaznacheev/cleanenv"
 	"os"
 	"sync"
+
+	"github.com/ilyakaznacheev/cleanenv"
 )
 
 type Config struct {
@@ -15,7 +16,14 @@ type Config struct {
 	Log            Log     `yaml:"log"`
 	FilePath       string  `yaml:"file_path"`
 	Auth           Auth    `yaml:"auth"`
+	Minio          Minio   `yaml:"minio"`
 	UserServiceURL string  `yaml:"user_service"`
+}
+
+type Minio struct {
+	Endpoint        string `yaml:"endpoint" env-required:"true"`
+	AccessKeyID     string `yaml:"access_key_id" env-required:"true"`
+	SecretAccessKey string `yaml:"secret_access_key" env-required:"true"`
 }
 
 type Auth struct {

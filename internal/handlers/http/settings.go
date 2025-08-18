@@ -4,12 +4,13 @@ import (
 	"autotm-admin/internal/dtos"
 	"autotm-admin/internal/services/repository"
 	"encoding/json"
-	"github.com/go-chi/chi/v5"
-	shttp "github.com/salamsites/package-http"
-	slog "github.com/salamsites/package-log"
 	"io"
 	"net/http"
 	"strconv"
+
+	"github.com/go-chi/chi/v5"
+	shttp "github.com/salamsites/package-http"
+	slog "github.com/salamsites/package-log"
 )
 
 type SettingsHandler struct {
@@ -47,7 +48,7 @@ func (h *SettingsHandler) SettingsRegisterRoutes(r chi.Router) {
 // @Accept json
 // @Produce json
 // @Param Role body dtos.CreateRoleReq true "Role data (the 'role' field accepts any JSON object)"
-// @Success 200 {object} map[string]int64 "Returns created role ID"
+// @Success 200 {object} dtos.ID "Returns created role ID"
 // @Failure 400 {object} string "Bad request"
 // @Failure 422 {object} string "Unprocessable entity"
 // @Failure 500 {object} string "Internal server error"
@@ -81,9 +82,7 @@ func (h *SettingsHandler) v1CreateRole(w http.ResponseWriter, r *http.Request) s
 
 	result.Status = true
 	result.Message = "Successfully created role"
-	result.Data = map[string]interface{}{
-		"id": id,
-	}
+	result.Data = id
 	return shttp.Success.SetData(result)
 }
 
@@ -179,7 +178,7 @@ func (h *SettingsHandler) v1GetAllRoles(w http.ResponseWriter, r *http.Request) 
 // @Accept json
 // @Produce json
 // @Param Role body dtos.UpdateRoleReq true "Role data with ID"
-// @Success 200 {object} map[string]int64 "Returns updated role ID"
+// @Success 200 {object} dtos.ID "Returns updated role ID"
 // @Failure 400 {object} string "Bad request"
 // @Failure 422 {object} string "Unprocessable entity"
 // @Failure 500 {object} string "Internal server error"
@@ -213,9 +212,7 @@ func (h *SettingsHandler) v1UpdateRole(w http.ResponseWriter, r *http.Request) s
 
 	result.Status = true
 	result.Message = "Successfully updated role"
-	result.Data = map[string]interface{}{
-		"id": id,
-	}
+	result.Data = id
 	return shttp.Success.SetData(result)
 }
 
@@ -267,7 +264,7 @@ func (h *SettingsHandler) v1DeleteRole(w http.ResponseWriter, r *http.Request) s
 // @Accept json
 // @Produce json
 // @Param Role body dtos.CreateUserReq true "User data"
-// @Success 200 {object} map[string]int64 "Returns created user ID"
+// @Success 200 {object} dtos.ID "Returns created user ID"
 // @Failure 400 {object} string "Bad request"
 // @Failure 422 {object} string "Unprocessable entity"
 // @Failure 500 {object} string "Internal server error"
@@ -301,9 +298,7 @@ func (h *SettingsHandler) v1CreateUser(w http.ResponseWriter, r *http.Request) s
 
 	result.Status = true
 	result.Message = "Successfully created user"
-	result.Data = map[string]interface{}{
-		"id": id,
-	}
+	result.Data = id
 	return shttp.Success.SetData(result)
 }
 
@@ -357,7 +352,7 @@ func (h *SettingsHandler) v1GetAllUsers(w http.ResponseWriter, r *http.Request) 
 // @Accept json
 // @Produce json
 // @Param Role body dtos.UpdateUserReq true "User data with ID"
-// @Success 200 {object} map[string]int64 "Returns updated user ID"
+// @Success 200 {object} dtos.ID "Returns updated user ID"
 // @Failure 400 {object} string "Bad request"
 // @Failure 422 {object} string "Unprocessable entity"
 // @Failure 500 {object} string "Internal server error"
@@ -391,9 +386,7 @@ func (h *SettingsHandler) v1UpdateUser(w http.ResponseWriter, r *http.Request) s
 
 	result.Status = true
 	result.Message = "Successfully updated user"
-	result.Data = map[string]interface{}{
-		"id": id,
-	}
+	result.Data = id
 	return shttp.Success.SetData(result)
 }
 

@@ -25,11 +25,12 @@ func NewSlidersService(logger *slog.Logger, repo storage.SlidersRepository, mini
 	}
 }
 
-func (s *SlidersService) CreateSlider(ctx context.Context, slider dtos.CreateSliderReq) (int64, error) {
+func (s *SlidersService) CreateSlider(ctx context.Context, slider dtos.CreateSliderReq) (dtos.ID, error) {
+	var id dtos.ID
 	validate := helpers.GetValidator()
 	if err := validate.Struct(slider); err != nil {
 		s.logger.Errorf("validate err: %v", err)
-		return 0, err
+		return id, err
 	}
 
 	newSlider := models.Slider{
@@ -45,9 +46,10 @@ func (s *SlidersService) CreateSlider(ctx context.Context, slider dtos.CreateSli
 	brandID, err := s.repo.CreateSlider(ctx, newSlider)
 	if err != nil {
 		s.logger.Errorf("create err: %v", err)
-		return brandID, err
+		return id, err
 	}
-	return brandID, nil
+	id.ID = brandID
+	return id, nil
 }
 
 func (s *SlidersService) GetAllSliders(ctx context.Context, limit, page int64, platform string) (dtos.SliderResult, error) {
@@ -83,11 +85,12 @@ func (s *SlidersService) GetAllSliders(ctx context.Context, limit, page int64, p
 	return result, nil
 }
 
-func (s *SlidersService) UpdateSlider(ctx context.Context, slider dtos.UpdateSliderReq) (int64, error) {
+func (s *SlidersService) UpdateSlider(ctx context.Context, slider dtos.UpdateSliderReq) (dtos.ID, error) {
+	var id dtos.ID
 	validate := helpers.GetValidator()
 	if err := validate.Struct(slider); err != nil {
 		s.logger.Errorf("validate err: %v", err)
-		return 0, err
+		return id, err
 	}
 
 	newSlider := models.Slider{
@@ -104,9 +107,10 @@ func (s *SlidersService) UpdateSlider(ctx context.Context, slider dtos.UpdateSli
 	sliderID, err := s.repo.UpdateSlider(ctx, newSlider)
 	if err != nil {
 		s.logger.Errorf("update slider err: %v", err)
-		return sliderID, err
+		return id, err
 	}
-	return sliderID, nil
+	id.ID = sliderID
+	return id, nil
 }
 
 func (s *SlidersService) DeleteSlider(ctx context.Context, id int64) error {

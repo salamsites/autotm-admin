@@ -55,7 +55,7 @@ func (h *StockHandler) StockRegisterRoutes(r chi.Router) {
 // @Param address formData string false "Address"
 // @Param image formData []file true "Image file(s)"
 // @Param logo formData file false "Logo image file"
-// @Success 200 {object} map[string]interface{} "Returns created stock ID"
+// @Success 200 {object} dtos.ID "Returns created stock ID"
 // @Failure 400 {object} string "Bad request"
 // @Failure 422 {object} string "Unprocessable entity"
 // @Failure 500 {object} string "Internal server error"
@@ -99,7 +99,7 @@ func (h *StockHandler) v1CreateStock(w http.ResponseWriter, r *http.Request) sht
 		return shttp.BadRequest.SetData("Invalid form data")
 	}
 
-	uploadResult, errUpload := h.minioFileClient.UploadFile(r.Context(), r, "image", stockID, helpers.StockImagesSize, util.StockBucket)
+	uploadResult, errUpload := h.minioFileClient.UploadFile(r.Context(), r, "image", stockID.ID, helpers.StockImagesSize, util.StockBucket)
 	if errUpload.StatusCode != 0 {
 		h.logger.Error("failed to upload images", errUpload)
 		return shttp.InternalServerError.SetData(errUpload.Message)
@@ -131,9 +131,7 @@ func (h *StockHandler) v1CreateStock(w http.ResponseWriter, r *http.Request) sht
 
 	result.Status = true
 	result.Message = "Created stock Successfully"
-	result.Data = map[string]interface{}{
-		"id": stockID,
-	}
+	result.Data = stockID
 	return shttp.Success.SetData(result)
 }
 
@@ -196,7 +194,7 @@ func (h *StockHandler) v1GetStocks(w http.ResponseWriter, r *http.Request) shttp
 // @Param address formData string false "Address"
 // @Param image formData []file false "Image file(s)"
 // @Param logo formData file false "Logo image file"
-// @Success 200 {object} map[string]interface{} "Returns updated stock ID"
+// @Success 200 {object} dtos.ID "Returns updated stock ID"
 // @Failure 400 {object} string "Bad request"
 // @Failure 422 {object} string "Unprocessable entity"
 // @Failure 500 {object} string "Internal server error"
@@ -243,14 +241,14 @@ func (h *StockHandler) v1UpdateStock(w http.ResponseWriter, r *http.Request) sht
 		Address:     address,
 	}
 
-	_, err = h.service.UpdateStock(r.Context(), stockDTO)
+	id, err := h.service.UpdateStock(r.Context(), stockDTO)
 	if err != nil {
 		h.logger.Error("unable to update stock", err)
 		return shttp.InternalServerError.SetData("Failed to update stock")
 	}
 
 	var images []string
-	uploadResult, errUpload := h.minioFileClient.UploadFile(r.Context(), r, "image", stockID, helpers.StockImagesSize, util.StockBucket)
+	uploadResult, errUpload := h.minioFileClient.UploadFile(r.Context(), r, "image", id.ID, helpers.StockImagesSize, util.StockBucket)
 	if errUpload.StatusCode != 0 && errUpload.StatusCode != http.StatusBadRequest {
 		h.logger.Error("failed to upload images", errUpload)
 		return shttp.InternalServerError.SetData(errUpload.Message)
@@ -275,7 +273,7 @@ func (h *StockHandler) v1UpdateStock(w http.ResponseWriter, r *http.Request) sht
 		}
 	}
 
-	errUpdate := h.service.UpdateStockFiles(r.Context(), stockID, images, logoPath)
+	errUpdate := h.service.UpdateStockFiles(r.Context(), id, images, logoPath)
 	if errUpdate != nil {
 		h.logger.Error("unable to update stock files", errUpdate)
 		return shttp.InternalServerError.SetData("Failed to update stock files")
@@ -283,9 +281,7 @@ func (h *StockHandler) v1UpdateStock(w http.ResponseWriter, r *http.Request) sht
 
 	result.Status = true
 	result.Message = "Stock updated successfully"
-	result.Data = map[string]interface{}{
-		"id": stockID,
-	}
+	result.Data = id
 	return shttp.Success.SetData(result)
 }
 

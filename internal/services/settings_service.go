@@ -6,6 +6,7 @@ import (
 	"autotm-admin/internal/models"
 	"autotm-admin/internal/repository/storage"
 	"context"
+
 	slog "github.com/salamsites/package-log"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -22,11 +23,12 @@ func NewSettingsService(logger *slog.Logger, repo storage.SettingsRepository) *S
 	}
 }
 
-func (s *SettingsService) CreateRole(ctx context.Context, role dtos.CreateRoleReq) (int64, error) {
+func (s *SettingsService) CreateRole(ctx context.Context, role dtos.CreateRoleReq) (dtos.ID, error) {
+	var id dtos.ID
 	validate := helpers.GetValidator()
 	if err := validate.Struct(role); err != nil {
 		s.logger.Errorf("validate err: %v", err)
-		return 0, err
+		return id, err
 	}
 
 	newRole := models.Role{
@@ -37,9 +39,10 @@ func (s *SettingsService) CreateRole(ctx context.Context, role dtos.CreateRoleRe
 	roleID, err := s.repo.CreateRole(ctx, newRole)
 	if err != nil {
 		s.logger.Errorf("create err: %v", err)
-		return roleID, err
+		return id, err
 	}
-	return roleID, nil
+	id.ID = roleID
+	return id, nil
 }
 
 func (s *SettingsService) GetRoleByID(ctx context.Context, roleID int64) (dtos.Role, error) {
@@ -86,11 +89,12 @@ func (s *SettingsService) GetAllRoles(ctx context.Context, limit, page int64, se
 	return result, nil
 }
 
-func (s *SettingsService) UpdateRole(ctx context.Context, role dtos.UpdateRoleReq) (int64, error) {
+func (s *SettingsService) UpdateRole(ctx context.Context, role dtos.UpdateRoleReq) (dtos.ID, error) {
+	var id dtos.ID
 	validate := helpers.GetValidator()
 	if err := validate.Struct(role); err != nil {
 		s.logger.Errorf("validate err: %v", err)
-		return 0, err
+		return id, err
 	}
 
 	newRole := models.Role{
@@ -102,9 +106,10 @@ func (s *SettingsService) UpdateRole(ctx context.Context, role dtos.UpdateRoleRe
 	roleID, err := s.repo.UpdateRole(ctx, newRole)
 	if err != nil {
 		s.logger.Errorf("update role err: %v", err)
-		return roleID, err
+		return id, err
 	}
-	return roleID, nil
+	id.ID = roleID
+	return id, nil
 }
 
 func (s *SettingsService) DeleteRole(ctx context.Context, id int64) error {
@@ -121,17 +126,18 @@ func (s *SettingsService) DeleteRole(ctx context.Context, id int64) error {
 }
 
 // User
-func (s *SettingsService) CreateUser(ctx context.Context, user dtos.CreateUserReq) (int64, error) {
+func (s *SettingsService) CreateUser(ctx context.Context, user dtos.CreateUserReq) (dtos.ID, error) {
+	var id dtos.ID
 	validate := helpers.GetValidator()
 	if err := validate.Struct(user); err != nil {
 		s.logger.Errorf("validate user err: %v", err)
-		return 0, err
+		return id, err
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
 		s.logger.Errorf("hash err: %v", err)
-		return 0, err
+		return id, err
 	}
 
 	newUser := models.User{
@@ -144,9 +150,10 @@ func (s *SettingsService) CreateUser(ctx context.Context, user dtos.CreateUserRe
 	userID, err := s.repo.CreateUser(ctx, newUser)
 	if err != nil {
 		s.logger.Errorf("create user err: %v", err)
-		return 0, err
+		return id, err
 	}
-	return userID, nil
+	id.ID = userID
+	return id, nil
 }
 
 func (s *SettingsService) InitSuperAdmin(ctx context.Context) error {
@@ -227,11 +234,12 @@ func (s *SettingsService) GetAllUsers(ctx context.Context, limit, page int64, se
 	return result, nil
 }
 
-func (s *SettingsService) UpdateUser(ctx context.Context, user dtos.UpdateUserReq) (int64, error) {
+func (s *SettingsService) UpdateUser(ctx context.Context, user dtos.UpdateUserReq) (dtos.ID, error) {
+	var id dtos.ID
 	validate := helpers.GetValidator()
 	if err := validate.Struct(user); err != nil {
 		s.logger.Errorf("validate err: %v", err)
-		return 0, err
+		return id, err
 	}
 	var hashedPassword string
 
@@ -239,7 +247,7 @@ func (s *SettingsService) UpdateUser(ctx context.Context, user dtos.UpdateUserRe
 		hp, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 		if err != nil {
 			s.logger.Errorf("hash err: %v", err)
-			return 0, err
+			return id, err
 		}
 		hashedPassword = string(hp)
 	}
@@ -255,9 +263,10 @@ func (s *SettingsService) UpdateUser(ctx context.Context, user dtos.UpdateUserRe
 	userID, err := s.repo.UpdateUser(ctx, newUser)
 	if err != nil {
 		s.logger.Errorf("update user err: %v", err)
-		return userID, err
+		return id, err
 	}
-	return userID, nil
+	id.ID = userID
+	return id, nil
 }
 
 func (s *SettingsService) DeleteUser(ctx context.Context, id int64) error {

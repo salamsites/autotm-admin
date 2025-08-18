@@ -7,14 +7,14 @@ import (
 
 type RegionsService interface {
 	// Regions
-	CreateRegion(ctx context.Context, region dtos.CreateRegionReq) (int64, error)
+	CreateRegion(ctx context.Context, region dtos.CreateRegionReq) (dtos.ID, error)
 	GetAllRegions(ctx context.Context, limit, page int64, search string) (dtos.RegionResult, error)
-	UpdateRegion(ctx context.Context, region dtos.UpdateRegionReq) (int64, error)
+	UpdateRegion(ctx context.Context, region dtos.UpdateRegionReq) (dtos.ID, error)
 	DeleteRegion(ctx context.Context, id int64) error
 
 	// Cities
-	CreateCity(ctx context.Context, city dtos.CreateCityReq) (int64, error)
+	CreateCity(ctx context.Context, city dtos.CreateCityReq) (dtos.ID, error)
 	GetAllCities(ctx context.Context, limit, page int64, search string) (dtos.CityResult, error)
-	UpdateCity(ctx context.Context, region dtos.UpdateCityReq) (int64, error)
+	UpdateCity(ctx context.Context, region dtos.UpdateCityReq) (dtos.ID, error)
 	DeleteCity(ctx context.Context, id int64) error
 }

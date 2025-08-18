@@ -4,12 +4,13 @@ import (
 	"autotm-admin/internal/dtos"
 	"autotm-admin/internal/services/repository"
 	"encoding/json"
-	"github.com/go-chi/chi/v5"
-	shttp "github.com/salamsites/package-http"
-	slog "github.com/salamsites/package-log"
 	"io"
 	"net/http"
 	"strconv"
+
+	"github.com/go-chi/chi/v5"
+	shttp "github.com/salamsites/package-http"
+	slog "github.com/salamsites/package-log"
 )
 
 type SliderHandler struct {
@@ -40,7 +41,7 @@ func (h *SliderHandler) SliderRegisterRoutes(r chi.Router) {
 // @Accept json
 // @Produce json
 // @Param slider body dtos.CreateSliderReq true "Slider data"
-// @Success 200 {object} map[string]int64 "Returns created slider ID"
+// @Success 200 {object} dtos.ID "Returns created slider ID"
 // @Failure 400 {object} string "Bad request"
 // @Failure 422 {object} string "Unprocessable entity"
 // @Failure 500 {object} string "Internal server error"
@@ -73,10 +74,8 @@ func (h *SliderHandler) v1CreateSlider(w http.ResponseWriter, r *http.Request) s
 	}
 
 	result.Status = true
-	result.Message = "Slider created"
-	result.Data = map[string]interface{}{
-		"id": id,
-	}
+	result.Message = "Slider created Successfully"
+	result.Data = id
 	return shttp.Success.SetData(result)
 }
 
@@ -130,7 +129,7 @@ func (h *SliderHandler) v1GetAllSliders(w http.ResponseWriter, r *http.Request) 
 // @Accept json
 // @Produce json
 // @Param slider body dtos.UpdateSliderReq true "Slider data with ID"
-// @Success 200 {object} map[string]int64 "Returns updated slider ID"
+// @Success 200 {object} dtos.ID "Returns updated slider ID"
 // @Failure 400 {object} string "Bad request"
 // @Failure 422 {object} string "Unprocessable entity"
 // @Failure 500 {object} string "Internal server error"
@@ -164,9 +163,7 @@ func (h *SliderHandler) v1UpdateSlider(w http.ResponseWriter, r *http.Request) s
 
 	result.Status = true
 	result.Message = "Slider updated Successfully"
-	result.Data = map[string]interface{}{
-		"id": id,
-	}
+	result.Data = id
 	return shttp.Success.SetData(result)
 }
 

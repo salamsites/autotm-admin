@@ -67,9 +67,9 @@ func main() {
 	}
 
 	minioImageClient, errImage := file.NewImageClient(sminio.Options{
-		Endpoint:        "10.192.1.127:9000",
-		AccessKeyID:     "minioadmin",
-		SecretAccessKey: "minioadmin",
+		Endpoint:        cfg.Minio.Endpoint,
+		AccessKeyID:     cfg.Minio.AccessKeyID,
+		SecretAccessKey: cfg.Minio.SecretAccessKey,
 	})
 
 	if errImage != nil {
@@ -77,9 +77,9 @@ func main() {
 	}
 
 	minioFileClient, errFile := files.NewFileClient(sminio.Options{
-		Endpoint:        "10.192.1.127:9000",
-		AccessKeyID:     "minioadmin",
-		SecretAccessKey: "minioadmin",
+		Endpoint:        cfg.Minio.Endpoint,
+		AccessKeyID:     cfg.Minio.AccessKeyID,
+		SecretAccessKey: cfg.Minio.SecretAccessKey,
 	})
 
 	if errFile != nil {

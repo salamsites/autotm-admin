@@ -4,12 +4,13 @@ import (
 	"autotm-admin/internal/dtos"
 	"autotm-admin/internal/services/repository"
 	"encoding/json"
-	"github.com/go-chi/chi/v5"
-	shttp "github.com/salamsites/package-http"
-	slog "github.com/salamsites/package-log"
 	"io"
 	"net/http"
 	"strconv"
+
+	"github.com/go-chi/chi/v5"
+	shttp "github.com/salamsites/package-http"
+	slog "github.com/salamsites/package-log"
 )
 
 type RegionsHandler struct {
@@ -46,7 +47,7 @@ func (h *RegionsHandler) RegionsRegisterRoutes(r chi.Router) {
 // @Accept json
 // @Produce json
 // @Param Region body dtos.CreateRegionReq true "Region data"
-// @Success 200 {object} map[string]int64 "Returns created region ID"
+// @Success 200 {object} dtos.ID "Returns created region ID"
 // @Failure 400 {object} string "Bad request"
 // @Failure 422 {object} string "Unprocessable entity"
 // @Failure 500 {object} string "Internal server error"
@@ -80,9 +81,7 @@ func (h *RegionsHandler) v1CreateRegion(w http.ResponseWriter, r *http.Request) 
 
 	result.Status = true
 	result.Message = "Returns created region ID"
-	result.Data = map[string]interface{}{
-		"id": id,
-	}
+	result.Data = id
 	return shttp.Success.SetData(result)
 }
 
@@ -136,7 +135,7 @@ func (h *RegionsHandler) v1GetAllRegions(w http.ResponseWriter, r *http.Request)
 // @Accept json
 // @Produce json
 // @Param Region body dtos.UpdateRegionReq true "Region data with ID"
-// @Success 200 {object} map[string]int64 "Returns updated region ID"
+// @Success 200 {object} dtos.ID "Returns updated region ID"
 // @Failure 400 {object} string "Bad request"
 // @Failure 422 {object} string "Unprocessable entity"
 // @Failure 500 {object} string "Internal server error"
@@ -170,9 +169,7 @@ func (h *RegionsHandler) v1UpdateRegion(w http.ResponseWriter, r *http.Request) 
 
 	result.Status = true
 	result.Message = "Returns updated region ID"
-	result.Data = map[string]interface{}{
-		"id": id,
-	}
+	result.Data = id
 	return shttp.Success.SetData(result)
 }
 
@@ -224,7 +221,7 @@ func (h *RegionsHandler) v1DeleteRegion(w http.ResponseWriter, r *http.Request) 
 // @Accept json
 // @Produce json
 // @Param City body dtos.CreateCityReq true "City data"
-// @Success 200 {object} map[string]int64 "Returns created city ID"
+// @Success 200 {object} dtos.ID "Returns created city ID"
 // @Failure 400 {object} string "Bad request"
 // @Failure 422 {object} string "Unprocessable entity"
 // @Failure 500 {object} string "Internal server error"
@@ -258,9 +255,7 @@ func (h *RegionsHandler) v1CreateCity(w http.ResponseWriter, r *http.Request) sh
 
 	result.Status = true
 	result.Message = "Returns created city ID"
-	result.Data = map[string]interface{}{
-		"id": id,
-	}
+	result.Data = id
 	return shttp.Success.SetData(result)
 }
 
@@ -314,7 +309,7 @@ func (h *RegionsHandler) v1GetAllCities(w http.ResponseWriter, r *http.Request) 
 // @Accept json
 // @Produce json
 // @Param City body dtos.UpdateCityReq true "City data with ID"
-// @Success 200 {object} map[string]int64 "Returns updated city ID"
+// @Success 200 {object} dtos.ID "Returns updated city ID"
 // @Failure 400 {object} string "Bad request"
 // @Failure 422 {object} string "Unprocessable entity"
 // @Failure 500 {object} string "Internal server error"
@@ -348,9 +343,7 @@ func (h *RegionsHandler) v1UpdateCity(w http.ResponseWriter, r *http.Request) sh
 
 	result.Status = true
 	result.Message = "Returns updated city ID"
-	result.Data = map[string]interface{}{
-		"id": id,
-	}
+	result.Data = id
 	return shttp.Success.SetData(result)
 }
 

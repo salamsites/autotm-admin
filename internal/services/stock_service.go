@@ -22,11 +22,12 @@ func NewStockService(logger *slog.Logger, repo storage.StockRepository) *StockSe
 	}
 }
 
-func (s *StockService) CreateStock(ctx context.Context, stock dtos.CreateStockReq) (int64, error) {
+func (s *StockService) CreateStock(ctx context.Context, stock dtos.CreateStockReq) (dtos.ID, error) {
+	var id dtos.ID
 	validate := helpers.GetValidator()
 	if err := validate.Struct(stock); err != nil {
 		s.logger.Errorf("validate err: %v", err)
-		return 0, err
+		return id, err
 	}
 
 	newStock := models.Stock{
@@ -44,19 +45,20 @@ func (s *StockService) CreateStock(ctx context.Context, stock dtos.CreateStockRe
 	stockID, err := s.repo.CreateStock(ctx, newStock)
 	if err != nil {
 		s.logger.Errorf("create err: %v", err)
-		return stockID, err
+		return id, err
 	}
-	return stockID, nil
+	id.ID = stockID
+	return id, nil
 }
 
-func (s *StockService) UpdateStockFiles(ctx context.Context, stockID int64, images []string, logo string) error {
-	if err := s.repo.UpdateStockImages(ctx, stockID, images); err != nil {
+func (s *StockService) UpdateStockFiles(ctx context.Context, stockID dtos.ID, images []string, logo string) error {
+	if err := s.repo.UpdateStockImages(ctx, stockID.ID, images); err != nil {
 		s.logger.Errorf("failed to update stock images: %v", err)
 		return err
 	}
 
 	if logo != "" {
-		if err := s.repo.UpdateStockLogo(ctx, stockID, logo); err != nil {
+		if err := s.repo.UpdateStockLogo(ctx, stockID.ID, logo); err != nil {
 			s.logger.Errorf("failed to update stock logo: %v", err)
 			return err
 		}
