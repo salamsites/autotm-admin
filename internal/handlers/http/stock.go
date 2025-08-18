@@ -115,7 +115,7 @@ func (h *StockHandler) v1CreateStock(w http.ResponseWriter, r *http.Request) sht
 	logoFileHeaders := r.MultipartForm.File["logo"]
 	var logoPath string
 	if len(logoFileHeaders) > 0 {
-		logoPath = fmt.Sprintf("%d/logo", stockID)
+		logoPath = fmt.Sprintf("%d/logo", stockID.ID)
 		errLogo := h.minioImageClient.UploadImage(r.Context(), r, "logo", logoPath, helpers.StockLogoSize, util.FileBucket)
 		if errLogo.StatusCode != 0 {
 			h.logger.Error("failed to upload logo", errLogo)
@@ -265,7 +265,7 @@ func (h *StockHandler) v1UpdateStock(w http.ResponseWriter, r *http.Request) sht
 	logoFileHeaders := r.MultipartForm.File["logo"]
 	var logoPath string
 	if len(logoFileHeaders) > 0 {
-		logoPath = fmt.Sprintf("%d/logo", stockID)
+		logoPath = fmt.Sprintf("%d/logo", id.ID)
 		errLogo := h.minioImageClient.UploadImage(r.Context(), r, "logo", logoPath, helpers.StockLogoSize, util.FileBucket)
 		if errLogo.StatusCode != 0 {
 			h.logger.Error("failed to upload logo", errLogo)

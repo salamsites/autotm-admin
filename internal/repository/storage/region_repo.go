@@ -13,7 +13,7 @@ type RegionsRepository interface {
 
 	//Cities
 	CreateCity(ctx context.Context, model models.City) (int64, error)
-	GetAllCities(ctx context.Context, limit, page int64, search string) ([]models.City, int64, error)
+	GetAllCities(ctx context.Context, limit, page int64, search string, regionIds []int64) ([]models.City, int64, error)
 	UpdateCity(ctx context.Context, region models.City) (int64, error)
 	DeleteCity(ctx context.Context, id models.ID) error
 }

@@ -136,14 +136,14 @@ func (s *RegionsService) CreateCity(ctx context.Context, city dtos.CreateCityReq
 	return id, nil
 }
 
-func (s *RegionsService) GetAllCities(ctx context.Context, limit, page int64, search string) (dtos.CityResult, error) {
+func (s *RegionsService) GetAllCities(ctx context.Context, limit, page int64, search string, regionIds []int64) (dtos.CityResult, error) {
 	offset := (page - 1) * limit
 	if page <= 0 {
 		page = 1
 		offset = 0
 	}
 
-	cities, count, err := s.repo.GetAllCities(ctx, limit, offset, search)
+	cities, count, err := s.repo.GetAllCities(ctx, limit, offset, search, regionIds)
 	if err != nil {
 		s.logger.Errorf("get all cities err: %v", err)
 		return dtos.CityResult{}, err

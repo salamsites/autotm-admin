@@ -3,6 +3,7 @@ package repository
 import (
 	"autotm-admin/internal/models"
 	"context"
+
 	slog "github.com/salamsites/package-log"
 	spsql "github.com/salamsites/package-psql"
 )
@@ -117,7 +118,7 @@ func (r *RegionsPsqlRepository) CreateCity(ctx context.Context, city models.City
 	return id, nil
 }
 
-func (r *RegionsPsqlRepository) GetAllCities(ctx context.Context, limit, page int64, search string) ([]models.City, int64, error) {
+func (r *RegionsPsqlRepository) GetAllCities(ctx context.Context, limit, page int64, search string, regionIds []int64) ([]models.City, int64, error) {
 	var (
 		cities []models.City
 		count  int64
@@ -131,11 +132,20 @@ func (r *RegionsPsqlRepository) GetAllCities(ctx context.Context, limit, page in
 			LEFT JOIN regions r on r.id = c.region_id
 		WHERE (c.name_tm ILIKE '%' || $1 || '%' OR c.name_ru ILIKE '%' || $1 || '%' OR c.name_en ILIKE '%' || $1 || '%' 
 		    OR r.name_tm ILIKE '%' || $1 || '%' OR r.name_ru ILIKE '%' || $1 || '%' OR r.name_en ILIKE '%' || $1 || '%')
-		ORDER BY c.created_at DESC
-		LIMIT $2 OFFSET $3;
 	`
 
-	rows, err := r.client.Query(ctx, query, search, limit, page)
+	args := []interface{}{search, limit, page}
+
+	if len(regionIds) > 0 {
+		query += " AND c.region_id = ANY($4)"
+		args = append(args, regionIds)
+	}
+
+	query += `
+        ORDER BY c.created_at DESC
+        LIMIT $2 OFFSET $3;
+    `
+	rows, err := r.client.Query(ctx, query, args...)
 	if err != nil {
 		r.logger.Errorf("get all cities query err : %v", err)
 		return nil, 0, err
@@ -161,7 +171,14 @@ func (r *RegionsPsqlRepository) GetAllCities(ctx context.Context, limit, page in
 		WHERE (c.name_tm ILIKE '%' || $1 || '%' OR c.name_ru ILIKE '%' || $1 || '%' OR c.name_en ILIKE '%' || $1 || '%' 
 		    OR r.name_tm ILIKE '%' || $1 || '%' OR r.name_ru ILIKE '%' || $1 || '%' OR r.name_en ILIKE '%' || $1 || '%')
 		`
-	errCount := r.client.QueryRow(ctx, queryCount, search).Scan(&count)
+
+	countArgs := []interface{}{search}
+	if len(regionIds) > 0 {
+		queryCount += " AND c.region_id = ANY($2)"
+		countArgs = append(countArgs, regionIds)
+	}
+
+	errCount := r.client.QueryRow(ctx, queryCount, countArgs...).Scan(&count)
 	if errCount != nil {
 		r.logger.Errorf("get all cities count err : %v", err)
 		return nil, 0, err

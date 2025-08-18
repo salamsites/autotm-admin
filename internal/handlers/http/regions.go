@@ -268,6 +268,7 @@ func (h *RegionsHandler) v1CreateCity(w http.ResponseWriter, r *http.Request) sh
 // @Param limit query int false "Limit number of cities to return"
 // @Param page query int false "Page number"
 // @Param search query string false "Search string to filter cities by name"
+// @Param region_id query []int false "Filter cities by multiple region IDs"
 // @Success 200 {object} dtos.CityResult "List of cities with pagination info Successfully"
 // @Failure 400 {object} string "Bad request"
 // @Failure 500 {object} string "Internal server error"
@@ -289,7 +290,15 @@ func (h *RegionsHandler) v1GetAllCities(w http.ResponseWriter, r *http.Request) 
 		page = 1
 	}
 
-	cities, err := h.service.GetAllCities(r.Context(), limit, page, search)
+	var regionIDs []int64
+	regionIDStrs := r.URL.Query()["region_id"]
+	for _, idStr := range regionIDStrs {
+		id, err := strconv.ParseInt(idStr, 10, 64)
+		if err == nil {
+			regionIDs = append(regionIDs, id)
+		}
+	}
+	cities, err := h.service.GetAllCities(r.Context(), limit, page, search, regionIDs)
 	if err != nil {
 		result.Message = err.Error()
 		h.logger.Error("unable to get cities", err)

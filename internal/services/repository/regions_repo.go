@@ -14,7 +14,7 @@ type RegionsService interface {
 
 	// Cities
 	CreateCity(ctx context.Context, city dtos.CreateCityReq) (dtos.ID, error)
-	GetAllCities(ctx context.Context, limit, page int64, search string) (dtos.CityResult, error)
+	GetAllCities(ctx context.Context, limit, page int64, search string, regionIds []int64) (dtos.CityResult, error)
 	UpdateCity(ctx context.Context, region dtos.UpdateCityReq) (dtos.ID, error)
 	DeleteCity(ctx context.Context, id int64) error
 }
