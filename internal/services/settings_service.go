@@ -113,11 +113,7 @@ func (s *SettingsService) UpdateRole(ctx context.Context, role dtos.UpdateRoleRe
 }
 
 func (s *SettingsService) DeleteRole(ctx context.Context, id int64) error {
-	deleteID := models.ID{
-		ID: id,
-	}
-
-	err := s.repo.DeleteRole(ctx, deleteID)
+	err := s.repo.DeleteRole(ctx, id)
 	if err != nil {
 		s.logger.Errorf("delete role err: %v", err)
 		return err
@@ -270,11 +266,7 @@ func (s *SettingsService) UpdateUser(ctx context.Context, user dtos.UpdateUserRe
 }
 
 func (s *SettingsService) DeleteUser(ctx context.Context, id int64) error {
-	deleteID := models.ID{
-		ID: id,
-	}
-
-	err := s.repo.DeleteUser(ctx, deleteID)
+	err := s.repo.DeleteUser(ctx, id)
 	if err != nil {
 		s.logger.Errorf("delete user err: %v", err)
 		return err

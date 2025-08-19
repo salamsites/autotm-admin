@@ -99,11 +99,7 @@ func (s *RegionsService) UpdateRegion(ctx context.Context, region dtos.UpdateReg
 }
 
 func (s *RegionsService) DeleteRegion(ctx context.Context, id int64) error {
-	deleteID := models.ID{
-		ID: id,
-	}
-
-	err := s.repo.DeleteRegion(ctx, deleteID)
+	err := s.repo.DeleteRegion(ctx, id)
 	if err != nil {
 		s.logger.Errorf("delete region err: %v", err)
 		return err
@@ -195,11 +191,7 @@ func (s *RegionsService) UpdateCity(ctx context.Context, city dtos.UpdateCityReq
 }
 
 func (s *RegionsService) DeleteCity(ctx context.Context, id int64) error {
-	deleteID := models.ID{
-		ID: id,
-	}
-
-	err := s.repo.DeleteCity(ctx, deleteID)
+	err := s.repo.DeleteCity(ctx, id)
 	if err != nil {
 		s.logger.Errorf("delete city err: %v", err)
 		return err

@@ -26,8 +26,8 @@ func (r *StockPsqlRepository) CreateStock(ctx context.Context, stock models.Stoc
 
 	query := ` 
 			INSERT INTO stocks 
-			    (user_id, phone_number, email, store_name, images, logo, address, region_id, city_id) 
-			VALUES (@user_id, @phone_number, @email, @store_name, @images, @logo, @address, @region_id, @city_id) 
+			    (user_id, phone_number, email, store_name, images, logo, address, region_id, city_id, status) 
+			VALUES (@user_id, @phone_number, @email, @store_name, @images, @logo, @address, @region_id, @city_id, @status) 
 			RETURNING id;
 	`
 
@@ -41,6 +41,7 @@ func (r *StockPsqlRepository) CreateStock(ctx context.Context, stock models.Stoc
 		"address":      stock.Address,
 		"region_id":    stock.RegionID,
 		"city_id":      stock.CityID,
+		"status":       stock.Status,
 	}
 
 	err := r.client.QueryRow(ctx, query, args).Scan(&id)
@@ -52,8 +53,13 @@ func (r *StockPsqlRepository) CreateStock(ctx context.Context, stock models.Stoc
 }
 
 func (r *StockPsqlRepository) UpdateStockImages(ctx context.Context, stockID int64, images []string) error {
-	query := `UPDATE stocks SET images = $1 WHERE id = $2`
-	_, err := r.client.Exec(ctx, query, images, stockID)
+	query := `UPDATE stocks SET images = @images WHERE id = @id`
+
+	args := pgx.NamedArgs{
+		"images": images,
+		"id":     stockID,
+	}
+	_, err := r.client.Exec(ctx, query, args)
 	if err != nil {
 		r.logger.Errorf("update images err: %v", err)
 		return err
@@ -62,8 +68,13 @@ func (r *StockPsqlRepository) UpdateStockImages(ctx context.Context, stockID int
 }
 
 func (r *StockPsqlRepository) UpdateStockLogo(ctx context.Context, stockID int64, logo string) error {
-	query := `UPDATE stocks SET logo = $1 WHERE id = $2`
-	_, err := r.client.Exec(ctx, query, logo, stockID)
+	query := `UPDATE stocks SET logo = @logo WHERE id = @id`
+
+	args := pgx.NamedArgs{
+		"logo": logo,
+		"id":   stockID,
+	}
+	_, err := r.client.Exec(ctx, query, args)
 	if err != nil {
 		r.logger.Errorf("update logo err: %v", err)
 		return err
@@ -80,8 +91,8 @@ func (r *StockPsqlRepository) GetStocks(ctx context.Context, limit, page int64, 
 	query := `
 			SELECT
 				s.id, s.user_id, u.full_name, s.phone_number, s.email, s.store_name, 
-				s.images, s.logo, s.address, s.city_id, c.name_tm,
-				c.name_en, c.name_ru, s.region_id, r.name_tm, r.name_en, r.name_ru
+				s.images, s.logo, s.address, s.city_id, c.name_tm, c.name_en, c.name_ru, 
+				s.region_id, r.name_tm, r.name_en, r.name_ru, s.status
            FROM stocks s
            LEFT JOIN users u ON u.id = s.user_id
            LEFT JOIN cities c ON c.id = s.city_id
@@ -124,6 +135,7 @@ func (r *StockPsqlRepository) GetStocks(ctx context.Context, limit, page int64, 
 			&stock.RegionNameTM,
 			&stock.RegionNameEN,
 			&stock.RegionNameRU,
+			&stock.Status,
 		)
 		if err != nil {
 			r.logger.Errorf("Error scanning stock: %s", err)
@@ -154,13 +166,47 @@ func (r *StockPsqlRepository) GetStocks(ctx context.Context, limit, page int64, 
 	return stocks, count, nil
 }
 
+func (r *StockPsqlRepository) GetStockByID(ctx context.Context, stockID int64) (models.Stock, error) {
+	var stock models.Stock
+
+	query := `
+		SELECT
+			s.id, s.user_id, u.full_name, 
+			s.phone_number, s.email, s.store_name,
+			s.images, s.logo, s.region_id, r.name_tm,
+			r.name_ru, r.name_en, s.city_id, c.name_tm,
+			c.name_en, c.name_ru, s.address, s.status
+		FROM stocks s
+			LEFT JOIN users u ON u.id = s.user_id
+			LEFT JOIN cities c ON c.id = s.city_id
+			LEFT JOIN regions r ON r.id = s.region_id
+		WHERE s.id = @id
+	`
+
+	args := pgx.NamedArgs{
+		"id": stockID,
+	}
+
+	err := r.client.QueryRow(ctx, query, args).Scan(&stock.ID, &stock.UserID, &stock.UserName, &stock.PhoneNumber, &stock.Email,
+		&stock.StoreName, &stock.Images, &stock.Logo, &stock.RegionID, &stock.RegionNameTM, &stock.RegionNameRU, &stock.RegionNameEN,
+		&stock.CityID, &stock.CityNameTM, &stock.CityNameEN, &stock.CityNameRU, &stock.Address, &stock.Status,
+	)
+
+	if err != nil {
+		r.logger.Errorf("Error getting stock by id: %s", err)
+		return stock, err
+	}
+
+	return stock, nil
+}
+
 func (r *StockPsqlRepository) UpdateStock(ctx context.Context, stock models.Stock) (int64, error) {
 	var stockID int64
 
 	query := `
 		UPDATE stocks SET 
-		    user_id = @user_id, phone_number = @phone_number, email = @email, store_name = @store_name, 
-		    images = @images, logo = @logo, address = @address, region_id = @region_id, city_id = @city_id
+		    user_id = @user_id, phone_number = @phone_number, email = @email, store_name = @store_name, images = @images, 
+		    logo = @logo, address = @address, region_id = @region_id, city_id = @city_id, status = @status
 		WHERE id = @id
 		RETURNING id
 	`
@@ -175,6 +221,7 @@ func (r *StockPsqlRepository) UpdateStock(ctx context.Context, stock models.Stoc
 		"address":      stock.Address,
 		"region_id":    stock.RegionID,
 		"city_id":      stock.CityID,
+		"status":       stock.Status,
 		"id":           stock.ID,
 	}
 	err := r.client.QueryRow(ctx, query, args).Scan(&stockID)
@@ -185,11 +232,11 @@ func (r *StockPsqlRepository) UpdateStock(ctx context.Context, stock models.Stoc
 	return stockID, nil
 }
 
-func (r *StockPsqlRepository) DeleteStock(ctx context.Context, id models.ID) error {
+func (r *StockPsqlRepository) DeleteStock(ctx context.Context, id int64) error {
 	query := ` DELETE FROM stocks WHERE id = @id `
 
 	args := pgx.NamedArgs{
-		"id": id.ID,
+		"id": id,
 	}
 	_, err := r.client.Exec(ctx, query, args)
 	if err != nil {
@@ -197,4 +244,28 @@ func (r *StockPsqlRepository) DeleteStock(ctx context.Context, id models.ID) err
 		return err
 	}
 	return nil
+}
+
+func (r *StockPsqlRepository) UpdateStockStatus(ctx context.Context, id int64, status string) (int64, error) {
+	var stockID int64
+
+	query := `
+   		UPDATE stocks SET
+   		     status = @status
+   		WHERE id = @id
+   		RETURNING id
+	`
+
+	args := pgx.NamedArgs{
+		"status": status,
+		"id":     id,
+	}
+
+	err := r.client.QueryRow(ctx, query, args).Scan(&stockID)
+	if err != nil {
+		r.logger.Errorf("update stock status err: %v", err)
+		return stockID, err
+	}
+
+	return stockID, nil
 }

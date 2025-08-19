@@ -3,6 +3,8 @@ package repository
 import (
 	"autotm-admin/internal/models"
 	"context"
+
+	"github.com/jackc/pgx/v5"
 	slog "github.com/salamsites/package-log"
 	spsql "github.com/salamsites/package-psql"
 )
@@ -29,12 +31,17 @@ func (r *UserPsqlRepository) GetUsersFromUserService(ctx context.Context, limit,
 		SELECT 
 		    id, full_name, mail, phone_number
 		FROM users 
-		WHERE (full_name ILIKE '%' || $1 || '%' OR mail ILIKE '%' || $1 || '%' OR phone_number ILIKE '%' || $1 || '%')
+		WHERE (full_name ILIKE '%' || @search || '%' OR mail ILIKE '%' || @search || '%' OR phone_number ILIKE '%' || @search || '%')
 		ORDER BY created_at DESC
-		LIMIT $2 OFFSET $3;
+		LIMIT @limit OFFSET @offset;
 	`
 
-	rows, err := r.client.Query(ctx, query, search, limit, page)
+	args := pgx.NamedArgs{
+		"search": search,
+		"limit":  limit,
+		"offset": page,
+	}
+	rows, err := r.client.Query(ctx, query, args)
 	if err != nil {
 		r.logger.Errorf("get all users from user service query err : %v", err)
 		return nil, 0, err
@@ -53,9 +60,13 @@ func (r *UserPsqlRepository) GetUsersFromUserService(ctx context.Context, limit,
 			SELECT 
 			    COUNT(*) 
 			FROM users
-			WHERE (full_name ILIKE '%' || $1 || '%' OR mail ILIKE '%' || $1 || '%' OR phone_number ILIKE '%' || $1 || '%')
+			WHERE (full_name ILIKE '%' || @search || '%' OR mail ILIKE '%' || @search || '%' OR phone_number ILIKE '%' || @search || '%')
 		`
-	errCount := r.client.QueryRow(ctx, queryCount, search).Scan(&count)
+
+	argsCount := pgx.NamedArgs{
+		"search": search,
+	}
+	errCount := r.client.QueryRow(ctx, queryCount, argsCount).Scan(&count)
 	if errCount != nil {
 		r.logger.Errorf("get all users from user service count err : %v", err)
 		return nil, 0, err

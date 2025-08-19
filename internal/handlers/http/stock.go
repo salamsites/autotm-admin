@@ -4,7 +4,9 @@ import (
 	"autotm-admin/internal/dtos"
 	"autotm-admin/internal/helpers"
 	"autotm-admin/internal/services/repository"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"strconv"
 
@@ -36,8 +38,10 @@ func NewStockHandler(logger *slog.Logger, middleware *shttp.Middleware, service 
 func (h *StockHandler) StockRegisterRoutes(r chi.Router) {
 	r.Method("POST", "/create-stock", h.middleware.Base(h.v1CreateStock))
 	r.Method("GET", "/get-stocks", h.middleware.Base(h.v1GetStocks))
+	r.Method("GET", "/get-stock-by-id", h.middleware.Base(h.v1GetStockByID))
 	r.Method("PUT", "/update-stock", h.middleware.Base(h.v1UpdateStock))
 	r.Method("DELETE", "/delete-stock", h.middleware.Base(h.v1DeleteStock))
+	r.Method("PUT", "/update-stock-status", h.middleware.Base(h.v1UpdateStockStatus))
 }
 
 // v1CreateStock
@@ -175,6 +179,48 @@ func (h *StockHandler) v1GetStocks(w http.ResponseWriter, r *http.Request) shttp
 	result.Status = true
 	result.Message = "List of stocks with pagination info successfully"
 	result.Data = stocks
+	return shttp.Success.SetData(result)
+}
+
+// v1GetStockByID
+// @Summary Get stock by id
+// @Description Get stock by ID
+// @Tags Stock
+// @Accept json
+// @Produce json
+// @Param id query int true "Stock ID to get"
+// @Success 200 {object} dtos.Stock "Successfully get stock by id"
+// @Failure 400 {object} string "Bad request"
+// @Failure 404 {object} string "Brand not found"
+// @Failure 500 {object} string "Internal server error"
+// @Router /stocks/get-stock-by-id [get]
+func (h *StockHandler) v1GetStockByID(w http.ResponseWriter, r *http.Request) shttp.Response {
+	var result shttp.Result
+	result.Status = false
+
+	idStr := r.URL.Query().Get("id")
+	if idStr == "" {
+		result.Message = "id is required"
+		return shttp.BadRequest.SetData(result)
+	}
+
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		result.Message = err.Error()
+		h.logger.Error("invalid role ID", err)
+		return shttp.BadRequest.SetData(result)
+	}
+
+	stock, err := h.service.GetStockByID(r.Context(), id)
+	if err != nil {
+		result.Message = err.Error()
+		h.logger.Error("unable to get stock", err)
+		return shttp.InternalServerError.SetData(result)
+	}
+
+	result.Status = true
+	result.Message = "Successfully retrieved stock"
+	result.Data = stock
 	return shttp.Success.SetData(result)
 }
 
@@ -323,5 +369,50 @@ func (h *StockHandler) v1DeleteStock(w http.ResponseWriter, r *http.Request) sht
 
 	result.Status = true
 	result.Message = "Stock Deleted Successfully"
+	return shttp.Success.SetData(result)
+}
+
+// v1UpdateStockStatus
+// @Summary Update Stock Status
+// @Description Updates the status of a stock
+// @Tags Stock
+// @Accept json
+// @Produce json
+// @Param Stock body dtos.UpdateStockStatus true "Stock ID and new Status"
+// @Success 200 {object} dtos.ID "Returns updated stock ID"
+// @Failure 400 {object} string "Bad request"
+// @Failure 404 {object} string "Stock not found"
+// @Failure 500 {object} string "Internal server error"
+// @Router /stocks/update-stock-status [put]
+func (h *StockHandler) v1UpdateStockStatus(w http.ResponseWriter, r *http.Request) shttp.Response {
+	var result shttp.Result
+	result.Status = false
+
+	body, errBody := io.ReadAll(r.Body)
+	if errBody != nil {
+		result.Message = errBody.Error()
+		h.logger.Error("unable to read request body", errBody)
+		return shttp.BadRequest.SetData(result)
+	}
+	defer r.Body.Close()
+
+	var stockDTO dtos.UpdateStockStatus
+	errData := json.Unmarshal(body, &stockDTO)
+	if errData != nil {
+		result.Message = errData.Error()
+		h.logger.Error("unable to unmarshal request body", errData)
+		return shttp.UnprocessableEntity.SetData(result)
+	}
+
+	id, err := h.service.UpdateStockStatus(r.Context(), stockDTO)
+	if err != nil {
+		result.Message = err.Error()
+		h.logger.Error("unable to update stock", err)
+		return shttp.InternalServerError.SetData(result)
+	}
+
+	result.Status = true
+	result.Message = "Successfully updated stock"
+	result.Data = id
 	return shttp.Success.SetData(result)
 }

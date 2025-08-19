@@ -4,6 +4,7 @@ import (
 	"autotm-admin/internal/models"
 	"context"
 
+	"github.com/jackc/pgx/v5"
 	slog "github.com/salamsites/package-log"
 	spsql "github.com/salamsites/package-psql"
 )
@@ -23,9 +24,15 @@ func NewRegionsPsqlRepository(logger *slog.Logger, client spsql.Client) *Regions
 func (r *RegionsPsqlRepository) CreateRegion(ctx context.Context, region models.Region) (int64, error) {
 	var id int64
 
-	query := `INSERT INTO regions (name_tm, name_en, name_ru) VALUES ($1, $2, $3) RETURNING id`
+	query := `INSERT INTO regions (name_tm, name_en, name_ru) VALUES (@name_tm, @name_en, @name_ru) RETURNING id`
 
-	err := r.client.QueryRow(ctx, query, region.NameTM, region.NameEN, region.NameRU).Scan(&id)
+	args := pgx.NamedArgs{
+		"name_tm": region.NameTM,
+		"name_en": region.NameEN,
+		"name_ru": region.NameRU,
+	}
+
+	err := r.client.QueryRow(ctx, query, args).Scan(&id)
 	if err != nil {
 		r.logger.Errorf("create region err: %v", err)
 		return id, err
@@ -43,12 +50,17 @@ func (r *RegionsPsqlRepository) GetAllRegions(ctx context.Context, limit, page i
 		SELECT 
 		    id, name_tm, name_en, name_ru 
 		FROM regions
-		WHERE (name_tm ILIKE '%' || $1 || '%' OR name_ru ILIKE '%' || $1 || '%' OR name_en ILIKE '%' || $1 || '%')
+		WHERE (name_tm ILIKE '%' || @search || '%' OR name_ru ILIKE '%' || @search || '%' OR name_en ILIKE '%' || @search || '%')
 		ORDER BY created_at DESC
-		LIMIT $2 OFFSET $3;
+		LIMIT @limit OFFSET @offset;
 	`
 
-	rows, err := r.client.Query(ctx, query, search, limit, page)
+	args := pgx.NamedArgs{
+		"search": search,
+		"limit":  limit,
+		"offset": page,
+	}
+	rows, err := r.client.Query(ctx, query, args)
 	if err != nil {
 		r.logger.Errorf("get all regions query err : %v", err)
 		return nil, 0, err
@@ -67,9 +79,13 @@ func (r *RegionsPsqlRepository) GetAllRegions(ctx context.Context, limit, page i
 			SELECT 
 			    COUNT(*) 
 			FROM regions
-			WHERE (name_tm ILIKE '%' || $1 || '%' OR name_ru ILIKE '%' || $1 || '%' OR name_en ILIKE '%' || $1 || '%')
+			WHERE (name_tm ILIKE '%' || @search || '%' OR name_ru ILIKE '%' || @search || '%' OR name_en ILIKE '%' || @search || '%')
 		`
-	errCount := r.client.QueryRow(ctx, queryCount, search).Scan(&count)
+
+	argsCount := pgx.NamedArgs{
+		"search": search,
+	}
+	errCount := r.client.QueryRow(ctx, queryCount, argsCount).Scan(&count)
 	if errCount != nil {
 		r.logger.Errorf("get all regions count err : %v", err)
 		return nil, 0, err
@@ -82,11 +98,17 @@ func (r *RegionsPsqlRepository) UpdateRegion(ctx context.Context, region models.
 
 	query := `
 		UPDATE regions SET 
-		    name_tm = $1, name_ru = $2, name_en = $3, updated_at = NOW()
-		WHERE id = $4
+		    name_tm = @name_tm, name_ru = @name_ru, name_en = @name_en, updated_at = NOW()
+		WHERE id = @id
 		RETURNING id
 	`
-	err := r.client.QueryRow(ctx, query, region.NameTM, region.NameRU, region.NameEN, region.ID).Scan(&id)
+	args := pgx.NamedArgs{
+		"name_tm": region.NameTM,
+		"name_ru": region.NameRU,
+		"name_en": region.NameEN,
+		"id":      region.ID,
+	}
+	err := r.client.QueryRow(ctx, query, args).Scan(&id)
 	if err != nil {
 		r.logger.Errorf("update region err: %v", err)
 		return id, err
@@ -94,9 +116,13 @@ func (r *RegionsPsqlRepository) UpdateRegion(ctx context.Context, region models.
 	return id, nil
 }
 
-func (r *RegionsPsqlRepository) DeleteRegion(ctx context.Context, id models.ID) error {
-	query := `DELETE FROM regions WHERE id = $1`
-	_, err := r.client.Exec(ctx, query, id.ID)
+func (r *RegionsPsqlRepository) DeleteRegion(ctx context.Context, id int64) error {
+	query := `DELETE FROM regions WHERE id = @id`
+
+	args := pgx.NamedArgs{
+		"id": id,
+	}
+	_, err := r.client.Exec(ctx, query, args)
 	if err != nil {
 		r.logger.Errorf("delete region err: %v", err)
 		return err
@@ -108,9 +134,15 @@ func (r *RegionsPsqlRepository) DeleteRegion(ctx context.Context, id models.ID) 
 func (r *RegionsPsqlRepository) CreateCity(ctx context.Context, city models.City) (int64, error) {
 	var id int64
 
-	query := `INSERT INTO cities (name_tm, name_en, name_ru, region_id) VALUES ($1, $2, $3, $4) RETURNING id`
+	query := `INSERT INTO cities (name_tm, name_en, name_ru, region_id) VALUES (@name_tm, @name_en, @name_ru, @region_id) RETURNING id`
 
-	err := r.client.QueryRow(ctx, query, city.NameTM, city.NameEN, city.NameRU, city.RegionID).Scan(&id)
+	args := pgx.NamedArgs{
+		"name_tm":   city.NameTM,
+		"name_en":   city.NameEN,
+		"name_ru":   city.NameRU,
+		"region_id": city.RegionID,
+	}
+	err := r.client.QueryRow(ctx, query, args).Scan(&id)
 	if err != nil {
 		r.logger.Errorf("create city err: %v", err)
 		return id, err
@@ -130,22 +162,26 @@ func (r *RegionsPsqlRepository) GetAllCities(ctx context.Context, limit, page in
 		    r.name_tm, r.name_en, r.name_ru
 		FROM cities c
 			LEFT JOIN regions r on r.id = c.region_id
-		WHERE (c.name_tm ILIKE '%' || $1 || '%' OR c.name_ru ILIKE '%' || $1 || '%' OR c.name_en ILIKE '%' || $1 || '%' 
-		    OR r.name_tm ILIKE '%' || $1 || '%' OR r.name_ru ILIKE '%' || $1 || '%' OR r.name_en ILIKE '%' || $1 || '%')
+		WHERE (c.name_tm ILIKE '%' || @search || '%' OR c.name_ru ILIKE '%' || @search || '%' OR c.name_en ILIKE '%' || @search || '%' 
+		    OR r.name_tm ILIKE '%' || @search || '%' OR r.name_ru ILIKE '%' || @search || '%' OR r.name_en ILIKE '%' || @search || '%')
 	`
 
-	args := []interface{}{search, limit, page}
+	args := pgx.NamedArgs{
+		"search": search,
+		"limit":  limit,
+		"offset": page,
+	}
 
 	if len(regionIds) > 0 {
-		query += " AND c.region_id = ANY($4)"
-		args = append(args, regionIds)
+		query += " AND c.region_id = ANY(@regionIds)"
+		args["regionIds"] = regionIds
 	}
 
 	query += `
         ORDER BY c.created_at DESC
-        LIMIT $2 OFFSET $3;
+        LIMIT @limit OFFSET @offset;
     `
-	rows, err := r.client.Query(ctx, query, args...)
+	rows, err := r.client.Query(ctx, query, args)
 	if err != nil {
 		r.logger.Errorf("get all cities query err : %v", err)
 		return nil, 0, err
@@ -168,17 +204,19 @@ func (r *RegionsPsqlRepository) GetAllCities(ctx context.Context, limit, page in
 			    COUNT(c.id) 
 			FROM cities c
 			LEFT JOIN regions r on r.id = c.region_id
-		WHERE (c.name_tm ILIKE '%' || $1 || '%' OR c.name_ru ILIKE '%' || $1 || '%' OR c.name_en ILIKE '%' || $1 || '%' 
-		    OR r.name_tm ILIKE '%' || $1 || '%' OR r.name_ru ILIKE '%' || $1 || '%' OR r.name_en ILIKE '%' || $1 || '%')
+		WHERE (c.name_tm ILIKE '%' || @search || '%' OR c.name_ru ILIKE '%' || @search || '%' OR c.name_en ILIKE '%' || @search || '%' 
+		    OR r.name_tm ILIKE '%' || @search || '%' OR r.name_ru ILIKE '%' || @search || '%' OR r.name_en ILIKE '%' || @search || '%')
 		`
 
-	countArgs := []interface{}{search}
+	countArgs := pgx.NamedArgs{
+		"search": search,
+	}
 	if len(regionIds) > 0 {
-		queryCount += " AND c.region_id = ANY($2)"
-		countArgs = append(countArgs, regionIds)
+		queryCount += " AND c.region_id = ANY(@regionIds)"
+		countArgs["regionIds"] = regionIds
 	}
 
-	errCount := r.client.QueryRow(ctx, queryCount, countArgs...).Scan(&count)
+	errCount := r.client.QueryRow(ctx, queryCount, countArgs).Scan(&count)
 	if errCount != nil {
 		r.logger.Errorf("get all cities count err : %v", err)
 		return nil, 0, err
@@ -191,11 +229,19 @@ func (r *RegionsPsqlRepository) UpdateCity(ctx context.Context, city models.City
 
 	query := `
 		UPDATE cities SET 
-		    name_tm = $1, name_ru = $2, name_en = $3, region_id = $4, updated_at = NOW()
-		WHERE id = $5
+		    name_tm = @name_tm, name_ru = @name_ru, name_en = @name_en, region_id = @region_id, updated_at = NOW()
+		WHERE id = @id
 		RETURNING id
 	`
-	err := r.client.QueryRow(ctx, query, city.NameTM, city.NameRU, city.NameEN, city.RegionID, city.ID).Scan(&id)
+
+	args := pgx.NamedArgs{
+		"name_tm":   city.NameTM,
+		"name_ru":   city.NameRU,
+		"name_en":   city.NameEN,
+		"region_id": city.RegionID,
+		"id":        city.ID,
+	}
+	err := r.client.QueryRow(ctx, query, args).Scan(&id)
 	if err != nil {
 		r.logger.Errorf("update city err: %v", err)
 		return id, err
@@ -203,9 +249,12 @@ func (r *RegionsPsqlRepository) UpdateCity(ctx context.Context, city models.City
 	return id, nil
 }
 
-func (r *RegionsPsqlRepository) DeleteCity(ctx context.Context, id models.ID) error {
-	query := `DELETE FROM cities WHERE id = $1`
-	_, err := r.client.Exec(ctx, query, id.ID)
+func (r *RegionsPsqlRepository) DeleteCity(ctx context.Context, id int64) error {
+	query := `DELETE FROM cities WHERE id = @id`
+	args := pgx.NamedArgs{
+		"id": id,
+	}
+	_, err := r.client.Exec(ctx, query, args)
 	if err != nil {
 		r.logger.Errorf("delete cities err: %v", err)
 		return err

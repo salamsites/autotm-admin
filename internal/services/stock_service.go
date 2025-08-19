@@ -40,6 +40,7 @@ func (s *StockService) CreateStock(ctx context.Context, stock dtos.CreateStockRe
 		Address:     stock.Address,
 		RegionID:    stock.RegionID,
 		CityID:      stock.CityID,
+		Status:      stock.Status,
 	}
 
 	stockID, err := s.repo.CreateStock(ctx, newStock)
@@ -84,6 +85,8 @@ func (s *StockService) GetStocks(ctx context.Context, limit, page int64, search 
 	for _, stock := range stocks {
 		dtoStocks = append(dtoStocks, dtos.Stock{
 			ID:           stock.ID,
+			UserID:       stock.UserID,
+			UserName:     stock.UserName,
 			PhoneNumber:  stock.PhoneNumber,
 			Email:        stock.Email,
 			StoreName:    stock.StoreName,
@@ -98,14 +101,44 @@ func (s *StockService) GetStocks(ctx context.Context, limit, page int64, search 
 			RegionNameTM: stock.RegionNameTM,
 			RegionNameEN: stock.RegionNameEN,
 			RegionNameRU: stock.RegionNameRU,
-			UserID:       stock.UserID,
-			UserName:     stock.UserName,
+			Status:       stock.Status,
 		})
 	}
 
 	result := dtos.StocksResult{
 		Stocks: dtoStocks,
 		Count:  count,
+	}
+
+	return result, nil
+}
+
+func (s *StockService) GetStockByID(ctx context.Context, stockID int64) (dtos.Stock, error) {
+	stock, err := s.repo.GetStockByID(ctx, stockID)
+	if err != nil {
+		s.logger.Errorf("get stock by id err: %v", err)
+		return dtos.Stock{}, err
+	}
+
+	result := dtos.Stock{
+		ID:           stock.ID,
+		UserID:       stock.UserID,
+		UserName:     stock.UserName,
+		PhoneNumber:  stock.PhoneNumber,
+		Email:        stock.Email,
+		StoreName:    stock.StoreName,
+		Images:       stock.Images,
+		Logo:         stock.Logo,
+		CityID:       stock.CityID,
+		CityNameTM:   stock.CityNameTM,
+		CityNameEN:   stock.CityNameEN,
+		CityNameRU:   stock.CityNameRU,
+		RegionID:     stock.RegionID,
+		RegionNameTM: stock.RegionNameTM,
+		RegionNameEN: stock.RegionNameEN,
+		RegionNameRU: stock.RegionNameRU,
+		Address:      stock.Address,
+		Status:       stock.Status,
 	}
 
 	return result, nil
@@ -130,6 +163,7 @@ func (s *StockService) UpdateStock(ctx context.Context, stock dtos.UpdateStockRe
 		RegionID:    stock.RegionID,
 		CityID:      stock.CityID,
 		Address:     stock.Address,
+		Status:      stock.Status,
 	}
 
 	stockID, err := s.repo.UpdateStock(ctx, newStock)
@@ -142,14 +176,29 @@ func (s *StockService) UpdateStock(ctx context.Context, stock dtos.UpdateStockRe
 }
 
 func (s *StockService) DeleteStock(ctx context.Context, id int64) error {
-	deleteID := models.ID{
-		ID: id,
-	}
-
-	err := s.repo.DeleteStock(ctx, deleteID)
+	err := s.repo.DeleteStock(ctx, id)
 	if err != nil {
 		s.logger.Errorf("delete stock err: %v", err)
 		return err
 	}
 	return nil
+}
+
+func (s *StockService) UpdateStockStatus(ctx context.Context, stock dtos.UpdateStockStatus) (dtos.ID, error) {
+	var id dtos.ID
+
+	validate := helpers.GetValidator()
+	if err := validate.Struct(stock); err != nil {
+		s.logger.Errorf("validate err: %v", err)
+		return id, err
+	}
+
+	stockID, err := s.repo.UpdateStockStatus(ctx, stock.ID, stock.Status)
+	if err != nil {
+		s.logger.Errorf("update stock status err: %v", err)
+		return id, err
+	}
+
+	id.ID = stockID
+	return id, nil
 }

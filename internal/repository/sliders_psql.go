@@ -4,6 +4,7 @@ import (
 	"autotm-admin/internal/models"
 	"context"
 
+	"github.com/jackc/pgx/v5"
 	slog "github.com/salamsites/package-log"
 	spsql "github.com/salamsites/package-psql"
 )
@@ -26,11 +27,20 @@ func (r *SliderPsqlRepository) CreateSlider(ctx context.Context, slider models.S
 	query := `
 			INSERT INTO sliders 
     			(image_path_tm, image_path_en, image_path_ru, upload_id_tm, upload_id_en, upload_id_ru, platform) 
-			VALUES ($1, $2, $3, $4, $5, $6, $7) 
+			VALUES (@image_path_tm, @image_path_en, @image_path_ru, @upload_id_tm, @upload_id_en, @upload_id_ru, @platform) 
 			RETURNING id
 		`
 
-	err := r.client.QueryRow(ctx, query, slider.ImagePathTM, slider.ImagePathEN, slider.ImagePathRU, slider.UploadIdTM, slider.UploadIdEN, slider.UploadIdRU, slider.Platform).Scan(&id)
+	args := pgx.NamedArgs{
+		"image_path_tm": slider.ImagePathTM,
+		"image_path_en": slider.ImagePathEN,
+		"image_path_ru": slider.ImagePathRU,
+		"upload_id_tm":  slider.UploadIdTM,
+		"upload_id_en":  slider.UploadIdEN,
+		"upload_id_ru":  slider.UploadIdRU,
+		"platform":      slider.Platform,
+	}
+	err := r.client.QueryRow(ctx, query, args).Scan(&id)
 	if err != nil {
 		r.logger.Errorf("create err: %v", err)
 		return id, err
@@ -49,12 +59,17 @@ func (r *SliderPsqlRepository) GetAllSliders(ctx context.Context, limit, page in
 		    id, image_path_tm, image_path_en, image_path_ru, 
 		    upload_id_tm, upload_id_en, upload_id_ru, platform
 		FROM sliders
-		WHERE platform = $1
+		WHERE platform = @platform
 		ORDER BY created_at DESC
-		LIMIT $2 OFFSET $3;
+		LIMIT @limit OFFSET @offset;
 	`
 
-	rows, err := r.client.Query(ctx, query, platform, limit, page)
+	args := pgx.NamedArgs{
+		"platform": platform,
+		"limit":    limit,
+		"offset":   page,
+	}
+	rows, err := r.client.Query(ctx, query, args)
 	if err != nil {
 		r.logger.Errorf("get sliders query err : %v", err)
 		return nil, 0, err
@@ -75,9 +90,13 @@ func (r *SliderPsqlRepository) GetAllSliders(ctx context.Context, limit, page in
 			SELECT 
 			    COUNT(*) 
 			FROM sliders
-			WHERE platform = $1
+			WHERE platform = @platform
 		`
-	errCount := r.client.QueryRow(ctx, queryCount, platform).Scan(&count)
+
+	argsCount := pgx.NamedArgs{
+		"platform": platform,
+	}
+	errCount := r.client.QueryRow(ctx, queryCount, argsCount).Scan(&count)
 	if errCount != nil {
 		r.logger.Errorf("get sliders count err : %v", err)
 		return nil, 0, err
@@ -90,12 +109,23 @@ func (r *SliderPsqlRepository) UpdateSlider(ctx context.Context, slider models.S
 
 	query := `
 		UPDATE sliders SET 
-		    image_path_tm = $1, image_path_en = $2, image_path_ru = $3, platform = $4, 
-		    upload_id_tm = $5, upload_id_en = $6, upload_id_ru = $7, updated_at = NOW()
-		WHERE id = $8
+		    image_path_tm = @image_path_tm, image_path_en = @image_path_en, image_path_ru = @image_path_ru, platform = @platform, 
+		    upload_id_tm = @upload_id_tm, upload_id_en = @upload_id_en, upload_id_ru = @upload_id_ru, updated_at = NOW()
+		WHERE id = @id
 		RETURNING id;
 	`
-	err := r.client.QueryRow(ctx, query, slider.ImagePathTM, slider.ImagePathEN, slider.ImagePathRU, slider.Platform, slider.UploadIdTM, slider.UploadIdEN, slider.UploadIdRU, slider.ID).Scan(&id)
+
+	args := pgx.NamedArgs{
+		"image_path_tm": slider.ImagePathTM,
+		"image_path_en": slider.ImagePathEN,
+		"image_path_ru": slider.ImagePathRU,
+		"platform":      slider.Platform,
+		"upload_id_tm":  slider.UploadIdTM,
+		"upload_id_en":  slider.UploadIdEN,
+		"upload_id_ru":  slider.UploadIdRU,
+		"id":            slider.ID,
+	}
+	err := r.client.QueryRow(ctx, query, args).Scan(&id)
 	if err != nil {
 		r.logger.Errorf("update slider err: %v", err)
 		return id, err
@@ -103,9 +133,12 @@ func (r *SliderPsqlRepository) UpdateSlider(ctx context.Context, slider models.S
 	return id, nil
 }
 
-func (r *SliderPsqlRepository) DeleteSlider(ctx context.Context, id models.ID) error {
-	query := `DELETE FROM sliders WHERE id = $1`
-	_, err := r.client.Exec(ctx, query, id.ID)
+func (r *SliderPsqlRepository) DeleteSlider(ctx context.Context, id int64) error {
+	query := `DELETE FROM sliders WHERE id = @id`
+	args := pgx.NamedArgs{
+		"id": id,
+	}
+	_, err := r.client.Exec(ctx, query, args)
 	if err != nil {
 		r.logger.Errorf("delete slider err: %v", err)
 		return err
@@ -121,9 +154,15 @@ func (r *SliderPsqlRepository) GetSliderByID(ctx context.Context, id int64) (mod
 			id, image_path_tm, image_path_en, image_path_ru, 
 			upload_id_tm, upload_id_en, upload_id_ru, platform
 		FROM sliders
-		WHERE id = $1
+		WHERE id = @id
 	`
-	err := r.client.QueryRow(ctx, query, id).Scan(&slider.ID, &slider.ImagePathTM, &slider.ImagePathEN, &slider.ImagePathRU, &slider.UploadIdTM, &slider.UploadIdEN, &slider.UploadIdRU, &slider.Platform)
+
+	args := pgx.NamedArgs{
+		"id": id,
+	}
+	err := r.client.QueryRow(ctx, query, args).Scan(&slider.ID, &slider.ImagePathTM, &slider.ImagePathEN, &slider.ImagePathRU,
+		&slider.UploadIdTM, &slider.UploadIdEN, &slider.UploadIdRU, &slider.Platform,
+	)
 	if err != nil {
 		r.logger.Errorf("get slider by id query err : %v", err)
 		return slider, err

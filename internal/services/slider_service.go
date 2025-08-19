@@ -114,11 +114,7 @@ func (s *SlidersService) UpdateSlider(ctx context.Context, slider dtos.UpdateSli
 }
 
 func (s *SlidersService) DeleteSlider(ctx context.Context, id int64) error {
-	deleteID := models.ID{
-		ID: id,
-	}
-
-	err := s.repo.DeleteSlider(ctx, deleteID)
+	err := s.repo.DeleteSlider(ctx, id)
 	if err != nil {
 		s.logger.Errorf("delete slider err: %v", err)
 		return err

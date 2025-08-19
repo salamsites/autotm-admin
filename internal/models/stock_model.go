@@ -3,6 +3,7 @@ package models
 type Stock struct {
 	ID           int64
 	UserID       int64
+	UserName     string
 	PhoneNumber  string
 	Email        string
 	StoreName    string
@@ -17,5 +18,5 @@ type Stock struct {
 	RegionNameTM string
 	RegionNameEN string
 	RegionNameRU string
-	UserName     string
+	Status       string
 }

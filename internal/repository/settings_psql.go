@@ -3,6 +3,7 @@ package repository
 import (
 	"autotm-admin/internal/models"
 	"context"
+
 	"github.com/jackc/pgx/v5"
 	slog "github.com/salamsites/package-log"
 	spsql "github.com/salamsites/package-psql"
@@ -23,9 +24,13 @@ func NewSettingsPsqlRepository(logger *slog.Logger, client spsql.Client) *Settin
 func (r *SettingsPsqlRepository) CreateRole(ctx context.Context, role models.Role) (int64, error) {
 	var id int64
 
-	query := `INSERT INTO roles (name, role) VALUES ($1, $2) RETURNING id`
+	query := `INSERT INTO roles (name, role) VALUES (@name, @role) RETURNING id`
 
-	err := r.client.QueryRow(ctx, query, role.Name, role.Role).Scan(&id)
+	args := pgx.NamedArgs{
+		"name": role.Name,
+		"role": role.Role,
+	}
+	err := r.client.QueryRow(ctx, query, args).Scan(&id)
 	if err != nil {
 		r.logger.Errorf("create role err: %v", err)
 		return id, err
@@ -65,12 +70,18 @@ func (r *SettingsPsqlRepository) GetAllRoles(ctx context.Context, limit, page in
 		SELECT 
 		    id, name, role 
 		FROM roles
-		WHERE name ILIKE '%' || $1 || '%'
+		WHERE name ILIKE '%' || @search || '%'
 		ORDER BY created_at DESC
-		LIMIT $2 OFFSET $3;
+		LIMIT @limit OFFSET @offset;
 	`
 
-	rows, err := r.client.Query(ctx, query, search, limit, page)
+	args := pgx.NamedArgs{
+		"search": search,
+		"limit":  limit,
+		"offset": page,
+	}
+
+	rows, err := r.client.Query(ctx, query, args)
 	if err != nil {
 		r.logger.Errorf("get all roles query err : %v", err)
 		return nil, 0, err
@@ -89,9 +100,13 @@ func (r *SettingsPsqlRepository) GetAllRoles(ctx context.Context, limit, page in
 			SELECT 
 			    COUNT(*) 
 			FROM roles
-			WHERE name ILIKE '%' || $1 || '%'
+			WHERE name ILIKE '%' || @search || '%'
 		`
-	errCount := r.client.QueryRow(ctx, queryCount, search).Scan(&count)
+
+	argsCount := pgx.NamedArgs{
+		"search": search,
+	}
+	errCount := r.client.QueryRow(ctx, queryCount, argsCount).Scan(&count)
 	if errCount != nil {
 		r.logger.Errorf("get all roles count err : %v", err)
 		return nil, 0, err
@@ -104,11 +119,17 @@ func (r *SettingsPsqlRepository) UpdateRole(ctx context.Context, role models.Rol
 
 	query := `
 		UPDATE roles SET 
-		    name = $1, role = $2, updated_at = NOW()
-		WHERE id = $3
+		    name = @name, role = @role, updated_at = NOW()
+		WHERE id = @id
 		RETURNING id
 	`
-	err := r.client.QueryRow(ctx, query, role.Name, role.Role, role.ID).Scan(&id)
+
+	args := pgx.NamedArgs{
+		"name": role.Name,
+		"role": role.Role,
+		"id":   role.ID,
+	}
+	err := r.client.QueryRow(ctx, query, args).Scan(&id)
 	if err != nil {
 		r.logger.Errorf("update role err: %v", err)
 		return id, err
@@ -116,9 +137,12 @@ func (r *SettingsPsqlRepository) UpdateRole(ctx context.Context, role models.Rol
 	return id, nil
 }
 
-func (r *SettingsPsqlRepository) DeleteRole(ctx context.Context, id models.ID) error {
-	query := `DELETE FROM roles WHERE id = $1`
-	_, err := r.client.Exec(ctx, query, id.ID)
+func (r *SettingsPsqlRepository) DeleteRole(ctx context.Context, id int64) error {
+	query := `DELETE FROM roles WHERE id = @id`
+	args := pgx.NamedArgs{
+		"id": id,
+	}
+	_, err := r.client.Exec(ctx, query, args)
 	if err != nil {
 		r.logger.Errorf("delete role err: %v", err)
 		return err
@@ -126,13 +150,19 @@ func (r *SettingsPsqlRepository) DeleteRole(ctx context.Context, id models.ID) e
 	return nil
 }
 
-// Users
+// Admin Users
 func (r *SettingsPsqlRepository) CreateUser(ctx context.Context, user models.User) (int64, error) {
 	var id int64
 
-	query := `INSERT INTO admin_users (username, login, password, role_id) VALUES ($1, $2, $3, $4) RETURNING id`
+	query := `INSERT INTO admin_users (username, login, password, role_id) VALUES (@username, @login, @password, @role_id) RETURNING id`
 
-	err := r.client.QueryRow(ctx, query, user.Username, user.Login, user.Password, user.RoleID).Scan(&id)
+	args := pgx.NamedArgs{
+		"username": user.Username,
+		"login":    user.Login,
+		"password": user.Password,
+		"role_id":  user.RoleID,
+	}
+	err := r.client.QueryRow(ctx, query, args).Scan(&id)
 	if err != nil {
 		r.logger.Errorf("create user err: %v", err)
 		return id, err
@@ -149,10 +179,14 @@ func (r *SettingsPsqlRepository) GetUserByLogin(ctx context.Context, login strin
 		SELECT
 			id, username, login, password, role_id
 		FROM admin_users
-		WHERE login = $1
+		WHERE login = @login
 		LIMIT 1
 	`
-	err := r.client.QueryRow(ctx, query, login).Scan(&user.ID, &user.Username, &user.Login, &user.Password, &user.RoleID)
+
+	args := pgx.NamedArgs{
+		"login": login,
+	}
+	err := r.client.QueryRow(ctx, query, args).Scan(&user.ID, &user.Username, &user.Login, &user.Password, &user.RoleID)
 	if err != nil {
 		r.logger.Errorf("get user by login err: %v", err)
 		return user, err
@@ -172,12 +206,18 @@ func (r *SettingsPsqlRepository) GetAllUsers(ctx context.Context, limit, page in
 		    u.role_id, r.name AS role_name 
 		FROM admin_users u
 			LEFT JOIN roles r ON u.role_id = r.id
-		WHERE (u.username ILIKE '%' || $1 || '%' OR r.name ILIKE '%' || $1 || '%' OR u.login ILIKE '%' || $1 || '%')
+		WHERE (u.username ILIKE '%' || @search || '%' OR r.name ILIKE '%' || @search || '%' OR u.login ILIKE '%' || @search || '%')
 		ORDER BY u.created_at DESC
-		LIMIT $2 OFFSET $3;
+		LIMIT @limit OFFSET @offset;
 	`
 
-	rows, err := r.client.Query(ctx, query, search, limit, page)
+	args := pgx.NamedArgs{
+		"search": search,
+		"limit":  limit,
+		"offset": page,
+	}
+
+	rows, err := r.client.Query(ctx, query, args)
 	if err != nil {
 		r.logger.Errorf("get all users query err : %v", err)
 		return nil, 0, err
@@ -197,9 +237,13 @@ func (r *SettingsPsqlRepository) GetAllUsers(ctx context.Context, limit, page in
 			    COUNT(u.id) 
 			FROM admin_users u
 				LEFT JOIN roles r ON u.role_id = r.id
-			WHERE (u.username ILIKE '%' || $1 || '%' OR r.name ILIKE '%' || $1 || '%' OR u.login ILIKE '%' || $1 || '%')
+			WHERE (u.username ILIKE '%' || @search || '%' OR r.name ILIKE '%' || @search || '%' OR u.login ILIKE '%' || @search || '%')
 		`
-	errCount := r.client.QueryRow(ctx, queryCount, search).Scan(&count)
+
+	argsCount := pgx.NamedArgs{
+		"search": search,
+	}
+	errCount := r.client.QueryRow(ctx, queryCount, argsCount).Scan(&count)
 	if errCount != nil {
 		r.logger.Errorf("get all users count err : %v", err)
 		return nil, 0, err
@@ -212,11 +256,18 @@ func (r *SettingsPsqlRepository) UpdateUser(ctx context.Context, user models.Use
 
 	query := `
 		UPDATE admin_users SET 
-		    username = $1, login = $2, password = $3, role_id = $4, updated_at = NOW()
-		WHERE id = $5
+		    username = @username, login = @login, password = @password, role_id = @role_id, updated_at = NOW()
+		WHERE id = @id
 		RETURNING id
 	`
-	err := r.client.QueryRow(ctx, query, user.Username, user.Login, user.Password, user.RoleID, user.ID).Scan(&id)
+	args := pgx.NamedArgs{
+		"username": user.Username,
+		"login":    user.Login,
+		"password": user.Password,
+		"role_id":  user.RoleID,
+		"id":       user.ID,
+	}
+	err := r.client.QueryRow(ctx, query, args).Scan(&id)
 	if err != nil {
 		r.logger.Errorf("update user err: %v", err)
 		return id, err
@@ -224,9 +275,12 @@ func (r *SettingsPsqlRepository) UpdateUser(ctx context.Context, user models.Use
 	return id, nil
 }
 
-func (r *SettingsPsqlRepository) DeleteUser(ctx context.Context, id models.ID) error {
-	query := `DELETE FROM admin_users WHERE id = $1`
-	_, err := r.client.Exec(ctx, query, id.ID)
+func (r *SettingsPsqlRepository) DeleteUser(ctx context.Context, id int64) error {
+	query := `DELETE FROM admin_users WHERE id = @id`
+	args := pgx.NamedArgs{
+		"id": id,
+	}
+	_, err := r.client.Exec(ctx, query, args)
 	if err != nil {
 		r.logger.Errorf("delete users err: %v", err)
 		return err

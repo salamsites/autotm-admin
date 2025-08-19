@@ -17,11 +17,6 @@ type Brand struct {
 	Categories []string
 }
 
-type ID struct {
-	ID       int64  `json:"id"`
-	Category string `json:"category"`
-}
-
 type Model struct {
 	ID        int64
 	Name      string

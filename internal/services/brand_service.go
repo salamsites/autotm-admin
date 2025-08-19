@@ -113,11 +113,7 @@ func (s *BrandService) UpdateBodyType(ctx context.Context, bodyType dtos.UpdateB
 }
 
 func (s *BrandService) DeleteBodyType(ctx context.Context, id int64) error {
-	deleteID := models.ID{
-		ID: id,
-	}
-
-	err := s.repo.DeleteBodyType(ctx, deleteID)
+	err := s.repo.DeleteBodyType(ctx, id)
 	if err != nil {
 		s.logger.Errorf("delete body type err: %v", err)
 		return err
@@ -207,12 +203,7 @@ func (s *BrandService) UpdateBrand(ctx context.Context, brand dtos.UpdateBrandRe
 }
 
 func (s *BrandService) DeleteBrandCategory(ctx context.Context, id int64, category string) error {
-	deleteID := models.ID{
-		ID:       id,
-		Category: category,
-	}
-
-	err := s.repo.DeleteBrandCategory(ctx, deleteID)
+	err := s.repo.DeleteBrandCategory(ctx, id, category)
 	if err != nil {
 		s.logger.Errorf("delete brand err: %v", err)
 		return err
@@ -301,11 +292,7 @@ func (s *BrandService) UpdateModel(ctx context.Context, model dtos.UpdateModelRe
 }
 
 func (s *BrandService) DeleteModel(ctx context.Context, id int64) error {
-	deleteID := models.ID{
-		ID: id,
-	}
-
-	err := s.repo.DeleteModel(ctx, deleteID)
+	err := s.repo.DeleteModel(ctx, id)
 	if err != nil {
 		s.logger.Errorf("delete model err: %v", err)
 		return err
@@ -392,11 +379,7 @@ func (s *BrandService) UpdateDescription(ctx context.Context, description dtos.U
 }
 
 func (s *BrandService) DeleteDescription(ctx context.Context, id int64) error {
-	deleteID := models.ID{
-		ID: id,
-	}
-
-	err := s.repo.DeleteDescription(ctx, deleteID)
+	err := s.repo.DeleteDescription(ctx, id)
 	if err != nil {
 		s.logger.Errorf("delete description err: %v", err)
 		return err

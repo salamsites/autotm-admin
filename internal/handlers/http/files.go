@@ -34,13 +34,13 @@ func (h *FilesHandler) FilesRegisterRoutes(r chi.Router) {
 }
 
 // v1UploadImage
-// @Summary Upload an image(s)
-// @Description Uploads one or multiple image files and returns the file path(s)
+// @Summary Upload an image
+// @Description Uploads one image file and returns the file path
 // @Tags Files
 // @Accept multipart/form-data
 // @Produce json
-// @Param image formData file true "Image file(s) to uploa	d (single or multiple)"
-// @Success 200 {object} dtos.UploadImage "Returns the uploaded image path(s)"
+// @Param image formData file true "Image file to upload (single)"
+// @Success 200 {object} dtos.UploadImage "Returns the uploaded image path"
 // @Failure 400 {object} string "Bad request"
 // @Failure 500 {object} string "Internal server error"
 // @Router /files/upload-image [post]
