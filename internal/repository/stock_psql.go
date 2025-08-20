@@ -82,7 +82,7 @@ func (r *StockPsqlRepository) UpdateStockLogo(ctx context.Context, stockID int64
 	return nil
 }
 
-func (r *StockPsqlRepository) GetStocks(ctx context.Context, limit, page int64, search string) ([]models.Stock, int64, error) {
+func (r *StockPsqlRepository) GetStocks(ctx context.Context, limit, page int64, search, status string) ([]models.Stock, int64, error) {
 	var (
 		stocks []models.Stock
 		count  int64
@@ -97,17 +97,24 @@ func (r *StockPsqlRepository) GetStocks(ctx context.Context, limit, page int64, 
            LEFT JOIN users u ON u.id = s.user_id
            LEFT JOIN cities c ON c.id = s.city_id
            LEFT JOIN regions r on r.id = s.region_id
-		   WHERE s.store_name ILIKE '%' || @search || '%' OR u.full_name ILIKE '%' || @search || '%'
-		   ORDER BY s.created_at DESC
-		   LIMIT @limit OFFSET @page
+		   WHERE (s.store_name ILIKE '%' || @search || '%' OR u.full_name ILIKE '%' || @search || '%')
 		`
 
 	args := pgx.NamedArgs{
 		"search": search,
 		"limit":  limit,
-		"page":   page,
+		"offset": page,
 	}
 
+	if status != "" {
+		query += " AND s.status = @status "
+		args["status"] = status
+	}
+
+	query += `
+   		ORDER BY s.created_at DESC
+   		LIMIT @limit OFFSET @offset
+    `
 	rows, err := r.client.Query(ctx, query, args)
 	if err != nil {
 		r.logger.Errorf("Error getting stock: %s", err)
@@ -151,15 +158,20 @@ func (r *StockPsqlRepository) GetStocks(ctx context.Context, limit, page int64, 
 				LEFT JOIN users u ON u.id = s.user_id
 			    LEFT JOIN cities c ON c.id = s.city_id
 			    LEFT JOIN regions r on r.id = s.region_id
-			WHERE s.store_name ILIKE '%' || @search || '%' OR u.full_name ILIKE '%' || @search || '%'
+			WHERE (s.store_name ILIKE '%' || @search || '%' OR u.full_name ILIKE '%' || @search || '%')
 		`
 	argsCount := pgx.NamedArgs{
 		"search": search,
 	}
 
+	if status != "" {
+		queryCount += " AND s.status = @status "
+		argsCount["status"] = status
+	}
+
 	err = r.client.QueryRow(ctx, queryCount, argsCount).Scan(&count)
 	if err != nil {
-		r.logger.Errorf("Error getting auto-store count: %s", err)
+		r.logger.Errorf("Error getting stocks count: %s", err)
 		return nil, 0, err
 	}
 

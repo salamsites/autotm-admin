@@ -148,6 +148,7 @@ func (h *StockHandler) v1CreateStock(w http.ResponseWriter, r *http.Request) sht
 // @Param limit query int false "Limit number of stocks to return"
 // @Param page query int false "Page number"
 // @Param search query string false "Search string to filter stocks by name and users by name"
+// @Param status query string false "Status string to filter stocks by status"
 // @Success 200 {object} dtos.StocksResult "List of stocks with pagination info successfully"
 // @Failure 400 {object} string "Bad request"
 // @Failure 500 {object} string "Internal server error"
@@ -156,6 +157,7 @@ func (h *StockHandler) v1GetStocks(w http.ResponseWriter, r *http.Request) shttp
 	limitStr := r.URL.Query().Get("limit")
 	pageStr := r.URL.Query().Get("page")
 	search := r.URL.Query().Get("search")
+	status := r.URL.Query().Get("status")
 
 	limit, err := strconv.ParseInt(limitStr, 10, 64)
 	if err != nil || limit <= 0 {
@@ -168,7 +170,7 @@ func (h *StockHandler) v1GetStocks(w http.ResponseWriter, r *http.Request) shttp
 
 	var result shttp.Result
 
-	stocks, err := h.service.GetStocks(r.Context(), limit, page, search)
+	stocks, err := h.service.GetStocks(r.Context(), limit, page, search, status)
 	if err != nil {
 		result.Status = false
 		result.Message = err.Error()

@@ -156,6 +156,165 @@ CREATE TABLE IF NOT EXISTS descriptions (
                         "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+
+-- +goose Up
+
+-- +goose StatementBegin
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'feeds_status') THEN
+CREATE TYPE feeds_status AS ENUM ('pending', 'accepted', 'blocked');
+END IF;
+END
+$$;
+-- +goose StatementEnd
+
+-- +goose StatementBegin
+CREATE TABLE IF NOT EXISTS cars (
+                id SERIAL PRIMARY KEY,
+                user_id BIGINT NOT NULL,
+                stock_id BIGINT,
+                brand_id BIGINT NOT NULL,
+                model_id BIGINT NOT NULL,
+                year BIGINT NOT NULL,
+                mileage BIGINT NOT NULL,
+                color VARCHAR(255) NOT NULL,
+                engine_capacity DOUBLE PRECISION NOT NULL,
+                engine_type VARCHAR(255) NOT NULL,
+                body_id BIGINT NOT NULL,
+                transmission VARCHAR(255) NOT NULL,
+                drive_type VARCHAR(255) NOT NULL,
+                vin VARCHAR(255),
+                description TEXT,
+                city_id BIGINT NOT NULL,
+                name VARCHAR(255),
+                mail VARCHAR(255),
+                phone_number VARCHAR(50) NOT NULL,
+                price BIGINT NOT NULL,
+                is_comment BOOLEAN NOT NULL,
+                is_exchange BOOLEAN NOT NULL,
+                is_credit BOOLEAN NOT NULL,
+                images JSONB,
+                status feeds_status DEFAULT 'pending',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                CONSTRAINT fk_user
+                    FOREIGN KEY (user_id)
+                        REFERENCES users (id)
+                            ON DELETE SET NULL,
+                CONSTRAINT fk_brand
+                    FOREIGN KEY (brand_id)
+                        REFERENCES brands (id)
+                            ON DELETE CASCADE,
+                CONSTRAINT fk_stock
+                    FOREIGN KEY (stock_id)
+                        REFERENCES stocks (id)
+                            ON DELETE SET NULL,
+                CONSTRAINT fk_model
+                    FOREIGN KEY (model_id)
+                        REFERENCES models (id)
+                            ON DELETE CASCADE,
+                CONSTRAINT fk_body
+                    FOREIGN KEY (body_id)
+                        REFERENCES body_types (id)
+                            ON DELETE CASCADE,
+                CONSTRAINT fk_city
+                    FOREIGN KEY (city_id)
+                        REFERENCES cities (id)
+                            ON DELETE CASCADE
+);
+-- +goose StatementEnd
+
+-- +goose StatementBegin
+ALTER TABLE cars OWNER TO autotm;
+-- +goose StatementEnd
+
+-- +goose StatementBegin
+CREATE TABLE IF NOT EXISTS trucks (
+                id BIGSERIAL PRIMARY KEY,
+                user_id BIGINT NOT NULL,
+                stock_id BIGINT NULL,
+                body_id BIGINT NOT NULL,
+                brand_id BIGINT NOT NULL,
+                model_id BIGINT NOT NULL,
+                load_capacity DOUBLE PRECISION,
+                price BIGINT NOT NULL,
+                body_type VARCHAR(255),
+                drive_type VARCHAR(255),
+                transmission VARCHAR(255),
+                engine_type VARCHAR(255),
+                year BIGINT NOT NULL,
+                seats BIGINT,
+                cab_type VARCHAR(255),
+                wheel_formula VARCHAR(255),
+                chassis VARCHAR(255),
+                cab_suspension VARCHAR(255),
+                bus_type VARCHAR(255),
+                suspension_type VARCHAR(255),
+                brakes VARCHAR(255),
+                axles BIGINT,
+                engine_hours BIGINT,
+                vehicle_type VARCHAR(255),
+                engine_capacity DOUBLE PRECISION,
+                forklift_type VARCHAR(255),
+                lifting_capacity BIGINT,
+                mileage BIGINT,
+                excavator_type VARCHAR(255),
+                bulldozer_type VARCHAR(255),
+                color VARCHAR(255) NOT NULL,
+                vin VARCHAR(255),
+                description TEXT,
+                city_id BIGINT NOT NULL,
+                name VARCHAR(255),
+                mail VARCHAR(255),
+                phone_number VARCHAR(255) NOT NULL,
+                is_comment BOOLEAN NOT NULL,
+                is_exchange BOOLEAN NOT NULL,
+                is_credit BOOLEAN NOT NULL,
+                images JSONB,
+                status feeds_status DEFAULT 'pending',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                CONSTRAINT fk_user
+                    FOREIGN KEY (user_id)
+                        REFERENCES users (id)
+                            ON DELETE SET NULL,
+                CONSTRAINT fk_brand
+                    FOREIGN KEY (brand_id)
+                        REFERENCES brands (id)
+                            ON DELETE CASCADE,
+                CONSTRAINT fk_stock
+                    FOREIGN KEY (stock_id)
+                        REFERENCES stocks (id)
+                            ON DELETE SET NULL,
+                CONSTRAINT fk_model
+                    FOREIGN KEY (model_id)
+                        REFERENCES models (id)
+                            ON DELETE CASCADE,
+                CONSTRAINT fk_body
+                    FOREIGN KEY (body_id)
+                        REFERENCES body_types (id)
+                            ON DELETE CASCADE,
+                CONSTRAINT fk_city
+                    FOREIGN KEY (city_id)
+                        REFERENCES cities (id)
+                            ON DELETE CASCADE
+);
+-- +goose StatementEnd
+
+-- +goose StatementBegin
+ALTER TABLE trucks OWNER TO autotm;
+-- +goose StatementEnd
+
+-- +goose Down
+-- +goose StatementBegin
+DROP TABLE IF EXISTS cars;
+-- +goose StatementEnd
+
+-- +goose StatementBegin
+DROP TABLE IF EXISTS trucks;
+-- +goose StatementEnd
+
 -- +goose Down
 -- +goose StatementBegin
 DROP TABLE IF EXISTS sliders;

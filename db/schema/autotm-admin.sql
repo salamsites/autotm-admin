@@ -15,7 +15,7 @@ SET client_encoding TO 'UTF-8';
 
 
 CREATE TYPE category_type AS ENUM ('auto', 'moto', 'truck');
-
+CREATE TYPE stock_status AS ENUM ('waiting', 'accepted', 'blocked');
 
 CREATE TABLE IF NOT EXISTS body_types (
             "id" SERIAL PRIMARY KEY,

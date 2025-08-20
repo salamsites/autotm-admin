@@ -68,14 +68,14 @@ func (s *StockService) UpdateStockFiles(ctx context.Context, stockID dtos.ID, im
 	return nil
 }
 
-func (s *StockService) GetStocks(ctx context.Context, limit, page int64, search string) (dtos.StocksResult, error) {
+func (s *StockService) GetStocks(ctx context.Context, limit, page int64, search, status string) (dtos.StocksResult, error) {
 	offset := (page - 1) * limit
 	if page <= 0 {
 		page = 1
 		offset = 0
 	}
 
-	stocks, count, err := s.repo.GetStocks(ctx, limit, offset, search)
+	stocks, count, err := s.repo.GetStocks(ctx, limit, offset, search, status)
 	if err != nil {
 		s.logger.Errorf("get autoStores err: %v", err)
 		return dtos.StocksResult{}, err
