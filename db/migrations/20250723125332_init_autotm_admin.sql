@@ -14,8 +14,7 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'stock_status') THEN
 CREATE TYPE stock_status AS ENUM ('waiting', 'accepted', 'blocked');
 END IF;
-END
-$$;
+END$$;
 -- +goose StatementEnd
 
 CREATE TABLE IF NOT EXISTS body_types (
@@ -155,9 +154,6 @@ CREATE TABLE IF NOT EXISTS descriptions (
                         "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
-
--- +goose Up
 
 -- +goose StatementBegin
 DO $$
