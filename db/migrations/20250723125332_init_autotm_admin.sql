@@ -1,4 +1,5 @@
 -- +goose Up
+
 -- +goose StatementBegin
 DO $$
 BEGIN
@@ -15,6 +16,16 @@ BEGIN
 CREATE TYPE stock_status AS ENUM ('waiting', 'accepted', 'blocked');
 END IF;
 END$$;
+-- +goose StatementEnd
+
+-- +goose StatementBegin
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'feeds_status') THEN
+CREATE TYPE feeds_status AS ENUM ('pending', 'accepted', 'blocked');
+END IF;
+END
+$$;
 -- +goose StatementEnd
 
 CREATE TABLE IF NOT EXISTS body_types (
@@ -156,16 +167,6 @@ CREATE TABLE IF NOT EXISTS descriptions (
 );
 
 -- +goose StatementBegin
-DO $$
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'feeds_status') THEN
-CREATE TYPE feeds_status AS ENUM ('pending', 'accepted', 'blocked');
-END IF;
-END
-$$;
--- +goose StatementEnd
-
--- +goose StatementBegin
 CREATE TABLE IF NOT EXISTS cars (
                 id SERIAL PRIMARY KEY,
                 user_id BIGINT NOT NULL,
@@ -302,17 +303,11 @@ CREATE TABLE IF NOT EXISTS trucks (
 ALTER TABLE trucks OWNER TO autotm;
 -- +goose StatementEnd
 
--- +goose Down
--- +goose StatementBegin
-DROP TABLE IF EXISTS cars;
--- +goose StatementEnd
 
+-- +goose Down
 -- +goose StatementBegin
 DROP TABLE IF EXISTS trucks;
--- +goose StatementEnd
-
--- +goose Down
--- +goose StatementBegin
+DROP TABLE IF EXISTS cars;
 DROP TABLE IF EXISTS sliders;
 DROP TABLE IF EXISTS cities;
 DROP TABLE IF EXISTS regions;
@@ -324,6 +319,8 @@ DROP TABLE IF EXISTS brands;
 DROP TABLE IF EXISTS body_types;
 DROP TABLE IF EXISTS stocks;
 DROP TABLE IF EXISTS descriptions;
+
+DROP TYPE IF EXISTS feeds_status;
 DROP TYPE IF EXISTS category_type;
 DROP TYPE IF EXISTS stock_status;
 -- +goose StatementEnd
