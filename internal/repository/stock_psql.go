@@ -26,8 +26,8 @@ func (r *StockPsqlRepository) CreateStock(ctx context.Context, stock models.Stoc
 
 	query := ` 
 			INSERT INTO stocks 
-			    (user_id, phone_number, email, store_name, images, logo, address, region_id, city_id, status) 
-			VALUES (@user_id, @phone_number, @email, @store_name, @images, @logo, @address, @region_id, @city_id, @status) 
+			    (user_id, phone_number, email, store_name, images, logo, address, region_id, city_id, status, description) 
+			VALUES (@user_id, @phone_number, @email, @store_name, @images, @logo, @address, @region_id, @city_id, @status, @description) 
 			RETURNING id;
 	`
 
@@ -42,6 +42,7 @@ func (r *StockPsqlRepository) CreateStock(ctx context.Context, stock models.Stoc
 		"region_id":    stock.RegionID,
 		"city_id":      stock.CityID,
 		"status":       stock.Status,
+		"description":  stock.Description,
 	}
 
 	err := r.client.QueryRow(ctx, query, args).Scan(&id)
@@ -92,7 +93,7 @@ func (r *StockPsqlRepository) GetStocks(ctx context.Context, limit, page int64, 
 			SELECT
 				s.id, s.user_id, u.full_name, s.phone_number, s.email, s.store_name, 
 				s.images, s.logo, s.address, s.city_id, c.name_tm, c.name_en, c.name_ru, 
-				s.region_id, r.name_tm, r.name_en, r.name_ru, s.status
+				s.region_id, r.name_tm, r.name_en, r.name_ru, s.status, s.description
            FROM stocks s
            LEFT JOIN users u ON u.id = s.user_id
            LEFT JOIN cities c ON c.id = s.city_id
@@ -143,6 +144,7 @@ func (r *StockPsqlRepository) GetStocks(ctx context.Context, limit, page int64, 
 			&stock.RegionNameEN,
 			&stock.RegionNameRU,
 			&stock.Status,
+			&stock.Description,
 		)
 		if err != nil {
 			r.logger.Errorf("Error scanning stock: %s", err)
@@ -183,11 +185,10 @@ func (r *StockPsqlRepository) GetStockByID(ctx context.Context, stockID int64) (
 
 	query := `
 		SELECT
-			s.id, s.user_id, u.full_name, 
-			s.phone_number, s.email, s.store_name,
-			s.images, s.logo, s.region_id, r.name_tm,
-			r.name_ru, r.name_en, s.city_id, c.name_tm,
-			c.name_en, c.name_ru, s.address, s.status
+			s.id, s.user_id, u.full_name, s.phone_number, 
+			s.email, s.store_name, s.images, s.logo, s.region_id, 
+			r.name_tm, r.name_ru, r.name_en, s.city_id, c.name_tm,
+			c.name_en, c.name_ru, s.address, s.status, s.description
 		FROM stocks s
 			LEFT JOIN users u ON u.id = s.user_id
 			LEFT JOIN cities c ON c.id = s.city_id
@@ -201,7 +202,7 @@ func (r *StockPsqlRepository) GetStockByID(ctx context.Context, stockID int64) (
 
 	err := r.client.QueryRow(ctx, query, args).Scan(&stock.ID, &stock.UserID, &stock.UserName, &stock.PhoneNumber, &stock.Email,
 		&stock.StoreName, &stock.Images, &stock.Logo, &stock.RegionID, &stock.RegionNameTM, &stock.RegionNameRU, &stock.RegionNameEN,
-		&stock.CityID, &stock.CityNameTM, &stock.CityNameEN, &stock.CityNameRU, &stock.Address, &stock.Status,
+		&stock.CityID, &stock.CityNameTM, &stock.CityNameEN, &stock.CityNameRU, &stock.Address, &stock.Status, &stock.Description,
 	)
 
 	if err != nil {
@@ -218,7 +219,7 @@ func (r *StockPsqlRepository) UpdateStock(ctx context.Context, stock models.Stoc
 	query := `
 		UPDATE stocks SET 
 		    user_id = @user_id, phone_number = @phone_number, email = @email, store_name = @store_name, images = @images, 
-		    logo = @logo, address = @address, region_id = @region_id, city_id = @city_id, status = @status
+		    logo = @logo, address = @address, region_id = @region_id, city_id = @city_id, status = @status, description = @description
 		WHERE id = @id
 		RETURNING id
 	`
@@ -234,6 +235,7 @@ func (r *StockPsqlRepository) UpdateStock(ctx context.Context, stock models.Stoc
 		"region_id":    stock.RegionID,
 		"city_id":      stock.CityID,
 		"status":       stock.Status,
+		"description":  stock.Description,
 		"id":           stock.ID,
 	}
 	err := r.client.QueryRow(ctx, query, args).Scan(&stockID)

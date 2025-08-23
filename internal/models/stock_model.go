@@ -19,4 +19,5 @@ type Stock struct {
 	RegionNameEN string
 	RegionNameRU string
 	Status       string
+	Description  string
 }

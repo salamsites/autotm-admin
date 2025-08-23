@@ -11,6 +11,7 @@ type CreateStockReq struct {
 	CityID      int64    `json:"city_id"`
 	Address     string   `json:"address"`
 	Status      string   `json:"status"`
+	Description string   `json:"description"`
 }
 
 type UpdateStockReq struct {
@@ -25,6 +26,7 @@ type UpdateStockReq struct {
 	CityID      int64    `json:"city_id"`
 	Address     string   `json:"address"`
 	Status      string   `json:"status"`
+	Description string   `json:"description"`
 }
 
 type Stock struct {
@@ -46,6 +48,7 @@ type Stock struct {
 	RegionNameEN string   `json:"region_name_en"`
 	RegionNameRU string   `json:"region_name_ru"`
 	Status       string   `json:"status"`
+	Description  string   `json:"description"`
 }
 
 type StocksResult struct {

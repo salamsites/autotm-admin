@@ -41,6 +41,7 @@ func (s *StockService) CreateStock(ctx context.Context, stock dtos.CreateStockRe
 		RegionID:    stock.RegionID,
 		CityID:      stock.CityID,
 		Status:      stock.Status,
+		Description: stock.Description,
 	}
 
 	stockID, err := s.repo.CreateStock(ctx, newStock)
@@ -102,6 +103,7 @@ func (s *StockService) GetStocks(ctx context.Context, limit, page int64, search,
 			RegionNameEN: stock.RegionNameEN,
 			RegionNameRU: stock.RegionNameRU,
 			Status:       stock.Status,
+			Description:  stock.Description,
 		})
 	}
 
@@ -139,6 +141,7 @@ func (s *StockService) GetStockByID(ctx context.Context, stockID int64) (dtos.St
 		RegionNameRU: stock.RegionNameRU,
 		Address:      stock.Address,
 		Status:       stock.Status,
+		Description:  stock.Description,
 	}
 
 	return result, nil
@@ -164,6 +167,7 @@ func (s *StockService) UpdateStock(ctx context.Context, stock dtos.UpdateStockRe
 		CityID:      stock.CityID,
 		Address:     stock.Address,
 		Status:      stock.Status,
+		Description: stock.Description,
 	}
 
 	stockID, err := s.repo.UpdateStock(ctx, newStock)
