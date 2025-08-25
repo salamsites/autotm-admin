@@ -9,13 +9,14 @@ import (
 )
 
 type Config struct {
-	IsDebug *bool   `yaml:"is_debug" env-required:"true"`
-	Listen  Listen  `yaml:"listen"`
-	Swagger Swagger `yaml:"swagger"`
-	Storage Storage `yaml:"storage"`
-	Log     Log     `yaml:"log"`
-	Auth    Auth    `yaml:"auth"`
-	Minio   Minio   `yaml:"minio"`
+	IsDebug     *bool   `yaml:"is_debug" env-required:"true"`
+	Listen      Listen  `yaml:"listen"`
+	Swagger     Swagger `yaml:"swagger"`
+	Storage     Storage `yaml:"storage"`
+	Log         Log     `yaml:"log"`
+	Auth        Auth    `yaml:"auth"`
+	Minio       Minio   `yaml:"minio"`
+	PushService string  `yaml:"push_service"`
 }
 
 type Minio struct {

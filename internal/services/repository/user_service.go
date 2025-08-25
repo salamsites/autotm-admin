@@ -7,4 +7,5 @@ import (
 
 type UserService interface {
 	GetUsersFromUserService(ctx context.Context, limit, page int64, search string) (dtos.GetUsersResult, error)
+	GetUserFirebaseToken(ctx context.Context, userId int64) (string, error)
 }

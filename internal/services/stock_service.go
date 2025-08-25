@@ -11,14 +11,18 @@ import (
 )
 
 type StockService struct {
-	logger *slog.Logger
-	repo   storage.StockRepository
+	logger      *slog.Logger
+	repo        storage.StockRepository
+	userService UserService
+	pushService PushService
 }
 
-func NewStockService(logger *slog.Logger, repo storage.StockRepository) *StockService {
+func NewStockService(logger *slog.Logger, repo storage.StockRepository, userService UserService, pushService PushService) *StockService {
 	return &StockService{
-		logger: logger,
-		repo:   repo,
+		logger:      logger,
+		repo:        repo,
+		userService: userService,
+		pushService: pushService,
 	}
 }
 
@@ -202,6 +206,25 @@ func (s *StockService) UpdateStockStatus(ctx context.Context, stock dtos.UpdateS
 		s.logger.Errorf("update stock status err: %v", err)
 		return id, err
 	}
+
+	userId, err := s.repo.GetUserByStockId(ctx, stockID)
+	if err != nil {
+		s.logger.Errorf("get GetUserByStockId err: %v", err)
+		return id, err
+	}
+
+	token, err := s.userService.GetUserFirebaseToken(ctx, userId)
+	if err != nil {
+		s.logger.Errorf("get GetUserFirebaseToken err: %v", err)
+		return id, err
+	}
+
+	reqPush := dtos.ReqSendPushDTO{
+		Message: stock.Message,
+		Token:   token,
+	}
+
+	go s.pushService.SendPush(reqPush)
 
 	id.ID = stockID
 	return id, nil

@@ -283,3 +283,25 @@ func (r *StockPsqlRepository) UpdateStockStatus(ctx context.Context, id int64, s
 
 	return stockID, nil
 }
+
+func (r *StockPsqlRepository) GetUserByStockId(ctx context.Context, stockId int64) (int64, error) {
+	var userId int64
+
+	query := `
+		SELECT 
+			user_id
+		FROM stocks
+		WHERE stock_id = @stock_id
+	`
+
+	args := pgx.NamedArgs{
+		"stock_id": stockId,
+	}
+
+	err := r.client.QueryRow(ctx, query, args).Scan(&userId)
+	if err != nil {
+		r.logger.Errorf("get user by stock id err: %v", err)
+		return userId, err
+	}
+	return userId, nil
+}

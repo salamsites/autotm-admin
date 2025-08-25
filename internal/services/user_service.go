@@ -48,3 +48,12 @@ func (s *UserService) GetUsersFromUserService(ctx context.Context, limit, page i
 	}
 	return result, nil
 }
+
+func (s *UserService) GetUserFirebaseToken(ctx context.Context, userId int64) (string, error) {
+	token, err := s.repo.GetUserFirebaseToken(ctx, userId)
+	if err != nil {
+		s.logger.Errorf("get user firebase token err: %v", err)
+		return "", err
+	}
+	return token, nil
+}

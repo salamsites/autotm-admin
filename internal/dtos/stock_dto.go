@@ -57,6 +57,12 @@ type StocksResult struct {
 }
 
 type UpdateStockStatus struct {
-	ID     int64  `json:"id"`
-	Status string `json:"status"`
+	ID      int64  `json:"id"`
+	Status  string `json:"status"`
+	Message string `json:"message"`
+}
+
+type ReqSendPushDTO struct {
+	Message string `json:"message"`
+	Token   string `json:"token"`
 }

@@ -73,3 +73,27 @@ func (r *UserPsqlRepository) GetUsersFromUserService(ctx context.Context, limit,
 	}
 	return users, count, nil
 }
+
+func (r *UserPsqlRepository) GetUserFirebaseToken(ctx context.Context, userId int64) (string, error) {
+	var (
+		token string
+	)
+
+	query := `
+ 		SELECT
+			firebase_token
+        FROM user_devices
+ 		WHERE user_id = @user_id;
+	`
+
+	args := pgx.NamedArgs{
+		"user_id": userId,
+	}
+
+	err := r.client.QueryRow(ctx, query, args).Scan(&token)
+	if err != nil {
+		return "", err
+	}
+
+	return token, nil
+}

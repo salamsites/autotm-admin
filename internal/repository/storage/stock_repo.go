@@ -14,4 +14,5 @@ type StockRepository interface {
 	UpdateStock(ctx context.Context, autoStore models.Stock) (int64, error)
 	DeleteStock(ctx context.Context, id int64) error
 	UpdateStockStatus(ctx context.Context, id int64, status string) (int64, error)
+	GetUserByStockId(ctx context.Context, stockId int64) (int64, error)
 }
