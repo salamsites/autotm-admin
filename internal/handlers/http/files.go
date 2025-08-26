@@ -3,6 +3,7 @@ package http
 import (
 	"autotm-admin/internal/dtos"
 	"autotm-admin/internal/helpers"
+	"context"
 	"fmt"
 	"net/http"
 
@@ -18,14 +19,24 @@ type FilesHandler struct {
 	logger          *slog.Logger
 	middleware      *shttp.Middleware
 	minioFileClient sminio.ImageClient
+	jobQueue        chan UploadJob
+}
+
+type UploadJob struct {
+	UploadID string
+	Request  *http.Request
+	Field    string
 }
 
 func NewFilesHandler(logger *slog.Logger, middleware *shttp.Middleware, minioFileClient sminio.ImageClient) *FilesHandler {
-	return &FilesHandler{
+	h := &FilesHandler{
 		logger:          logger,
 		middleware:      middleware,
 		minioFileClient: minioFileClient,
+		jobQueue:        make(chan UploadJob, 100),
 	}
+	h.StartWorkerPool(10)
+	return h
 }
 
 func (h *FilesHandler) FilesRegisterRoutes(r chi.Router) {
@@ -65,13 +76,20 @@ func (h *FilesHandler) v1UploadImage(w http.ResponseWriter, r *http.Request) sht
 	defer file.Close()
 
 	uploadID := uuid.NewString()
-	path := fmt.Sprintf("%s", uploadID)
 
-	errUpload := h.minioFileClient.UploadImage(r.Context(), r, "image", path, helpers.FileSizes, util.FileBucket)
-	if errUpload.StatusCode != 0 {
-		h.logger.Error("failed to upload image", errUpload)
-		return shttp.InternalServerError.SetData(errUpload.Message)
+	h.jobQueue <- UploadJob{
+		UploadID: uploadID,
+		Request:  r,
+		Field:    "image",
 	}
+
+	//path := fmt.Sprintf("%s", uploadID)
+	//
+	//errUpload := h.minioFileClient.UploadImage(r.Context(), r, "image", path, helpers.FileSizes, util.FileBucket)
+	//if errUpload.StatusCode != 0 {
+	//	h.logger.Error("failed to upload image", errUpload)
+	//	return shttp.InternalServerError.SetData(errUpload.Message)
+	//}
 
 	sizeStrings := make([]string, 0, len(helpers.FileSizes))
 	for _, s := range helpers.FileSizes {
@@ -114,4 +132,34 @@ func (h *FilesHandler) v1DeleteImage(w http.ResponseWriter, r *http.Request) sht
 		return shttp.InternalServerError.SetData(err.Error())
 	}
 	return shttp.Success.SetData("image deleted successfully")
+}
+
+func (h *FilesHandler) worker(id int) {
+	for job := range h.jobQueue {
+		h.logger.Info(fmt.Sprintf("Worker %d: processing upload %s", id, job.UploadID))
+
+		ctx := context.Background()
+		// use minioFileClient.UploadImage
+		errUpload := h.minioFileClient.UploadImage(
+			ctx,
+			job.Request,
+			job.Field,
+			job.UploadID,
+			helpers.FileSizes,
+			util.FileBucket,
+		)
+
+		if errUpload.StatusCode != 0 {
+			h.logger.Error(fmt.Sprintf("Worker %d: failed upload %s", id, job.UploadID), errUpload)
+		} else {
+			h.logger.Info(fmt.Sprintf("Worker %d: finished upload %s", id, job.UploadID))
+		}
+	}
+}
+
+// start worker pool
+func (h *FilesHandler) StartWorkerPool(workerCount int) {
+	for i := 1; i <= workerCount; i++ {
+		go h.worker(i)
+	}
 }
