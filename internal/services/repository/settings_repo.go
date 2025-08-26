@@ -19,4 +19,5 @@ type SettingsService interface {
 	GetAllUsers(ctx context.Context, limit, page int64, search string) (dtos.UserResult, error)
 	UpdateUser(ctx context.Context, user dtos.UpdateUserReq) (dtos.ID, error)
 	DeleteUser(ctx context.Context, id int64) error
+	Login(ctx context.Context, login dtos.LoginReq) (string, error)
 }

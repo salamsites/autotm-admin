@@ -47,7 +47,7 @@ func Manager(logger *slog.Logger, clientPsql spsql.Client, minioImageClient smin
 
 	r.Route(settingsURL, func(subRouter chi.Router) {
 		settingsRepo := repository.NewSettingsPsqlRepository(logger, clientPsql)
-		settingsService := services.NewSettingsService(logger, settingsRepo)
+		settingsService := services.NewSettingsService(logger, settingsRepo, cfg)
 
 		if err := settingsService.InitSuperAdmin(context.Background()); err != nil {
 			logger.Errorf("Failed to initialize super admin settings: %v", err)
@@ -72,7 +72,10 @@ func Manager(logger *slog.Logger, clientPsql spsql.Client, minioImageClient smin
 
 	r.Route(stocksURL, func(subRouter chi.Router) {
 		stockRepo := repository.NewStockPsqlRepository(logger, clientPsql)
-		stockService := services.NewStockService(logger, stockRepo)
+		repo := repository.NewUserPsqlRepository(logger, clientPsql)
+		userService := services.NewUserService(logger, repo)
+		pushService := services.NewPushService(logger, cfg)
+		stockService := services.NewStockService(logger, stockRepo, userService, pushService)
 		stockHandler := http.NewStockHandler(logger, newMiddleware, stockService, minioFileClient, minioImageClient)
 		stockHandler.StockRegisterRoutes(subRouter)
 	})

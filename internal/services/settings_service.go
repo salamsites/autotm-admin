@@ -1,10 +1,12 @@
 package services
 
 import (
+	"autotm-admin/internal/configs"
 	"autotm-admin/internal/dtos"
 	"autotm-admin/internal/helpers"
 	"autotm-admin/internal/models"
 	"autotm-admin/internal/repository/storage"
+	"autotm-admin/utils"
 	"context"
 
 	slog "github.com/salamsites/package-log"
@@ -14,12 +16,14 @@ import (
 type SettingsService struct {
 	logger *slog.Logger
 	repo   storage.SettingsRepository
+	cfg    *configs.Config
 }
 
-func NewSettingsService(logger *slog.Logger, repo storage.SettingsRepository) *SettingsService {
+func NewSettingsService(logger *slog.Logger, repo storage.SettingsRepository, cfg *configs.Config) *SettingsService {
 	return &SettingsService{
 		logger: logger,
 		repo:   repo,
+		cfg:    cfg,
 	}
 }
 
@@ -141,6 +145,7 @@ func (s *SettingsService) CreateUser(ctx context.Context, user dtos.CreateUserRe
 		Login:    user.Login,
 		Password: string(hashedPassword),
 		RoleID:   user.RoleID,
+		Status:   user.Status,
 	}
 
 	userID, err := s.repo.CreateUser(ctx, newUser)
@@ -220,6 +225,7 @@ func (s *SettingsService) GetAllUsers(ctx context.Context, limit, page int64, se
 			Password: b.Password,
 			RoleID:   b.RoleID,
 			RoleName: b.RoleName,
+			Status:   b.Status,
 		})
 	}
 
@@ -254,6 +260,7 @@ func (s *SettingsService) UpdateUser(ctx context.Context, user dtos.UpdateUserRe
 		Login:    user.Login,
 		Password: hashedPassword,
 		RoleID:   user.RoleID,
+		Status:   user.Status,
 	}
 
 	userID, err := s.repo.UpdateUser(ctx, newUser)
@@ -272,4 +279,31 @@ func (s *SettingsService) DeleteUser(ctx context.Context, id int64) error {
 		return err
 	}
 	return nil
+}
+
+func (s *SettingsService) Login(ctx context.Context, login dtos.LoginReq) (string, error) {
+	validate := helpers.GetValidator()
+	if err := validate.Struct(login); err != nil {
+		s.logger.Errorf("validate err: %v", err)
+		return "id", err
+	}
+
+	user, err := s.repo.GetUserByLogin(ctx, login.Login)
+	if err != nil {
+		s.logger.Errorf("get user err: %v", err)
+		return "", err
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(login.Password))
+	if err != nil {
+		s.logger.Errorf("compare hash err: %v", err)
+	}
+
+	token, err := utils.TokenEncode(user.ID, s.cfg.Auth.JwtRegistration)
+	if err != nil {
+		s.logger.Errorf("token encode err: %v", err)
+		return "", err
+	}
+
+	return token, nil
 }

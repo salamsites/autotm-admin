@@ -5,6 +5,7 @@ import (
 	"autotm-admin/internal/helpers"
 	"autotm-admin/internal/models"
 	"autotm-admin/internal/repository/storage"
+	"autotm-admin/internal/services/repository"
 	"context"
 
 	slog "github.com/salamsites/package-log"
@@ -13,11 +14,11 @@ import (
 type StockService struct {
 	logger      *slog.Logger
 	repo        storage.StockRepository
-	userService UserService
-	pushService PushService
+	userService repository.UserService
+	pushService repository.PushService
 }
 
-func NewStockService(logger *slog.Logger, repo storage.StockRepository, userService UserService, pushService PushService) *StockService {
+func NewStockService(logger *slog.Logger, repo storage.StockRepository, userService repository.UserService, pushService repository.PushService) *StockService {
 	return &StockService{
 		logger:      logger,
 		repo:        repo,

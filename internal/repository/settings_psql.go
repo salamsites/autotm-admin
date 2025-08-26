@@ -154,13 +154,14 @@ func (r *SettingsPsqlRepository) DeleteRole(ctx context.Context, id int64) error
 func (r *SettingsPsqlRepository) CreateUser(ctx context.Context, user models.User) (int64, error) {
 	var id int64
 
-	query := `INSERT INTO admin_users (username, login, password, role_id) VALUES (@username, @login, @password, @role_id) RETURNING id`
+	query := `INSERT INTO admin_users (username, login, password, role_id, status) VALUES (@username, @login, @password, @role_id, @status) RETURNING id`
 
 	args := pgx.NamedArgs{
 		"username": user.Username,
 		"login":    user.Login,
 		"password": user.Password,
 		"role_id":  user.RoleID,
+		"status":   user.Status,
 	}
 	err := r.client.QueryRow(ctx, query, args).Scan(&id)
 	if err != nil {
@@ -177,7 +178,8 @@ func (r *SettingsPsqlRepository) GetUserByLogin(ctx context.Context, login strin
 
 	query := `
 		SELECT
-			id, username, login, password, role_id
+			id, username, login, 
+			password, role_id, status
 		FROM admin_users
 		WHERE login = @login
 		LIMIT 1
@@ -186,7 +188,7 @@ func (r *SettingsPsqlRepository) GetUserByLogin(ctx context.Context, login strin
 	args := pgx.NamedArgs{
 		"login": login,
 	}
-	err := r.client.QueryRow(ctx, query, args).Scan(&user.ID, &user.Username, &user.Login, &user.Password, &user.RoleID)
+	err := r.client.QueryRow(ctx, query, args).Scan(&user.ID, &user.Username, &user.Login, &user.Password, &user.RoleID, &user.Status)
 	if err != nil {
 		r.logger.Errorf("get user by login err: %v", err)
 		return user, err
@@ -203,7 +205,7 @@ func (r *SettingsPsqlRepository) GetAllUsers(ctx context.Context, limit, page in
 	query := `
 		SELECT 
 		    u.id, u.username, u.login, u.password, 
-		    u.role_id, r.name AS role_name 
+		    u.role_id, r.name, u.status
 		FROM admin_users u
 			LEFT JOIN roles r ON u.role_id = r.id
 		WHERE (u.username ILIKE '%' || @search || '%' OR r.name ILIKE '%' || @search || '%' OR u.login ILIKE '%' || @search || '%')
@@ -225,7 +227,7 @@ func (r *SettingsPsqlRepository) GetAllUsers(ctx context.Context, limit, page in
 	defer rows.Close()
 	for rows.Next() {
 		var user models.User
-		if err := rows.Scan(&user.ID, &user.Username, &user.Login, &user.Password, &user.RoleID, &user.RoleName); err != nil {
+		if err := rows.Scan(&user.ID, &user.Username, &user.Login, &user.Password, &user.RoleID, &user.RoleName, &user.Status); err != nil {
 			r.logger.Errorf("get all users scan err : %v", err)
 			return nil, 0, err
 		}
@@ -256,7 +258,8 @@ func (r *SettingsPsqlRepository) UpdateUser(ctx context.Context, user models.Use
 
 	query := `
 		UPDATE admin_users SET 
-		    username = @username, login = @login, password = @password, role_id = @role_id, updated_at = NOW()
+		    username = @username, login = @login, password = @password, role_id = @role_id, 
+		    status = @status, updated_at = NOW()
 		WHERE id = @id
 		RETURNING id
 	`
@@ -265,6 +268,7 @@ func (r *SettingsPsqlRepository) UpdateUser(ctx context.Context, user models.Use
 		"login":    user.Login,
 		"password": user.Password,
 		"role_id":  user.RoleID,
+		"status":   user.Status,
 		"id":       user.ID,
 	}
 	err := r.client.QueryRow(ctx, query, args).Scan(&id)

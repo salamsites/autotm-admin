@@ -39,6 +39,7 @@ func (h *SettingsHandler) SettingsRegisterRoutes(r chi.Router) {
 	r.Method("GET", "/get-users", h.middleware.Base(h.v1GetAllUsers))
 	r.Method("PUT", "/update-user", h.middleware.Base(h.v1UpdateUser))
 	r.Method("DELETE", "/delete-user", h.middleware.Base(h.v1DeleteUser))
+	r.Method("POST", "/login", h.middleware.Base(h.v1Login))
 }
 
 // v1CreateRole
@@ -428,5 +429,54 @@ func (h *SettingsHandler) v1DeleteUser(w http.ResponseWriter, r *http.Request) s
 
 	result.Status = true
 	result.Message = "Successfully deleted user"
+	return shttp.Success.SetData(result)
+}
+
+// v1Login
+// @Summary Login user
+// @Description Authenticate user and return JWT token
+// @Tags Login
+// @Accept json
+// @Produce json
+// @Param login body dtos.LoginReq true "Login data (login and password)"
+// @Success 200 {object} dtos.LoginResp "Returns JWT token"
+// @Failure 400 {object} string "Bad request"
+// @Failure 401 {object} string "Invalid credentials"
+// @Failure 500 {object} string "Internal server error"
+// @Router /settings/login [post]
+func (h *SettingsHandler) v1Login(w http.ResponseWriter, r *http.Request) shttp.Response {
+	var result shttp.Result
+	result.Status = false
+
+	body, errBody := io.ReadAll(r.Body)
+	if errBody != nil {
+		result.Message = errBody.Error()
+		h.logger.Error("unable to read request body", errBody)
+		return shttp.BadRequest.SetData(result)
+	}
+	defer r.Body.Close()
+
+	var req dtos.LoginReq
+	errData := json.Unmarshal(body, &req)
+	if errData != nil {
+		result.Message = errData.Error()
+		h.logger.Error("unable to unmarshal request body", errData)
+		return shttp.BadRequest.SetData(result)
+	}
+
+	token, err := h.service.Login(r.Context(), req)
+	if err != nil {
+		result.Message = err.Error()
+		h.logger.Error("unable to login", err)
+		return shttp.InternalServerError.SetData(result)
+	}
+
+	res := dtos.LoginResp{
+		Token: token,
+	}
+	result.Status = true
+	result.Message = "Successfully logged in"
+	result.Data = res
+
 	return shttp.Success.SetData(result)
 }

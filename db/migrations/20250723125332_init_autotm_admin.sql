@@ -86,6 +86,7 @@ CREATE TABLE IF NOT EXISTS admin_users (
                 "login" CHARACTER VARYING(255) NOT NULL UNIQUE,
                 "password" TEXT NOT NULL,
                 "role_id" INTEGER,
+                "status" BOOLEAN NOT NULL DEFAULT TRUE,
                 "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 CONSTRAINT role_id_fk

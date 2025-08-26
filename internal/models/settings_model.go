@@ -13,4 +13,5 @@ type User struct {
 	Password string
 	RoleID   int64
 	RoleName string
+	Status   bool
 }

@@ -26,7 +26,6 @@ type Minio struct {
 }
 
 type Auth struct {
-	JwtVerify       string `yaml:"jwt_verify"`
 	JwtRegistration string `yaml:"jwt_registration"`
 }
 type Storage struct {
