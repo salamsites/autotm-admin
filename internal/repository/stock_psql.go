@@ -291,7 +291,7 @@ func (r *StockPsqlRepository) GetUserByStockId(ctx context.Context, stockId int6
 		SELECT 
 			user_id
 		FROM stocks
-		WHERE stock_id = @stock_id
+		WHERE id = @stock_id
 	`
 
 	args := pgx.NamedArgs{

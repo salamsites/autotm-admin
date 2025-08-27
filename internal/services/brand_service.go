@@ -312,6 +312,7 @@ func (s *BrandService) CreateDescription(ctx context.Context, description dtos.C
 		NameTM: description.NameTM,
 		NameEN: description.NameEN,
 		NameRU: description.NameRU,
+		Type:   description.Type,
 	}
 
 	descriptionID, err := s.repo.CreateDescription(ctx, newDescription)
@@ -324,14 +325,14 @@ func (s *BrandService) CreateDescription(ctx context.Context, description dtos.C
 	return id, nil
 }
 
-func (s *BrandService) GetDescriptions(ctx context.Context, limit, page int64, search string) (dtos.DescriptionResult, error) {
+func (s *BrandService) GetDescriptions(ctx context.Context, limit, page int64, search, descriptionType string) (dtos.DescriptionResult, error) {
 	offset := (page - 1) * limit
 	if page <= 0 {
 		page = 1
 		offset = 0
 	}
 
-	descriptions, count, err := s.repo.GetDescriptions(ctx, limit, offset, search)
+	descriptions, count, err := s.repo.GetDescriptions(ctx, limit, offset, search, descriptionType)
 	if err != nil {
 		s.logger.Errorf("get descriptions err: %v", err)
 		return dtos.DescriptionResult{}, err
@@ -343,6 +344,7 @@ func (s *BrandService) GetDescriptions(ctx context.Context, limit, page int64, s
 			NameTM: b.NameTM,
 			NameEN: b.NameEN,
 			NameRU: b.NameRU,
+			Type:   b.Type,
 		})
 	}
 
@@ -366,6 +368,7 @@ func (s *BrandService) UpdateDescription(ctx context.Context, description dtos.U
 		NameTM: description.NameTM,
 		NameEN: description.NameEN,
 		NameRU: description.NameRU,
+		Type:   description.Type,
 	}
 
 	descriptionID, err := s.repo.UpdateDescription(ctx, newDescription)

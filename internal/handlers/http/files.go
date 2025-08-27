@@ -83,14 +83,6 @@ func (h *FilesHandler) v1UploadImage(w http.ResponseWriter, r *http.Request) sht
 		Field:    "image",
 	}
 
-	//path := fmt.Sprintf("%s", uploadID)
-	//
-	//errUpload := h.minioFileClient.UploadImage(r.Context(), r, "image", path, helpers.FileSizes, util.FileBucket)
-	//if errUpload.StatusCode != 0 {
-	//	h.logger.Error("failed to upload image", errUpload)
-	//	return shttp.InternalServerError.SetData(errUpload.Message)
-	//}
-
 	sizeStrings := make([]string, 0, len(helpers.FileSizes))
 	for _, s := range helpers.FileSizes {
 		if s.Height == 0 {
@@ -139,7 +131,6 @@ func (h *FilesHandler) worker(id int) {
 		h.logger.Info(fmt.Sprintf("Worker %d: processing upload %s", id, job.UploadID))
 
 		ctx := context.Background()
-		// use minioFileClient.UploadImage
 		errUpload := h.minioFileClient.UploadImage(
 			ctx,
 			job.Request,

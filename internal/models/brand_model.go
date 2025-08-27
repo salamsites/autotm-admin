@@ -32,4 +32,5 @@ type Description struct {
 	NameTM string
 	NameEN string
 	NameRU string
+	Type   string
 }

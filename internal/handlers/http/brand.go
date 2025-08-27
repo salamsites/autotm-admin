@@ -4,12 +4,13 @@ import (
 	"autotm-admin/internal/dtos"
 	"autotm-admin/internal/services/repository"
 	"encoding/json"
-	"github.com/go-chi/chi/v5"
-	shttp "github.com/salamsites/package-http"
-	slog "github.com/salamsites/package-log"
 	"io"
 	"net/http"
 	"strconv"
+
+	"github.com/go-chi/chi/v5"
+	shttp "github.com/salamsites/package-http"
+	slog "github.com/salamsites/package-log"
 )
 
 type BrandHandler struct {
@@ -659,6 +660,11 @@ func (h *BrandHandler) v1CreateDescription(w http.ResponseWriter, r *http.Reques
 func (h *BrandHandler) v1GetDescriptions(w http.ResponseWriter, r *http.Request) shttp.Response {
 	var result shttp.Result
 	result.Status = false
+	descriptionType := r.URL.Query().Get("type")
+	if descriptionType == "" {
+		result.Message = "type is required"
+		return shttp.BadRequest.SetData(result)
+	}
 
 	limitStr := r.URL.Query().Get("limit")
 	pageStr := r.URL.Query().Get("page")
@@ -673,7 +679,7 @@ func (h *BrandHandler) v1GetDescriptions(w http.ResponseWriter, r *http.Request)
 		page = 1
 	}
 
-	descriptions, err := h.service.GetDescriptions(r.Context(), limit, page, search)
+	descriptions, err := h.service.GetDescriptions(r.Context(), limit, page, search, descriptionType)
 	if err != nil {
 		result.Message = err.Error()
 		h.logger.Error("unable to get descriptions", err)

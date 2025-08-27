@@ -95,6 +95,7 @@ type CreateDescription struct {
 	NameTM string `json:"name_tm"`
 	NameEN string `json:"name_en"`
 	NameRU string `json:"name_ru"`
+	Type   string `json:"type"`
 }
 
 type Description struct {
@@ -102,6 +103,7 @@ type Description struct {
 	NameTM string `json:"name_tm"`
 	NameEN string `json:"name_en"`
 	NameRU string `json:"name_ru"`
+	Type   string `json:"type"`
 }
 
 type DescriptionResult struct {
@@ -114,4 +116,5 @@ type UpdateDescription struct {
 	NameTM string `json:"name_tm"`
 	NameEN string `json:"name_en"`
 	NameRU string `json:"name_ru"`
+	Type   string `json:"type"`
 }

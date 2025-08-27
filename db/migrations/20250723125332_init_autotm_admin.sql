@@ -62,7 +62,7 @@ CREATE TABLE IF NOT EXISTS brand_categories (
 CREATE TABLE IF NOT EXISTS models (
                 "id" SERIAL PRIMARY KEY,
                 "name" CHARACTER VARYING(255) NOT NULL,
-                    "brand_id" INTEGER NOT NULL,
+                "brand_id" INTEGER NOT NULL,
                 "category" category_type NOT NULL,
                 "created_at" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
                 "updated_at" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -163,6 +163,7 @@ CREATE TABLE IF NOT EXISTS descriptions (
                         "name_tm" TEXT,
                         "name_en" TEXT,
                         "name_ru" TEXT,
+                        "type" category_type NOT NULL,
                         "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -303,7 +304,6 @@ CREATE TABLE IF NOT EXISTS trucks (
 -- +goose StatementBegin
 ALTER TABLE trucks OWNER TO autotm;
 -- +goose StatementEnd
-
 
 -- +goose Down
 -- +goose StatementBegin

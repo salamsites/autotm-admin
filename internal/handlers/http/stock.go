@@ -148,7 +148,7 @@ func (h *StockHandler) v1CreateStock(w http.ResponseWriter, r *http.Request) sht
 // @Param limit query int false "Limit number of stocks to return"
 // @Param page query int false "Page number"
 // @Param search query string false "Search string to filter stocks by name and users by name"
-// @Param status query string false "Status string to filter stocks by status"
+// @Param status query string false "Status string to filter stocks by status (waiting, accepted, blocked)"
 // @Success 200 {object} dtos.StocksResult "List of stocks with pagination info successfully"
 // @Failure 400 {object} string "Bad request"
 // @Failure 500 {object} string "Internal server error"
@@ -209,7 +209,7 @@ func (h *StockHandler) v1GetStockByID(w http.ResponseWriter, r *http.Request) sh
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
 		result.Message = err.Error()
-		h.logger.Error("invalid role ID", err)
+		h.logger.Error("invalid car ID", err)
 		return shttp.BadRequest.SetData(result)
 	}
 

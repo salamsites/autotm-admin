@@ -24,6 +24,7 @@ const (
 	slidersURL  = baseURL + "/sliders"
 	stocksURL   = baseURL + "/stocks"
 	usersURL    = baseURL + "/users"
+	carsURL     = baseURL + "/cars"
 )
 
 func Manager(logger *slog.Logger, clientPsql spsql.Client, minioImageClient sminio.ImageClient, minioFileClient sminio.FileClient, cfg *configs.Config) chi.Router {
@@ -85,6 +86,16 @@ func Manager(logger *slog.Logger, clientPsql spsql.Client, minioImageClient smin
 		usersService := services.NewUserService(logger, usersRepo)
 		usersHandler := http.NewUsersHandler(logger, newMiddleware, usersService)
 		usersHandler.UsersRegisterRoutes(subRouter)
+	})
+
+	r.Route(carsURL, func(subRouter chi.Router) {
+		carsRepo := repository.NewCarsPsqlRepository(logger, clientPsql)
+		repo := repository.NewUserPsqlRepository(logger, clientPsql)
+		userService := services.NewUserService(logger, repo)
+		pushService := services.NewPushService(logger, cfg)
+		carsService := services.NewCarsService(logger, carsRepo, userService, pushService)
+		carsHandler := http.NewCarsHandler(logger, newMiddleware, carsService)
+		carsHandler.CarsRegisterRoutes(subRouter)
 	})
 
 	return r

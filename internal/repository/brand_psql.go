@@ -491,12 +491,13 @@ func (r *BrandPsqlRepository) DeleteModel(ctx context.Context, id int64) error {
 func (r *BrandPsqlRepository) CreateDescription(ctx context.Context, description models.Description) (int64, error) {
 	var id int64
 
-	query := ` INSERT INTO descriptions (name_tm, name_en, name_ru) VALUES (@name_tm, @name_en, @name_ru) RETURNING id `
+	query := ` INSERT INTO descriptions (name_tm, name_en, name_ru, type) VALUES (@name_tm, @name_en, @name_ru, @type) RETURNING id `
 
 	args := pgx.NamedArgs{
 		"name_tm": description.NameTM,
 		"name_en": description.NameEN,
 		"name_ru": description.NameRU,
+		"type":    description.Type,
 	}
 
 	err := r.client.QueryRow(ctx, query, args).Scan(&id)
@@ -507,7 +508,7 @@ func (r *BrandPsqlRepository) CreateDescription(ctx context.Context, description
 	return id, nil
 }
 
-func (r *BrandPsqlRepository) GetDescriptions(ctx context.Context, limit, page int64, search string) ([]models.Description, int64, error) {
+func (r *BrandPsqlRepository) GetDescriptions(ctx context.Context, limit, page int64, search, descriptionType string) ([]models.Description, int64, error) {
 	var (
 		descriptions []models.Description
 		count        int64
@@ -515,15 +516,16 @@ func (r *BrandPsqlRepository) GetDescriptions(ctx context.Context, limit, page i
 
 	query := `
 			SELECT 
-				id, name_tm, name_en, name_ru
+				id, name_tm, name_en, name_ru, type
             FROM descriptions
-			WHERE 
+			WHERE type = @type
 			    (name_tm ILIKE '%' || @search || '%' OR name_en ILIKE '%' || @search || '%' OR name_ru ILIKE '%' || @search || '%')
 			ORDER BY created_at DESC
 			LIMIT @limit OFFSET @offset;
 		`
 
 	args := pgx.NamedArgs{
+		"type":   descriptionType,
 		"search": search,
 		"limit":  limit,
 		"offset": page,
@@ -536,7 +538,7 @@ func (r *BrandPsqlRepository) GetDescriptions(ctx context.Context, limit, page i
 	defer rows.Close()
 	for rows.Next() {
 		var description models.Description
-		if err = rows.Scan(&description.ID, &description.NameTM, &description.NameEN, &description.NameRU); err != nil {
+		if err = rows.Scan(&description.ID, &description.NameTM, &description.NameEN, &description.NameRU, &description.Type); err != nil {
 			r.logger.Errorf("get descriptions scan err : %v", err)
 			return nil, 0, err
 		}
@@ -547,11 +549,12 @@ func (r *BrandPsqlRepository) GetDescriptions(ctx context.Context, limit, page i
 			SELECT 
 			    COUNT(*) 
 			FROM descriptions 
-			WHERE
+			WHERE type = @type
 				(name_tm ILIKE '%' || @search || '%' OR name_en ILIKE '%' || @search || '%' OR name_ru ILIKE '%' || @search || '%')	
 		`
 
 	argsCount := pgx.NamedArgs{
+		"type":   descriptionType,
 		"search": search,
 	}
 	errCount := r.client.QueryRow(ctx, queryCount, argsCount).Scan(&count)
@@ -567,7 +570,8 @@ func (r *BrandPsqlRepository) UpdateDescription(ctx context.Context, description
 
 	query := `
 		UPDATE descriptions SET 
-		    name_tm = @name_tm, name_en = @name_en, name_ru = @name_ru, updated_at = NOW()
+		    name_tm = @name_tm, name_en = @name_en, name_ru = @name_ru, 
+		    type = @type, updated_at = NOW()
 		WHERE id = @id
 		RETURNING id
 	`
@@ -576,6 +580,7 @@ func (r *BrandPsqlRepository) UpdateDescription(ctx context.Context, description
 		"name_tm": description.NameTM,
 		"name_en": description.NameEN,
 		"name_ru": description.NameRU,
+		"type":    description.Type,
 		"id":      description.ID,
 	}
 	err := r.client.QueryRow(ctx, query, args).Scan(&descriptionID)

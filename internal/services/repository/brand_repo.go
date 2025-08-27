@@ -26,7 +26,7 @@ type BrandService interface {
 
 	//Description
 	CreateDescription(ctx context.Context, description dtos.CreateDescription) (dtos.ID, error)
-	GetDescriptions(ctx context.Context, limit, page int64, search string) (dtos.DescriptionResult, error)
+	GetDescriptions(ctx context.Context, limit, page int64, search, descriptionType string) (dtos.DescriptionResult, error)
 	UpdateDescription(ctx context.Context, description dtos.UpdateDescription) (dtos.ID, error)
 	DeleteDescription(ctx context.Context, id int64) error
 }
