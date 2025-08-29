@@ -90,7 +90,7 @@ func (r *CarsPsqlRepository) GetCars(ctx context.Context, limit, page int64, sea
 			&car.BodyNameEN,
 			&car.BodyNameRU,
 			&car.Transmission,
-			&car.DriverType,
+			&car.DriveType,
 			&car.Vin,
 			&car.Description,
 			&car.CityId,
@@ -143,7 +143,7 @@ func (r *CarsPsqlRepository) GetCars(ctx context.Context, limit, page int64, sea
 	return cars, count, nil
 }
 
-func (r *CarsPsqlRepository) GetCarsByID(ctx context.Context, id int64) (models.Car, error) {
+func (r *CarsPsqlRepository) GetCarByID(ctx context.Context, id int64) (models.Car, error) {
 	var car models.Car
 
 	query := `
@@ -170,7 +170,7 @@ func (r *CarsPsqlRepository) GetCarsByID(ctx context.Context, id int64) (models.
 	err := r.client.QueryRow(ctx, query, args).Scan(&car.Id, &car.UserId, &car.UserName, &car.StockId, &car.StoreName,
 		&car.BrandId, &car.Name, &car.ModelId, &car.Name, &car.Name, &car.Year, &car.Mileage, &car.Color,
 		&car.EngineCapacity, &car.EngineType, &car.BodyId, &car.BodyNameTM, &car.BodyNameEN, &car.BodyNameRU, &car.Transmission,
-		&car.DriverType, &car.Vin, &car.Description, &car.CityId, &car.CityNameTM, &car.CityNameEN, &car.CityNameRU, &car.Name, &car.Mail,
+		&car.DriveType, &car.Vin, &car.Description, &car.CityId, &car.CityNameTM, &car.CityNameEN, &car.CityNameRU, &car.Name, &car.Mail,
 		&car.PhoneNumber, &car.Price, &car.IsComment, &car.IsExchange, &car.IsCredit, &car.Images, &car.Status,
 	)
 
@@ -367,4 +367,48 @@ func (r *CarsPsqlRepository) GetTrucks(ctx context.Context, limit, page int64, s
 	}
 
 	return trucks, count, nil
+}
+
+func (r *CarsPsqlRepository) GetTruckByID(ctx context.Context, id int64) (models.Truck, error) {
+	var truck models.Truck
+
+	query := `
+		SELECT
+			t.id, t.user_id, u.full_name, t.stock_id, s.store_name, t.brand_id, b.name,
+			t.load_capacity, t.price, t.body_type, t.drive_type, t.transmission, t.engine_type,
+			t.model_id, m.name, t.year, t.seats, t.cab_type, t.wheel_formula, t.chassis, t.cab_suspension,
+			t.bus_type, t.suspension_type, t.brakes, t.axles, t.engine_hours, t.vehicle_type, t.engine_capacity,
+			t.forklift_type, t.lifting_capacity, t.mileage, t.excavator_type, t.bulldozer_type, t.color, t.vin, 
+			t.body_id, bt.name_tm, bt.name_en, bt.name_ru, t.description, t.city_id, t.name_tm, t.name_en, t.name_ru, 
+			t.name, t.mail, t.phone_number, t.is_comment, t.is_exchange, t.is_credit, t.images, t.status
+		FROM trucks t
+			LEFT JOIN users u ON u.id = t.user_id 
+			LEFT JOIN stocks s ON s.id = t.stock_id
+			LEFT JOIN brands b ON b.id = t.brand_id
+			LEFT JOIN models m ON m.id = t.model_id
+			LEFT JOIN body_types bt ON bt.id = t.body_id
+			LEFT JOIN cities cs ON cs.id = t.city_id
+		WHERE t.id = @id
+	`
+
+	args := pgx.NamedArgs{
+		"id": id,
+	}
+
+	err := r.client.QueryRow(ctx, query, args).Scan(&truck.Id, &truck.UserId, &truck.UserName, &truck.StockId, &truck.StoreName,
+		&truck.BrandId, &truck.BrandName, &truck.LoadCapacity, &truck.Price, &truck.BodyType, &truck.DriveType, &truck.Transmission,
+		&truck.EngineType, &truck.ModelId, &truck.ModelName, &truck.Year, &truck.Seats, &truck.CabType, &truck.WheelFormula, &truck.Chassis,
+		&truck.CabSuspension, &truck.BusType, &truck.SuspensionType, &truck.Brakes, &truck.Axles, &truck.EngineHours, &truck.VehicleType,
+		&truck.EngineCapacity, &truck.ForkliftType, &truck.LiftingCapacity, &truck.Mileage, &truck.ExcavatorType, &truck.BulldozerType,
+		&truck.Color, &truck.Vin, &truck.BodyId, &truck.BodyNameTM, &truck.BodyNameEN, &truck.BodyNameRU, &truck.Description,
+		&truck.CityId, &truck.CityNameTM, &truck.CityNameEN, &truck.CityNameRU, &truck.Name, &truck.Mail, &truck.PhoneNumber,
+		&truck.IsComment, &truck.IsExchange, &truck.IsCredit, &truck.Images, &truck.Status,
+	)
+
+	if err != nil {
+		r.logger.Errorf("Error getting truck by id: %s", err)
+		return truck, err
+	}
+
+	return truck, nil
 }

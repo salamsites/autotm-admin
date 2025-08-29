@@ -20,7 +20,7 @@ type Car struct {
 	BodyNameEN     string
 	BodyNameRU     string
 	Transmission   string
-	DriverType     string
+	DriveType      string
 	Vin            string
 	Description    string
 	CityId         int64

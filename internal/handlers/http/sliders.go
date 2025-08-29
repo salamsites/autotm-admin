@@ -87,7 +87,7 @@ func (h *SliderHandler) v1CreateSlider(w http.ResponseWriter, r *http.Request) s
 // @Produce json
 // @Param limit query int false "Limit number of sliders to return"
 // @Param page query int false "Page number"
-// @Param platform query string false "Platform string to filter sliders"
+// @Param platform query string false "Platform string to filter sliders (web, mobile)"
 // @Success 200 {object} dtos.SliderResult "List of sliders with pagination info successfully"
 // @Failure 400 {object} string "Bad request"
 // @Failure 500 {object} string "Internal server error"

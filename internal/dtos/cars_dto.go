@@ -74,7 +74,7 @@ type Truck struct {
 	CabType         string      `json:"cab_type"`
 	WheelFormula    string      `json:"wheel_formula"`
 	Chassis         string      `json:"chassis"`
-	CubSuspension   string      `json:"cub_suspension"`
+	CabSuspension   string      `json:"cab_suspension"`
 	BusType         string      `json:"bus_type"`
 	SuspensionType  string      `json:"suspension_type"`
 	Brakes          string      `json:"brakes"`
@@ -83,7 +83,7 @@ type Truck struct {
 	VehicleType     string      `json:"vehicle_type"`
 	EngineCapacity  float64     `json:"engine_capacity"`
 	ForkLiftType    string      `json:"forklift_type"`
-	LiftingCapacity float64     `json:"lifting_capacity"`
+	LiftingCapacity int64       `json:"lifting_capacity"`
 	Mileage         int64       `json:"mileage"`
 	ExcavatorType   string      `json:"excavator_type"`
 	BulldozerType   string      `json:"bulldozer_type"`
