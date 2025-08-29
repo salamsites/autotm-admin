@@ -554,8 +554,8 @@ func (r *BrandPsqlRepository) GetDescriptions(ctx context.Context, limit, page i
 		`
 
 	argsCount := pgx.NamedArgs{
-		"type":   category,
-		"search": search,
+		"category": category,
+		"search":   search,
 	}
 	errCount := r.client.QueryRow(ctx, queryCount, argsCount).Scan(&count)
 	if errCount != nil {
