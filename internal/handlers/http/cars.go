@@ -1,7 +1,10 @@
 package http
 
 import (
+	"autotm-admin/internal/dtos"
 	"autotm-admin/internal/services/repository"
+	"encoding/json"
+	"io"
 	"net/http"
 	"strconv"
 
@@ -27,6 +30,7 @@ func NewCarsHandler(logger *slog.Logger, middleware *shttp.Middleware, service r
 func (h *CarsHandler) CarsRegisterRoutes(r chi.Router) {
 	r.Method("GET", "/get-cars", h.middleware.Base(h.v1GetCars))
 	r.Method("GET", "/get-car-by-id", h.middleware.Base(h.v1GetCarsById))
+	r.Method("PUT", "/update-car-status", h.middleware.Base(h.v1UpdateCarStatus))
 }
 
 // v1GetCars
@@ -113,5 +117,50 @@ func (h *CarsHandler) v1GetCarsById(w http.ResponseWriter, r *http.Request) shtt
 	result.Status = true
 	result.Message = "Successfully retrieved car"
 	result.Data = car
+	return shttp.Success.SetData(result)
+}
+
+// v1UpdateCarStatus
+// @Summary Update Car Status
+// @Description Updates the status of a car
+// @Tags Cars
+// @Accept json
+// @Produce json
+// @Param Car body dtos.UpdateCarStatus true "Car ID and new Status"
+// @Success 200 {object} dtos.ID "Returns updated car ID"
+// @Failure 400 {object} string "Bad request"
+// @Failure 404 {object} string "Car not found"
+// @Failure 500 {object} string "Internal server error"
+// @Router /cars/update-car-status [put]
+func (h *CarsHandler) v1UpdateCarStatus(w http.ResponseWriter, r *http.Request) shttp.Response {
+	var result shttp.Result
+	result.Status = false
+
+	body, errBody := io.ReadAll(r.Body)
+	if errBody != nil {
+		result.Message = errBody.Error()
+		h.logger.Error("unable to read request body", errBody)
+		return shttp.BadRequest.SetData(result)
+	}
+	defer r.Body.Close()
+
+	var carDTO dtos.UpdateCarStatus
+	errData := json.Unmarshal(body, &carDTO)
+	if errData != nil {
+		result.Message = errData.Error()
+		h.logger.Error("unable to unmarshal request body", errData)
+		return shttp.UnprocessableEntity.SetData(result)
+	}
+
+	id, err := h.service.UpdateCarStatus(r.Context(), carDTO)
+	if err != nil {
+		result.Message = err.Error()
+		h.logger.Error("unable to update car", err)
+		return shttp.InternalServerError.SetData(result)
+	}
+
+	result.Status = true
+	result.Message = "Successfully updated car"
+	result.Data = id
 	return shttp.Success.SetData(result)
 }
