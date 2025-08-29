@@ -28,7 +28,7 @@ type BrandRepository interface {
 
 	//Description
 	CreateDescription(ctx context.Context, description models.Description) (int64, error)
-	GetDescriptions(ctx context.Context, limit, page int64, search, descriptionType string) ([]models.Description, int64, error)
+	GetDescriptions(ctx context.Context, limit, page int64, search, category string) ([]models.Description, int64, error)
 	UpdateDescription(ctx context.Context, description models.Description) (int64, error)
 	DeleteDescription(ctx context.Context, id int64) error
 }
