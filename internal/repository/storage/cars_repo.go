@@ -14,4 +14,6 @@ type CarsRepository interface {
 	//Truck
 	GetTrucks(ctx context.Context, limit, page int64, search, status string) ([]models.Truck, int64, error)
 	GetTruckByID(ctx context.Context, id int64) (models.Truck, error)
+	UpdateTruckStatus(ctx context.Context, id int64, status string) (int64, error)
+	GetUserByTruckId(ctx context.Context, truckId int64) (int64, error)
 }

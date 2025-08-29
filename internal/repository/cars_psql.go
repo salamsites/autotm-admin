@@ -211,8 +211,8 @@ func (r *CarsPsqlRepository) GetUserByCarId(ctx context.Context, carId int64) (i
 
 	query := `
 		SELECT 
-			cars
-		FROM stocks
+			user_id
+		FROM cars
 		WHERE id = @car_id
 	`
 
@@ -411,4 +411,50 @@ func (r *CarsPsqlRepository) GetTruckByID(ctx context.Context, id int64) (models
 	}
 
 	return truck, nil
+}
+
+func (r *CarsPsqlRepository) UpdateTruckStatus(ctx context.Context, id int64, status string) (int64, error) {
+	var truckId int64
+
+	query := `
+   		UPDATE trucks SET
+   		     status = @status
+   		WHERE id = @id
+   		RETURNING id
+	`
+
+	args := pgx.NamedArgs{
+		"status": status,
+		"id":     id,
+	}
+
+	err := r.client.QueryRow(ctx, query, args).Scan(&truckId)
+	if err != nil {
+		r.logger.Errorf("update truck status err: %v", err)
+		return truckId, err
+	}
+
+	return truckId, nil
+}
+
+func (r *CarsPsqlRepository) GetUserByTruckId(ctx context.Context, truckId int64) (int64, error) {
+	var userId int64
+
+	query := `
+		SELECT 
+			user_id
+		FROM trucks
+		WHERE id = @truck_id
+	`
+
+	args := pgx.NamedArgs{
+		"truck_id": truckId,
+	}
+
+	err := r.client.QueryRow(ctx, query, args).Scan(&userId)
+	if err != nil {
+		r.logger.Errorf("get user by truck id err: %v", err)
+		return userId, err
+	}
+	return userId, nil
 }

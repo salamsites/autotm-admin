@@ -317,3 +317,41 @@ func (s *CarsService) GetTruckByID(ctx context.Context, id int64) (dtos.Truck, e
 
 	return result, nil
 }
+
+func (s *CarsService) UpdateTruckStatus(ctx context.Context, truck dtos.UpdateTruckStatus) (dtos.ID, error) {
+	var id dtos.ID
+
+	validate := helpers.GetValidator()
+	if err := validate.Struct(truck); err != nil {
+		s.logger.Errorf("validate err: %v", err)
+		return id, err
+	}
+
+	truckId, err := s.repo.UpdateTruckStatus(ctx, truck.ID, truck.Status)
+	if err != nil {
+		s.logger.Errorf("update truck status err: %v", err)
+		return id, err
+	}
+
+	userId, err := s.repo.GetUserByTruckId(ctx, truckId)
+	if err != nil {
+		s.logger.Errorf("get GetUserByTruckId err: %v", err)
+		return id, err
+	}
+
+	token, err := s.userService.GetUserFirebaseToken(ctx, userId)
+	if err != nil {
+		s.logger.Errorf("get GetUserFirebaseToken err: %v", err)
+		return id, err
+	}
+
+	reqPush := dtos.ReqSendPushDTO{
+		Message: truck.Message,
+		Token:   token,
+	}
+
+	go s.pushService.SendPush(reqPush)
+
+	id.ID = truckId
+	return id, nil
+}

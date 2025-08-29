@@ -13,4 +13,5 @@ type CarsService interface {
 	//Truck
 	GetTrucks(ctx context.Context, limit, page int64, search, status string) (dtos.TrucksResp, error)
 	GetTruckByID(ctx context.Context, id int64) (dtos.Truck, error)
+	UpdateTruckStatus(ctx context.Context, truck dtos.UpdateTruckStatus) (dtos.ID, error)
 }
