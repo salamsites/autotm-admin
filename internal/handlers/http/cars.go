@@ -35,6 +35,7 @@ func (h *CarsHandler) CarsRegisterRoutes(r chi.Router) {
 	//trucks
 	r.Method("GET", "/get-trucks", h.middleware.Base(h.v1GetTrucks))
 	r.Method("GET", "/get-truck-by-id", h.middleware.Base(h.v1GetTruckById))
+	r.Method("PUT", "/update-truck-status", h.middleware.Base(h.v1UpdateTruckStatus))
 }
 
 // v1GetCars
@@ -253,5 +254,50 @@ func (h *CarsHandler) v1GetTruckById(w http.ResponseWriter, r *http.Request) sht
 	result.Status = true
 	result.Message = "Successfully retrieved truck"
 	result.Data = truck
+	return shttp.Success.SetData(result)
+}
+
+// v1UpdateTruckStatus
+// @Summary Update Truck Status
+// @Description Updates the status of a truck
+// @Tags Trucks
+// @Accept json
+// @Produce json
+// @Param Truck body dtos.UpdateTruckStatus true "Truck ID and new Status"
+// @Success 200 {object} dtos.ID "Returns updated truck ID"
+// @Failure 400 {object} string "Bad request"
+// @Failure 404 {object} string "Truck not found"
+// @Failure 500 {object} string "Internal server error"
+// @Router /cars/update-truck-status [put]
+func (h *CarsHandler) v1UpdateTruckStatus(w http.ResponseWriter, r *http.Request) shttp.Response {
+	var result shttp.Result
+	result.Status = false
+
+	body, errBody := io.ReadAll(r.Body)
+	if errBody != nil {
+		result.Message = errBody.Error()
+		h.logger.Error("unable to read request body", errBody)
+		return shttp.BadRequest.SetData(result)
+	}
+	defer r.Body.Close()
+
+	var truckDTO dtos.UpdateTruckStatus
+	errData := json.Unmarshal(body, &truckDTO)
+	if errData != nil {
+		result.Message = errData.Error()
+		h.logger.Error("unable to unmarshal request body", errData)
+		return shttp.UnprocessableEntity.SetData(result)
+	}
+
+	id, err := h.service.UpdateTruckStatus(r.Context(), truckDTO)
+	if err != nil {
+		result.Message = err.Error()
+		h.logger.Error("unable to update truck", err)
+		return shttp.InternalServerError.SetData(result)
+	}
+
+	result.Status = true
+	result.Message = "Successfully updated truck"
+	result.Data = id
 	return shttp.Success.SetData(result)
 }
