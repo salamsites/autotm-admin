@@ -241,7 +241,7 @@ func (r *CarsPsqlRepository) GetTrucks(ctx context.Context, limit, page int64, s
 			t.model_id, m.name, t.year, t.seats, t.cab_type, t.wheel_formula, t.chassis, t.cab_suspension,
 			t.bus_type, t.suspension_type, t.brakes, t.axles, t.engine_hours, t.vehicle_type, t.engine_capacity,
 			t.forklift_type, t.lifting_capacity, t.mileage, t.excavator_type, t.bulldozer_type, t.color, t.vin, 
-			t.body_id, bt.name_tm, bt.name_en, bt.name_ru, t.description, t.city_id, t.name_tm, t.name_en, t.name_ru, 
+			t.body_id, bt.name_tm, bt.name_en, bt.name_ru, t.description, t.city_id, cs.name_tm, cs.name_en, cs.name_ru, 
 			t.name, t.mail, t.phone_number, t.is_comment, t.is_exchange, t.is_credit, t.images, t.status
 		FROM trucks t
 			LEFT JOIN users u ON u.id = t.user_id 
@@ -379,7 +379,7 @@ func (r *CarsPsqlRepository) GetTruckByID(ctx context.Context, id int64) (models
 			t.model_id, m.name, t.year, t.seats, t.cab_type, t.wheel_formula, t.chassis, t.cab_suspension,
 			t.bus_type, t.suspension_type, t.brakes, t.axles, t.engine_hours, t.vehicle_type, t.engine_capacity,
 			t.forklift_type, t.lifting_capacity, t.mileage, t.excavator_type, t.bulldozer_type, t.color, t.vin, 
-			t.body_id, bt.name_tm, bt.name_en, bt.name_ru, t.description, t.city_id, t.name_tm, t.name_en, t.name_ru, 
+			t.body_id, bt.name_tm, bt.name_en, bt.name_ru, t.description, t.city_id, cs.name_tm, cs.name_en, cs.name_ru, 
 			t.name, t.mail, t.phone_number, t.is_comment, t.is_exchange, t.is_credit, t.images, t.status
 		FROM trucks t
 			LEFT JOIN users u ON u.id = t.user_id 
