@@ -92,18 +92,18 @@ type ModelResult struct {
 }
 
 type CreateDescription struct {
-	NameTM string `json:"name_tm"`
-	NameEN string `json:"name_en"`
-	NameRU string `json:"name_ru"`
-	Type   string `json:"type"`
+	NameTM   string `json:"name_tm"`
+	NameEN   string `json:"name_en"`
+	NameRU   string `json:"name_ru"`
+	Category string `json:"category"`
 }
 
 type Description struct {
-	ID     int64  `json:"id"`
-	NameTM string `json:"name_tm"`
-	NameEN string `json:"name_en"`
-	NameRU string `json:"name_ru"`
-	Type   string `json:"type"`
+	ID       int64  `json:"id"`
+	NameTM   string `json:"name_tm"`
+	NameEN   string `json:"name_en"`
+	NameRU   string `json:"name_ru"`
+	Category string `json:"category"`
 }
 
 type DescriptionResult struct {
@@ -112,9 +112,9 @@ type DescriptionResult struct {
 }
 
 type UpdateDescription struct {
-	ID     int64  `json:"id"`
-	NameTM string `json:"name_tm"`
-	NameEN string `json:"name_en"`
-	NameRU string `json:"name_ru"`
-	Type   string `json:"type"`
+	ID       int64  `json:"id"`
+	NameTM   string `json:"name_tm"`
+	NameEN   string `json:"name_en"`
+	NameRU   string `json:"name_ru"`
+	Category string `json:"category"`
 }

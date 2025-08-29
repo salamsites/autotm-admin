@@ -660,9 +660,9 @@ func (h *BrandHandler) v1CreateDescription(w http.ResponseWriter, r *http.Reques
 func (h *BrandHandler) v1GetDescriptions(w http.ResponseWriter, r *http.Request) shttp.Response {
 	var result shttp.Result
 	result.Status = false
-	descriptionType := r.URL.Query().Get("type")
-	if descriptionType == "" {
-		result.Message = "type is required"
+	category := r.URL.Query().Get("category")
+	if category == "" {
+		result.Message = "category type is required"
 		return shttp.BadRequest.SetData(result)
 	}
 
@@ -679,7 +679,7 @@ func (h *BrandHandler) v1GetDescriptions(w http.ResponseWriter, r *http.Request)
 		page = 1
 	}
 
-	descriptions, err := h.service.GetDescriptions(r.Context(), limit, page, search, descriptionType)
+	descriptions, err := h.service.GetDescriptions(r.Context(), limit, page, search, category)
 	if err != nil {
 		result.Message = err.Error()
 		h.logger.Error("unable to get descriptions", err)

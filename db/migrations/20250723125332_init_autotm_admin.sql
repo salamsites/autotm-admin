@@ -163,7 +163,7 @@ CREATE TABLE IF NOT EXISTS descriptions (
                         "name_tm" TEXT,
                         "name_en" TEXT,
                         "name_ru" TEXT,
-                        "type" category_type NOT NULL,
+                        "category" category_type NOT NULL,
                         "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

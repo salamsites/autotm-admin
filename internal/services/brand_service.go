@@ -309,10 +309,10 @@ func (s *BrandService) CreateDescription(ctx context.Context, description dtos.C
 	}
 
 	newDescription := models.Description{
-		NameTM: description.NameTM,
-		NameEN: description.NameEN,
-		NameRU: description.NameRU,
-		Type:   description.Type,
+		NameTM:   description.NameTM,
+		NameEN:   description.NameEN,
+		NameRU:   description.NameRU,
+		Category: description.Category,
 	}
 
 	descriptionID, err := s.repo.CreateDescription(ctx, newDescription)
@@ -325,14 +325,14 @@ func (s *BrandService) CreateDescription(ctx context.Context, description dtos.C
 	return id, nil
 }
 
-func (s *BrandService) GetDescriptions(ctx context.Context, limit, page int64, search, descriptionType string) (dtos.DescriptionResult, error) {
+func (s *BrandService) GetDescriptions(ctx context.Context, limit, page int64, search, category string) (dtos.DescriptionResult, error) {
 	offset := (page - 1) * limit
 	if page <= 0 {
 		page = 1
 		offset = 0
 	}
 
-	descriptions, count, err := s.repo.GetDescriptions(ctx, limit, offset, search, descriptionType)
+	descriptions, count, err := s.repo.GetDescriptions(ctx, limit, offset, search, category)
 	if err != nil {
 		s.logger.Errorf("get descriptions err: %v", err)
 		return dtos.DescriptionResult{}, err
@@ -340,11 +340,11 @@ func (s *BrandService) GetDescriptions(ctx context.Context, limit, page int64, s
 	var dtoDescriptions []dtos.Description
 	for _, b := range descriptions {
 		dtoDescriptions = append(dtoDescriptions, dtos.Description{
-			ID:     b.ID,
-			NameTM: b.NameTM,
-			NameEN: b.NameEN,
-			NameRU: b.NameRU,
-			Type:   b.Type,
+			ID:       b.ID,
+			NameTM:   b.NameTM,
+			NameEN:   b.NameEN,
+			NameRU:   b.NameRU,
+			Category: b.Category,
 		})
 	}
 
@@ -364,11 +364,11 @@ func (s *BrandService) UpdateDescription(ctx context.Context, description dtos.U
 	}
 
 	newDescription := models.Description{
-		ID:     description.ID,
-		NameTM: description.NameTM,
-		NameEN: description.NameEN,
-		NameRU: description.NameRU,
-		Type:   description.Type,
+		ID:       description.ID,
+		NameTM:   description.NameTM,
+		NameEN:   description.NameEN,
+		NameRU:   description.NameRU,
+		Category: description.Category,
 	}
 
 	descriptionID, err := s.repo.UpdateDescription(ctx, newDescription)

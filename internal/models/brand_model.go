@@ -28,9 +28,9 @@ type Model struct {
 }
 
 type Description struct {
-	ID     int64
-	NameTM string
-	NameEN string
-	NameRU string
-	Type   string
+	ID       int64
+	NameTM   string
+	NameEN   string
+	NameRU   string
+	Category string
 }
