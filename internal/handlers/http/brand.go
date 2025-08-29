@@ -650,6 +650,7 @@ func (h *BrandHandler) v1CreateDescription(w http.ResponseWriter, r *http.Reques
 // @Tags Description
 // @Accept json
 // @Produce json
+// @Param category query string true "Category filter (auto, moto, truck)"
 // @Param limit query int false "Limit number of descriptions to return"
 // @Param page query int false "Page number"
 // @Param search query string false "Search string to filter descriptions by name"

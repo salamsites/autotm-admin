@@ -494,10 +494,10 @@ func (r *BrandPsqlRepository) CreateDescription(ctx context.Context, description
 	query := ` INSERT INTO descriptions (name_tm, name_en, name_ru, category) VALUES (@name_tm, @name_en, @name_ru, @category) RETURNING id `
 
 	args := pgx.NamedArgs{
-		"name_tm": description.NameTM,
-		"name_en": description.NameEN,
-		"name_ru": description.NameRU,
-		"type":    description.Category,
+		"name_tm":  description.NameTM,
+		"name_en":  description.NameEN,
+		"name_ru":  description.NameRU,
+		"category": description.Category,
 	}
 
 	err := r.client.QueryRow(ctx, query, args).Scan(&id)
@@ -525,10 +525,10 @@ func (r *BrandPsqlRepository) GetDescriptions(ctx context.Context, limit, page i
 		`
 
 	args := pgx.NamedArgs{
-		"type":   category,
-		"search": search,
-		"limit":  limit,
-		"offset": page,
+		"category": category,
+		"search":   search,
+		"limit":    limit,
+		"offset":   page,
 	}
 	rows, err := r.client.Query(ctx, query, args)
 	if err != nil {
@@ -571,17 +571,17 @@ func (r *BrandPsqlRepository) UpdateDescription(ctx context.Context, description
 	query := `
 		UPDATE descriptions SET 
 		    name_tm = @name_tm, name_en = @name_en, name_ru = @name_ru, 
-		    category = @type, updated_at = NOW()
+		    category = @category, updated_at = NOW()
 		WHERE id = @id
 		RETURNING id
 	`
 
 	args := pgx.NamedArgs{
-		"name_tm": description.NameTM,
-		"name_en": description.NameEN,
-		"name_ru": description.NameRU,
-		"type":    description.Category,
-		"id":      description.ID,
+		"name_tm":  description.NameTM,
+		"name_en":  description.NameEN,
+		"name_ru":  description.NameRU,
+		"category": description.Category,
+		"id":       description.ID,
 	}
 	err := r.client.QueryRow(ctx, query, args).Scan(&descriptionID)
 	if err != nil {
