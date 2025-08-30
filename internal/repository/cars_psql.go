@@ -469,7 +469,7 @@ func (r *CarsPsqlRepository) GetMotors(ctx context.Context, limit, page int64, s
 		SELECT
 			ms.id, ms.user_id, u.full_name, ms.stock_id, s.store_name, ms.brand_id, b.name,
 			ms.type_motorcycles, ms.year, ms.price, ms.volume, ms.engine_type, 
-			ms.number_of_clock_cycles, t.model_id, m.name, ms.air_type, ms.color, ms.vin, 
+			ms.number_of_clock_cycles, ms.model_id, m.name, ms.air_type, ms.color, ms.vin, 
 			ms.description, ms.city_id, cs.name_tm, cs.name_en, cs.name_ru,
 			ms.name, ms.mail, ms.phone_number, ms.options, ms.is_comment, 
 			ms.is_exchange, ms.is_credit, ms.images, ms.status
