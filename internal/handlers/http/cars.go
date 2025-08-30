@@ -28,6 +28,7 @@ func NewCarsHandler(logger *slog.Logger, middleware *shttp.Middleware, service r
 }
 
 func (h *CarsHandler) CarsRegisterRoutes(r chi.Router) {
+	//Cars
 	r.Method("GET", "/get-cars", h.middleware.Base(h.v1GetCars))
 	r.Method("GET", "/get-car-by-id", h.middleware.Base(h.v1GetCarById))
 	r.Method("PUT", "/update-car-status", h.middleware.Base(h.v1UpdateCarStatus))
@@ -36,6 +37,11 @@ func (h *CarsHandler) CarsRegisterRoutes(r chi.Router) {
 	r.Method("GET", "/get-trucks", h.middleware.Base(h.v1GetTrucks))
 	r.Method("GET", "/get-truck-by-id", h.middleware.Base(h.v1GetTruckById))
 	r.Method("PUT", "/update-truck-status", h.middleware.Base(h.v1UpdateTruckStatus))
+
+	//Motors
+	r.Method("GET", "/get-motors", h.middleware.Base(h.v1GetMotors))
+	r.Method("GET", "/get-moto-by-id", h.middleware.Base(h.v1GetMotoById))
+	r.Method("PUT", "/update-moto-status", h.middleware.Base(h.v1UpdateMotoStatus))
 }
 
 // v1GetCars
@@ -298,6 +304,138 @@ func (h *CarsHandler) v1UpdateTruckStatus(w http.ResponseWriter, r *http.Request
 
 	result.Status = true
 	result.Message = "Successfully updated truck"
+	result.Data = id
+	return shttp.Success.SetData(result)
+}
+
+// v1GetMotors
+// @Summary Get Motors
+// @Description Get paginated list of motors filtered optional search string
+// @Tags Motors
+// @Accept json
+// @Produce json
+// @Param limit query int false "Limit number of motors to return"
+// @Param page query int false "Page number"
+// @Param search query string false "Search string to filter motors by name and users by name"
+// @Param status query string false "Status string to filter motors by status (pending, accepted, blocked)"
+// @Success 200 {object} dtos.MotoResp "List of motors with pagination info successfully"
+// @Failure 400 {object} string "Bad request"
+// @Failure 500 {object} string "Internal server error"
+// @Router /cars/get-motors [get]
+func (h *CarsHandler) v1GetMotors(w http.ResponseWriter, r *http.Request) shttp.Response {
+	limitStr := r.URL.Query().Get("limit")
+	pageStr := r.URL.Query().Get("page")
+	search := r.URL.Query().Get("search")
+	status := r.URL.Query().Get("status")
+
+	limit, err := strconv.ParseInt(limitStr, 10, 64)
+	if err != nil || limit <= 0 {
+		limit = 10
+	}
+	page, err := strconv.ParseInt(pageStr, 10, 64)
+	if err != nil || page <= 0 {
+		page = 1
+	}
+
+	var result shttp.Result
+
+	motors, err := h.service.GetMotors(r.Context(), limit, page, search, status)
+	if err != nil {
+		result.Status = false
+		result.Message = err.Error()
+		h.logger.Error("unable to get motors", err)
+		return shttp.InternalServerError.SetData(result)
+	}
+
+	result.Status = true
+	result.Message = "List of motors with pagination info successfully"
+	result.Data = motors
+	return shttp.Success.SetData(result)
+}
+
+// v1GetMotoById
+// @Summary Get moto by id
+// @Description Get moto by ID
+// @Tags Motors
+// @Accept json
+// @Produce json
+// @Param id query int true "Moto ID to get"
+// @Success 200 {object} dtos.Moto "Successfully get moto by id"
+// @Failure 400 {object} string "Bad request"
+// @Failure 404 {object} string "Moto not found"
+// @Failure 500 {object} string "Internal server error"
+// @Router /cars/get-moto-by-id [get]
+func (h *CarsHandler) v1GetMotoById(w http.ResponseWriter, r *http.Request) shttp.Response {
+	var result shttp.Result
+	result.Status = false
+
+	idStr := r.URL.Query().Get("id")
+	if idStr == "" {
+		result.Message = "id is required"
+		return shttp.BadRequest.SetData(result)
+	}
+
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		result.Message = err.Error()
+		h.logger.Error("invalid moto ID", err)
+		return shttp.BadRequest.SetData(result)
+	}
+
+	moto, err := h.service.GetMotoByID(r.Context(), id)
+	if err != nil {
+		result.Message = err.Error()
+		h.logger.Error("unable to get moto", err)
+		return shttp.InternalServerError.SetData(result)
+	}
+
+	result.Status = true
+	result.Message = "Successfully retrieved moto"
+	result.Data = moto
+	return shttp.Success.SetData(result)
+}
+
+// v1UpdateMotoStatus
+// @Summary Update Moto Status
+// @Description Updates the status of a moto
+// @Tags Motors
+// @Accept json
+// @Produce json
+// @Param Moto body dtos.UpdateMotoStatus true "Moto ID and new Status"
+// @Success 200 {object} dtos.ID "Returns updated moto ID"
+// @Failure 400 {object} string "Bad request"
+// @Failure 404 {object} string "Car not found"
+// @Failure 500 {object} string "Internal server error"
+// @Router /cars/update-moto-status [put]
+func (h *CarsHandler) v1UpdateMotoStatus(w http.ResponseWriter, r *http.Request) shttp.Response {
+	var result shttp.Result
+	result.Status = false
+
+	body, errBody := io.ReadAll(r.Body)
+	if errBody != nil {
+		result.Message = errBody.Error()
+		h.logger.Error("unable to read request body", errBody)
+		return shttp.BadRequest.SetData(result)
+	}
+	defer r.Body.Close()
+
+	var motoDTO dtos.UpdateMotoStatus
+	errData := json.Unmarshal(body, &motoDTO)
+	if errData != nil {
+		result.Message = errData.Error()
+		h.logger.Error("unable to unmarshal request body", errData)
+		return shttp.UnprocessableEntity.SetData(result)
+	}
+
+	id, err := h.service.UpdateMotoStatus(r.Context(), motoDTO)
+	if err != nil {
+		result.Message = err.Error()
+		h.logger.Error("unable to update moto", err)
+		return shttp.InternalServerError.SetData(result)
+	}
+
+	result.Status = true
+	result.Message = "Successfully updated moto"
 	result.Data = id
 	return shttp.Success.SetData(result)
 }

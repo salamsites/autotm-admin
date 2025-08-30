@@ -92,3 +92,43 @@ type Truck struct {
 	Images          interface{}
 	Status          string
 }
+
+type Moto struct {
+	Id                  int64
+	UserId              int64
+	UserName            string
+	StockId             int64
+	StoreName           string
+	BodyId              int64
+	BodyNameTM          string
+	BodyNameEN          string
+	BodyNameRU          string
+	BrandId             int64
+	BrandName           string
+	ModelId             int64
+	ModelName           string
+	TypeMotorcycles     string
+	Year                int64
+	Price               int64
+	Volume              int64
+	EngineType          string
+	NumberOfClockCycles int64
+	Mileage             int64
+	AirType             string
+	Color               string
+	Vin                 string
+	Description         string
+	CityId              int64
+	CityNameTM          string
+	CityNameEN          string
+	CityNameRU          string
+	Name                string
+	Mail                string
+	PhoneNumber         string
+	Options             []int64
+	IsComment           bool
+	IsExchange          bool
+	IsCredit            bool
+	Images              interface{}
+	Status              string
+}

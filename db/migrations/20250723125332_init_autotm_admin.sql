@@ -305,6 +305,69 @@ CREATE TABLE IF NOT EXISTS trucks (
 ALTER TABLE trucks OWNER TO autotm;
 -- +goose StatementEnd
 
+
+-- +goose StatementBegin
+CREATE TABLE IF NOT EXISTS motos (
+        "id" BIGSERIAL PRIMARY KEY,
+        "user_id" BIGINT,
+        "stock_id" BIGINT,
+        "body_id" BIGINT NOT NULL,
+        "brand_id" BIGINT NOT NULL,
+        "model_id" BIGINT NOT NULL,
+        "type_motorcycles" CHARACTER VARYING(100),
+        "year" INTEGER NOT NULL,
+        "price" BIGINT NOT NULL,
+        "volume" BIGINT NOT NULL,
+        "engine_type" CHARACTER VARYING(100),
+        "number_of_clock_cycles" INTEGER,
+        "mileage" BIGINT,
+        "air_type" CHARACTER VARYING(100),
+        "color" CHARACTER VARYING(100) NOT NULL,
+        "vin" CHARACTER VARYING(100),
+        "description" TEXT,
+        "city_id" BIGINT,
+        "name" CHARACTER VARYING(255),
+        "mail" CHARACTER VARYING(255),
+        "phone_number" CHARACTER VARYING(50) NOT NULL,
+        "options" BIGINT[],
+        "is_comment" BOOLEAN DEFAULT FALSE,
+        "is_exchange" BOOLEAN DEFAULT FALSE,
+        "is_credit" BOOLEAN DEFAULT FALSE,
+        "images" JSONB,
+        "status" feeds_status DEFAULT 'pending',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT fk_user
+            FOREIGN KEY (user_id)
+                REFERENCES users (id)
+                    ON DELETE SET NULL,
+        CONSTRAINT fk_brand
+            FOREIGN KEY (brand_id)
+                REFERENCES brands (id)
+                    ON DELETE CASCADE,
+        CONSTRAINT fk_stock
+            FOREIGN KEY (stock_id)
+                REFERENCES stocks (id)
+                    ON DELETE SET NULL,
+        CONSTRAINT fk_model
+            FOREIGN KEY (model_id)
+                REFERENCES models (id)
+                    ON DELETE CASCADE,
+        CONSTRAINT fk_body
+            FOREIGN KEY (body_id)
+                REFERENCES body_types (id)
+                    ON DELETE CASCADE,
+        CONSTRAINT fk_city
+            FOREIGN KEY (city_id)
+                REFERENCES cities (id)
+                    ON DELETE CASCADE
+);
+-- +goose StatementEnd
+
+-- +goose StatementBegin
+ALTER TABLE motos OWNER TO autotm;
+-- +goose StatementEnd
+
 -- +goose Down
 -- +goose StatementBegin
 DROP TABLE IF EXISTS trucks;
