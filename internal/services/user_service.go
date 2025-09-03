@@ -35,17 +35,12 @@ func (s *UserService) GetUsersFromUserService(ctx context.Context, limit, page i
 	var dtoUsers []dtos.GetUser
 	for _, user := range users {
 		dtoUser := dtos.GetUser{
-			Id: user.Id,
+			Id:          user.Id,
+			FullName:    &user.FullName,
+			Email:       &user.Email,
+			PhoneNumber: &user.PhoneNumber,
 		}
-		if user.FullName.Valid {
-			dtoUser.FullName = &user.FullName.String
-		}
-		if user.Email.Valid {
-			dtoUser.Email = &user.Email.String
-		}
-		if user.PhoneNumber.Valid {
-			dtoUser.PhoneNumber = &user.PhoneNumber.String
-		}
+		dtoUsers = append(dtoUsers, dtoUser)
 	}
 
 	result := dtos.GetUsersResult{
