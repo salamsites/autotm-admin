@@ -7,6 +7,8 @@ import (
 	"autotm-admin/internal/repository/storage"
 	"autotm-admin/internal/services/repository"
 	"context"
+	"fmt"
+	"time"
 
 	slog "github.com/salamsites/package-log"
 )
@@ -208,25 +210,65 @@ func (s *StockService) UpdateStockStatus(ctx context.Context, stock dtos.UpdateS
 		return id, err
 	}
 
-	userId, err := s.repo.GetUserByStockId(ctx, stockID)
-	if err != nil {
-		s.logger.Errorf("get GetUserByStockId err: %v", err)
-		return id, err
-	}
-
-	token, err := s.userService.GetUserFirebaseToken(ctx, userId)
-	if err != nil {
-		s.logger.Errorf("get GetUserFirebaseToken err: %v", err)
-		return id, err
-	}
-
-	reqPush := dtos.ReqSendPushDTO{
-		Message: stock.Message,
-		Token:   token,
-	}
-
-	go s.pushService.SendPush(reqPush)
+	go s.handlePushNotifications(stockID, stock.Message)
 
 	id.ID = stockID
 	return id, nil
+}
+
+func (s *StockService) handlePushNotifications(stockID int64, message string) {
+	ctx := context.Background()
+	const maxRetries = 3
+	retryDelay := time.Second * 2
+
+	for attempt := 1; attempt <= maxRetries; attempt++ {
+		err := s.sendPushNotifications(ctx, stockID, message)
+		if err == nil {
+			s.logger.Infof("Push notifications sent successfully for stock %d", stockID)
+			return
+		}
+
+		s.logger.Warnf("Push attempt %d failed for stock %d: %v", attempt, stockID, err)
+
+		if attempt == maxRetries {
+			s.logger.Errorf("All push attempts failed for stock %d: %v", stockID, err)
+			return
+		}
+
+		time.Sleep(retryDelay)
+		retryDelay *= 2 // Exponential backoff
+	}
+}
+
+func (s *StockService) sendPushNotifications(ctx context.Context, stockID int64, message string) error {
+	userIDs, err := s.repo.GetStockFollowers(ctx, stockID)
+	if err != nil {
+		return fmt.Errorf("get stock followers: %w", err)
+	}
+
+	if len(userIDs) == 0 {
+		s.logger.Debugf("No followers for stock %d", stockID)
+		return nil
+	}
+
+	tokens, err := s.userService.GetUserFirebaseToken(ctx, userIDs)
+	if err != nil {
+		return fmt.Errorf("get firebase tokens: %w", err)
+	}
+
+	if len(tokens) == 0 {
+		s.logger.Debugf("No tokens for stock %d followers", stockID)
+		return nil
+	}
+
+	reqPush := dtos.ReqSendPushDTO{
+		Message: message,
+		Tokens:  tokens,
+	}
+
+	if err := s.pushService.SendMultiPush(ctx, reqPush); err != nil {
+		return fmt.Errorf("send push: %w", err)
+	}
+
+	return nil
 }

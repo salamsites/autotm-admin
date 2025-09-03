@@ -1,7 +1,10 @@
 package repository
 
-import "autotm-admin/internal/dtos"
+import (
+	"autotm-admin/internal/dtos"
+	"context"
+)
 
 type PushService interface {
-	SendPush(req dtos.ReqSendPushDTO) error
+	SendMultiPush(ctx context.Context, req dtos.ReqSendPushDTO) error
 }

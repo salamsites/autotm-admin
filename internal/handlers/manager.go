@@ -34,6 +34,10 @@ func Manager(logger *slog.Logger, clientPsql spsql.Client, minioImageClient smin
 
 	newMiddleware := shttp.NewMiddleware(logger, cfg.Auth.JwtRegistration, nil)
 
+	pushService := services.NewPushService(logger, cfg)
+	repo := repository.NewUserPsqlRepository(logger, clientPsql)
+	userService := services.NewUserService(logger, repo)
+
 	r.Route(filesURL, func(subRouter chi.Router) {
 		filesHandler := http.NewFilesHandler(logger, newMiddleware, minioImageClient)
 		filesHandler.FilesRegisterRoutes(subRouter)
@@ -73,9 +77,6 @@ func Manager(logger *slog.Logger, clientPsql spsql.Client, minioImageClient smin
 
 	r.Route(stocksURL, func(subRouter chi.Router) {
 		stockRepo := repository.NewStockPsqlRepository(logger, clientPsql)
-		repo := repository.NewUserPsqlRepository(logger, clientPsql)
-		userService := services.NewUserService(logger, repo)
-		pushService := services.NewPushService(logger, cfg)
 		stockService := services.NewStockService(logger, stockRepo, userService, pushService)
 		stockHandler := http.NewStockHandler(logger, newMiddleware, stockService, minioFileClient, minioImageClient)
 		stockHandler.StockRegisterRoutes(subRouter)
@@ -90,10 +91,8 @@ func Manager(logger *slog.Logger, clientPsql spsql.Client, minioImageClient smin
 
 	r.Route(carsURL, func(subRouter chi.Router) {
 		carsRepo := repository.NewCarsPsqlRepository(logger, clientPsql)
-		repo := repository.NewUserPsqlRepository(logger, clientPsql)
-		userService := services.NewUserService(logger, repo)
-		pushService := services.NewPushService(logger, cfg)
-		carsService := services.NewCarsService(logger, carsRepo, userService, pushService)
+		stockRepo := repository.NewStockPsqlRepository(logger, clientPsql)
+		carsService := services.NewCarsService(logger, carsRepo, userService, pushService, stockRepo)
 		carsHandler := http.NewCarsHandler(logger, newMiddleware, carsService)
 		carsHandler.CarsRegisterRoutes(subRouter)
 	})

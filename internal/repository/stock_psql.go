@@ -284,24 +284,37 @@ func (r *StockPsqlRepository) UpdateStockStatus(ctx context.Context, id int64, s
 	return stockID, nil
 }
 
-func (r *StockPsqlRepository) GetUserByStockId(ctx context.Context, stockId int64) (int64, error) {
-	var userId int64
+func (r *StockPsqlRepository) GetStockFollowers(ctx context.Context, stockId int64) ([]int64, error) {
+	var userIDs []int64
 
 	query := `
 		SELECT 
 			user_id
-		FROM stocks
-		WHERE id = @stock_id
+		FROM follow_stocks
+		WHERE stock_id = @stock_id
 	`
 
 	args := pgx.NamedArgs{
 		"stock_id": stockId,
 	}
 
-	err := r.client.QueryRow(ctx, query, args).Scan(&userId)
+	rows, err := r.client.Query(ctx, query, args)
 	if err != nil {
-		r.logger.Errorf("get user by stock id err: %v", err)
-		return userId, err
+		r.logger.Errorf("get stock followers err: %w", err)
+		return nil, err
 	}
-	return userId, nil
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var userID int64
+		err = rows.Scan(&userID)
+		if err != nil {
+			r.logger.Errorf("get stock followers scan err: %w", err)
+			return nil, err
+		}
+		userIDs = append(userIDs, userID)
+	}
+
+	return userIDs, nil
 }

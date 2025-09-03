@@ -45,6 +45,7 @@ type CarsResp struct {
 
 type UpdateCarStatus struct {
 	ID      int64  `json:"id"`
+	StockID int64  `json:"stock_id"`
 	Status  string `json:"status"`
 	Message string `json:"message"`
 }
@@ -111,6 +112,7 @@ type TrucksResp struct {
 
 type UpdateTruckStatus struct {
 	ID      int64  `json:"id"`
+	StockID int64  `json:"stock_id"`
 	Status  string `json:"status"`
 	Message string `json:"message"`
 }
@@ -162,6 +164,7 @@ type MotoResp struct {
 
 type UpdateMotoStatus struct {
 	ID      int64  `json:"id"`
+	StockID int64  `json:"stock_id"`
 	Status  string `json:"status"`
 	Message string `json:"message"`
 }

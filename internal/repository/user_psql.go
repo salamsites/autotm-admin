@@ -74,26 +74,38 @@ func (r *UserPsqlRepository) GetUsersFromUserService(ctx context.Context, limit,
 	return users, count, nil
 }
 
-func (r *UserPsqlRepository) GetUserFirebaseToken(ctx context.Context, userId int64) (string, error) {
+func (r *UserPsqlRepository) GetUserFirebaseToken(ctx context.Context, userIDs []int64) ([]string, error) {
 	var (
-		token string
+		tokens []string
 	)
 
 	query := `
  		SELECT
 			firebase_token
         FROM user_devices
- 		WHERE user_id = @user_id;
+ 		WHERE user_id = ANY(@user_ids)
+ 			AND firebase_token IS NOT NULL AND firebase_token != '';
 	`
 
 	args := pgx.NamedArgs{
-		"user_id": userId,
+		"user_id": userIDs,
 	}
 
-	err := r.client.QueryRow(ctx, query, args).Scan(&token)
+	rows, err := r.client.Query(ctx, query, args)
 	if err != nil {
-		return "", err
+		r.logger.Errorf("get users firebase token err : %v", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var token string
+		if err := rows.Scan(&token); err != nil {
+			r.logger.Errorf("get users firebase token scan err : %v", err)
+			return nil, err
+		}
+		tokens = append(tokens, token)
 	}
 
-	return token, nil
+	return tokens, nil
 }
