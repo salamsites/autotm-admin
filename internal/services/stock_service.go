@@ -43,8 +43,6 @@ func (s *StockService) CreateStock(ctx context.Context, stock dtos.CreateStockRe
 		PhoneNumber: stock.PhoneNumber,
 		Email:       stock.Email,
 		StoreName:   stock.StoreName,
-		Images:      stock.Images,
-		Logo:        stock.Logo,
 		Address:     stock.Address,
 		RegionID:    stock.RegionID,
 		CityID:      stock.CityID,
