@@ -288,19 +288,10 @@ func (h *StockHandler) v1UpdateStock(w http.ResponseWriter, r *http.Request) sht
 		return shttp.InternalServerError.SetData("Failed to update stock")
 	}
 
-	var images []string
 	uploadResult, errUpload := h.minioFileClient.UploadFile(r.Context(), r, "image", id.ID, helpers.StockImagesSize, util.StockBucket)
 	if errUpload.StatusCode != 0 && errUpload.StatusCode != http.StatusBadRequest {
 		h.logger.Error("failed to upload images", errUpload)
 		return shttp.InternalServerError.SetData(errUpload.Message)
-	}
-
-	if errUpload.StatusCode == 0 {
-		for _, item := range uploadResult.Content {
-			if img, ok := item.(util.FeedResultTypeImage); ok {
-				images = append(images, img.Path)
-			}
-		}
 	}
 
 	logoFileHeaders := r.MultipartForm.File["logo"]
