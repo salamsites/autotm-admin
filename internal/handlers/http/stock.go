@@ -235,6 +235,7 @@ func (h *StockHandler) v1GetStockByID(w http.ResponseWriter, r *http.Request) sh
 // @Param address formData string false "Address"
 // @Param image formData []file false "Image file(s)"
 // @Param logo formData file false "Logo image file"
+// @Param status formData string false "Status ('waiting', 'accepted', 'blocked')"
 // @Success 200 {object} dtos.ID "Returns updated stock ID"
 // @Failure 400 {object} string "Bad request"
 // @Failure 422 {object} string "Unprocessable entity"
@@ -270,6 +271,7 @@ func (h *StockHandler) v1UpdateStock(w http.ResponseWriter, r *http.Request) sht
 	regionID := helpers.ParseInt64(r.FormValue("region_id"))
 	cityID := helpers.ParseInt64(r.FormValue("city_id"))
 	address := r.FormValue("address")
+	status := r.FormValue("status")
 
 	stockDTO := dtos.UpdateStockReq{
 		ID:          stockID,
@@ -280,6 +282,7 @@ func (h *StockHandler) v1UpdateStock(w http.ResponseWriter, r *http.Request) sht
 		RegionID:    regionID,
 		CityID:      cityID,
 		Address:     address,
+		Status:      status,
 	}
 
 	id, err := h.service.UpdateStock(r.Context(), stockDTO)
