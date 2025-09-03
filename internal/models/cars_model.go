@@ -41,50 +41,50 @@ type Car struct {
 type Truck struct {
 	Id              int64
 	UserId          int64
-	UserName        string
-	StockId         int64
-	StoreName       string
+	UserName        *string
+	StockId         *int64
+	StoreName       *string
 	BodyId          int64
-	BodyNameTM      string
-	BodyNameEN      string
-	BodyNameRU      string
+	BodyNameTM      *string
+	BodyNameEN      *string
+	BodyNameRU      *string
 	BrandId         int64
-	BrandName       string
+	BrandName       *string
 	ModelId         int64
-	ModelName       string
-	LoadCapacity    float64
+	ModelName       *string
+	LoadCapacity    *float64
 	Price           int64
-	BodyType        string
-	DriveType       string
-	Transmission    string
-	EngineType      string
+	BodyType        *string
+	DriveType       *string
+	Transmission    *string
+	EngineType      *string
 	Year            int64
-	Seats           int64
-	CabType         string
-	WheelFormula    string
-	Chassis         string
-	CabSuspension   string
-	BusType         string
-	SuspensionType  string
-	Brakes          string
-	Axles           int64
-	EngineHours     int64
-	VehicleType     string
-	EngineCapacity  float64
-	ForkliftType    string
-	LiftingCapacity int64
-	Mileage         int64
-	ExcavatorType   string
-	BulldozerType   string
+	Seats           *int64
+	CabType         *string
+	WheelFormula    *string
+	Chassis         *string
+	CabSuspension   *string
+	BusType         *string
+	SuspensionType  *string
+	Brakes          *string
+	Axles           *int64
+	EngineHours     *int64
+	VehicleType     *string
+	EngineCapacity  *float64
+	ForkliftType    *string
+	LiftingCapacity *int64
+	Mileage         *int64
+	ExcavatorType   *string
+	BulldozerType   *string
 	Color           string
-	Vin             string
-	Description     string
+	Vin             *string
+	Description     *string
 	CityId          int64
-	CityNameTM      string
-	CityNameEN      string
-	CityNameRU      string
-	Name            string
-	Mail            string
+	CityNameTM      *string
+	CityNameEN      *string
+	CityNameRU      *string
+	Name            *string
+	Mail            *string
 	PhoneNumber     string
 	IsComment       bool
 	IsExchange      bool
