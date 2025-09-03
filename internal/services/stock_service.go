@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/salamsites/minio-pkg/util"
 	slog "github.com/salamsites/package-log"
 )
 
@@ -60,7 +61,7 @@ func (s *StockService) CreateStock(ctx context.Context, stock dtos.CreateStockRe
 	return id, nil
 }
 
-func (s *StockService) UpdateStockFiles(ctx context.Context, stockID dtos.ID, images []string, logo string) error {
+func (s *StockService) UpdateStockFiles(ctx context.Context, stockID dtos.ID, images util.Media, logo interface{}) error {
 	if err := s.repo.UpdateStockImages(ctx, stockID.ID, images); err != nil {
 		s.logger.Errorf("failed to update stock images: %v", err)
 		return err

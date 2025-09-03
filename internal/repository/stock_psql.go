@@ -4,7 +4,9 @@ import (
 	"autotm-admin/internal/models"
 	"context"
 
+	trmpgx "github.com/avito-tech/go-transaction-manager/drivers/pgxv5/v2"
 	"github.com/jackc/pgx/v5"
+	"github.com/salamsites/minio-pkg/util"
 	slog "github.com/salamsites/package-log"
 	spsql "github.com/salamsites/package-psql"
 )
@@ -12,12 +14,14 @@ import (
 type StockPsqlRepository struct {
 	logger *slog.Logger
 	client spsql.Client
+	getter *trmpgx.CtxGetter
 }
 
-func NewStockPsqlRepository(logger *slog.Logger, client spsql.Client) *StockPsqlRepository {
+func NewStockPsqlRepository(logger *slog.Logger, client spsql.Client, getter *trmpgx.CtxGetter) *StockPsqlRepository {
 	return &StockPsqlRepository{
 		logger: logger,
 		client: client,
+		getter: getter,
 	}
 }
 
@@ -53,31 +57,47 @@ func (r *StockPsqlRepository) CreateStock(ctx context.Context, stock models.Stoc
 	return id, nil
 }
 
-func (r *StockPsqlRepository) UpdateStockImages(ctx context.Context, stockID int64, images []string) error {
-	query := `UPDATE stocks SET images = @images WHERE id = @id`
+func (r *StockPsqlRepository) UpdateStockImages(ctx context.Context, stockID int64, images util.Media) error {
+	conn := r.getter.DefaultTrOrDB(ctx, r.client.Pool())
 
+	var parseImage *util.Media
+	query := `SELECT images FROM stocks WHERE id = @id`
 	args := pgx.NamedArgs{
-		"images": images,
+		"id": stockID,
+	}
+	if err := conn.QueryRow(ctx, query, args).Scan(&parseImage); err != nil && err != pgx.ErrNoRows {
+		r.logger.Error(err)
+		return err
+	}
+	if parseImage == nil {
+		parseImage = &util.Media{}
+	}
+
+	parseImage.Sizes = images.Sizes
+	parseImage.Content = append(parseImage.Content, images.Content...)
+
+	query = `UPDATE stocks SET images = @images WHERE id = @id`
+	args = pgx.NamedArgs{
+		"images": parseImage,
 		"id":     stockID,
 	}
-	_, err := r.client.Exec(ctx, query, args)
-	if err != nil {
-		r.logger.Errorf("update images err: %v", err)
+	if _, err := conn.Exec(ctx, query, args); err != nil {
+		r.logger.Error(err)
 		return err
 	}
 	return nil
 }
 
-func (r *StockPsqlRepository) UpdateStockLogo(ctx context.Context, stockID int64, logo string) error {
-	query := `UPDATE stocks SET logo = @logo WHERE id = @id`
+func (r *StockPsqlRepository) UpdateStockLogo(ctx context.Context, stockID int64, logo interface{}) error {
+	conn := r.getter.DefaultTrOrDB(ctx, r.client.Pool())
 
+	query := `UPDATE stocks SET logo = @logo WHERE id = @id`
 	args := pgx.NamedArgs{
 		"logo": logo,
 		"id":   stockID,
 	}
-	_, err := r.client.Exec(ctx, query, args)
-	if err != nil {
-		r.logger.Errorf("update logo err: %v", err)
+	if _, err := conn.Exec(ctx, query, args); err != nil {
+		r.logger.Error(err)
 		return err
 	}
 	return nil

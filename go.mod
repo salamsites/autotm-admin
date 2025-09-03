@@ -9,7 +9,7 @@ require (
 	github.com/go-playground/validator/v10 v10.27.0
 	github.com/google/uuid v1.6.0
 	github.com/ilyakaznacheev/cleanenv v1.5.0
-	github.com/jackc/pgx/v5 v5.7.4
+	github.com/jackc/pgx/v5 v5.7.5
 	github.com/lib/pq v1.10.9
 	github.com/pressly/goose/v3 v3.24.3
 	github.com/rs/cors v1.11.1
@@ -28,6 +28,8 @@ require (
 	github.com/Kodeworks/golang-image-ico v0.0.0-20141118225523-73f0f4cfade9 // indirect
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/adrium/goheif v0.0.0-20230113233934-ca402e77a786 // indirect
+	github.com/avito-tech/go-transaction-manager/drivers/pgxv5/v2 v2.0.1 // indirect
+	github.com/avito-tech/go-transaction-manager/trm/v2 v2.0.1 // indirect
 	github.com/aws/aws-sdk-go v1.38.20 // indirect
 	github.com/chai2010/webp v1.4.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect

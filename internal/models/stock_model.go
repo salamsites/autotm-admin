@@ -7,8 +7,8 @@ type Stock struct {
 	PhoneNumber  string
 	Email        string
 	StoreName    string
-	Images       []string
-	Logo         string
+	Images       interface{}
+	Logo         interface{}
 	Address      string
 	RegionID     int64
 	CityID       int64

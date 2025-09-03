@@ -6,7 +6,7 @@ import (
 	"autotm-admin/internal/repository"
 	"autotm-admin/internal/services"
 	"context"
-
+	trmpgx "github.com/avito-tech/go-transaction-manager/drivers/pgxv5/v2"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	sminio "github.com/salamsites/minio-pkg"
@@ -76,7 +76,7 @@ func Manager(logger *slog.Logger, clientPsql spsql.Client, minioImageClient smin
 	})
 
 	r.Route(stocksURL, func(subRouter chi.Router) {
-		stockRepo := repository.NewStockPsqlRepository(logger, clientPsql)
+		stockRepo := repository.NewStockPsqlRepository(logger, clientPsql, trmpgx.DefaultCtxGetter)
 		stockService := services.NewStockService(logger, stockRepo, userService, pushService)
 		stockHandler := http.NewStockHandler(logger, newMiddleware, stockService, minioFileClient, minioImageClient)
 		stockHandler.StockRegisterRoutes(subRouter)
@@ -91,7 +91,7 @@ func Manager(logger *slog.Logger, clientPsql spsql.Client, minioImageClient smin
 
 	r.Route(carsURL, func(subRouter chi.Router) {
 		carsRepo := repository.NewCarsPsqlRepository(logger, clientPsql)
-		stockRepo := repository.NewStockPsqlRepository(logger, clientPsql)
+		stockRepo := repository.NewStockPsqlRepository(logger, clientPsql, trmpgx.DefaultCtxGetter)
 		carsService := services.NewCarsService(logger, carsRepo, userService, pushService, stockRepo)
 		carsHandler := http.NewCarsHandler(logger, newMiddleware, carsService)
 		carsHandler.CarsRegisterRoutes(subRouter)

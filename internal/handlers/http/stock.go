@@ -120,14 +120,14 @@ func (h *StockHandler) v1CreateStock(w http.ResponseWriter, r *http.Request) sht
 	var logoPath string
 	if len(logoFileHeaders) > 0 {
 		logoPath = fmt.Sprintf("%d/logo", stockID.ID)
-		errLogo := h.minioImageClient.UploadImage(r.Context(), r, "logo", logoPath, helpers.StockLogoSize, util.FileBucket)
+		errLogo := h.minioImageClient.UploadImage(r.Context(), r, "logo", logoPath, helpers.StockLogoSize, util.StockBucket)
 		if errLogo.StatusCode != 0 {
 			h.logger.Error("failed to upload logo", errLogo)
 			return shttp.InternalServerError.SetData("Failed to upload logo")
 		}
 	}
 
-	errUpdate := h.service.UpdateStockFiles(r.Context(), stockID, images, logoPath)
+	errUpdate := h.service.UpdateStockFiles(r.Context(), stockID, uploadResult, helpers.StockLogoSize)
 	if errUpdate != nil {
 		h.logger.Error("unable to update stock files", errUpdate)
 		return shttp.InternalServerError.SetData("Failed to update stock files")
@@ -321,7 +321,7 @@ func (h *StockHandler) v1UpdateStock(w http.ResponseWriter, r *http.Request) sht
 		}
 	}
 
-	errUpdate := h.service.UpdateStockFiles(r.Context(), id, images, logoPath)
+	errUpdate := h.service.UpdateStockFiles(r.Context(), id, uploadResult, helpers.StockLogoSize)
 	if errUpdate != nil {
 		h.logger.Error("unable to update stock files", errUpdate)
 		return shttp.InternalServerError.SetData("Failed to update stock files")
