@@ -3,32 +3,32 @@ package models
 type Car struct {
 	Id             int64
 	UserId         int64
-	UserName       string
-	StockId        int64
-	StoreName      string
+	UserName       *string
+	StockId        *int64
+	StoreName      *string
 	BrandId        int64
-	BrandName      string
+	BrandName      *string
 	ModelId        int64
-	ModelName      string
+	ModelName      *string
 	Year           int64
 	Mileage        int64
 	Color          string
 	EngineCapacity float64
 	EngineType     string
 	BodyId         int64
-	BodyNameTM     string
-	BodyNameEN     string
-	BodyNameRU     string
+	BodyNameTM     *string
+	BodyNameEN     *string
+	BodyNameRU     *string
 	Transmission   string
 	DriveType      string
-	Vin            string
-	Description    string
+	Vin            *string
+	Description    *string
 	CityId         int64
-	CityNameTM     string
-	CityNameEN     string
-	CityNameRU     string
-	Name           string
-	Mail           string
+	CityNameTM     *string
+	CityNameEN     *string
+	CityNameRU     *string
+	Name           *string
+	Mail           *string
 	PhoneNumber    string
 	Price          int64
 	IsComment      bool
@@ -37,7 +37,6 @@ type Car struct {
 	Images         interface{}
 	Status         string
 }
-
 type Truck struct {
 	Id              int64
 	UserId          int64
@@ -96,35 +95,35 @@ type Truck struct {
 
 type Moto struct {
 	Id                  int64
-	UserId              int64
-	UserName            string
-	StockId             int64
-	StoreName           string
+	UserId              *int64
+	UserName            *string
+	StockId             *int64
+	StoreName           *string
 	BodyId              int64
-	BodyNameTM          string
-	BodyNameEN          string
-	BodyNameRU          string
+	BodyNameTM          *string
+	BodyNameEN          *string
+	BodyNameRU          *string
 	BrandId             int64
-	BrandName           string
+	BrandName           *string
 	ModelId             int64
-	ModelName           string
-	TypeMotorcycles     string
-	Year                int64
+	ModelName           *string
+	TypeMotorcycles     *string
+	Year                int32
 	Price               int64
 	Volume              int64
-	EngineType          string
-	NumberOfClockCycles int64
-	Mileage             int64
-	AirType             string
+	EngineType          *string
+	NumberOfClockCycles *int32
+	Mileage             *int64
+	AirType             *string
 	Color               string
-	Vin                 string
-	Description         string
-	CityId              int64
-	CityNameTM          string
-	CityNameEN          string
-	CityNameRU          string
-	Name                string
-	Mail                string
+	Vin                 *string
+	Description         *string
+	CityId              *int64
+	CityNameTM          *string
+	CityNameEN          *string
+	CityNameRU          *string
+	Name                *string
+	Mail                *string
 	PhoneNumber         string
 	Options             []int64
 	IsComment           bool
