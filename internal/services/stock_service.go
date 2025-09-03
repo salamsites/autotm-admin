@@ -167,8 +167,6 @@ func (s *StockService) UpdateStock(ctx context.Context, stock dtos.UpdateStockRe
 		PhoneNumber: stock.PhoneNumber,
 		Email:       stock.Email,
 		StoreName:   stock.StoreName,
-		Images:      stock.Images,
-		Logo:        stock.Logo,
 		RegionID:    stock.RegionID,
 		CityID:      stock.CityID,
 		Address:     stock.Address,
