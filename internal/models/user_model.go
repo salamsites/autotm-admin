@@ -1,8 +1,10 @@
 package models
 
+import "database/sql"
+
 type GetUser struct {
 	Id          int64
-	FullName    string
-	Email       string
-	PhoneNumber string
+	FullName    sql.NullString
+	Email       sql.NullString
+	PhoneNumber sql.NullString
 }
