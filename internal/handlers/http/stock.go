@@ -109,13 +109,6 @@ func (h *StockHandler) v1CreateStock(w http.ResponseWriter, r *http.Request) sht
 		return shttp.InternalServerError.SetData(errUpload.Message)
 	}
 
-	var images []string
-	for _, item := range uploadResult.Content {
-		if img, ok := item.(util.FeedResultTypeImage); ok {
-			images = append(images, img.Path)
-		}
-	}
-
 	logoFileHeaders := r.MultipartForm.File["logo"]
 	var logoPath string
 	if len(logoFileHeaders) > 0 {
