@@ -30,8 +30,8 @@ func (r *StockPsqlRepository) CreateStock(ctx context.Context, stock models.Stoc
 
 	query := ` 
 			INSERT INTO stocks 
-			    (user_id, phone_number, email, store_name, images, logo, address, region_id, city_id, status, description) 
-			VALUES (@user_id, @phone_number, @email, @store_name, @images, @logo, @address, @region_id, @city_id, @status, @description) 
+			    (user_id, phone_number, email, store_name, address, region_id, city_id, status, description) 
+			VALUES (@user_id, @phone_number, @email, @store_name, @address, @region_id, @city_id, @status, @description) 
 			RETURNING id;
 	`
 
@@ -40,8 +40,6 @@ func (r *StockPsqlRepository) CreateStock(ctx context.Context, stock models.Stoc
 		"phone_number": stock.PhoneNumber,
 		"email":        stock.Email,
 		"store_name":   stock.StoreName,
-		"images":       stock.Images,
-		"logo":         stock.Logo,
 		"address":      stock.Address,
 		"region_id":    stock.RegionID,
 		"city_id":      stock.CityID,
