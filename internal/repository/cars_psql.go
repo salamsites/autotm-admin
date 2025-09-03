@@ -242,7 +242,7 @@ func (r *CarsPsqlRepository) GetTrucks(ctx context.Context, limit, page int64, s
 			t.bus_type, t.suspension_type, t.brakes, t.axles, t.engine_hours, t.vehicle_type, t.engine_capacity,
 			t.forklift_type, t.lifting_capacity, t.mileage, t.excavator_type, t.bulldozer_type, t.color, t.vin, 
 			t.body_id, bt.name_tm, bt.name_en, bt.name_ru, t.description, t.city_id, cs.name_tm, cs.name_en, cs.name_ru, 
-			t.name, t.mail, t.phone_number, t.is_comment, t.is_exchange, t.is_credit, t.images, t.status
+			t.name, t.mail, t.phone_number, t.is_comment, t.is_exchange, t.is_credit, t.images, t.status, t.options
 		FROM trucks t
 			LEFT JOIN users u ON u.id = t.user_id 
 			LEFT JOIN stocks s ON s.id = t.stock_id
@@ -332,6 +332,7 @@ func (r *CarsPsqlRepository) GetTrucks(ctx context.Context, limit, page int64, s
 			&truck.IsCredit,
 			&truck.Images,
 			&truck.Status,
+			&truck.Options,
 		)
 		if err != nil {
 			r.logger.Errorf("Error getting cars: %s", err)
@@ -380,7 +381,7 @@ func (r *CarsPsqlRepository) GetTruckByID(ctx context.Context, id int64) (models
 			t.bus_type, t.suspension_type, t.brakes, t.axles, t.engine_hours, t.vehicle_type, t.engine_capacity,
 			t.forklift_type, t.lifting_capacity, t.mileage, t.excavator_type, t.bulldozer_type, t.color, t.vin, 
 			t.body_id, bt.name_tm, bt.name_en, bt.name_ru, t.description, t.city_id, cs.name_tm, cs.name_en, cs.name_ru, 
-			t.name, t.mail, t.phone_number, t.is_comment, t.is_exchange, t.is_credit, t.images, t.status
+			t.name, t.mail, t.phone_number, t.is_comment, t.is_exchange, t.is_credit, t.images, t.status, t.options
 		FROM trucks t
 			LEFT JOIN users u ON u.id = t.user_id 
 			LEFT JOIN stocks s ON s.id = t.stock_id
@@ -402,7 +403,7 @@ func (r *CarsPsqlRepository) GetTruckByID(ctx context.Context, id int64) (models
 		&truck.EngineCapacity, &truck.ForkliftType, &truck.LiftingCapacity, &truck.Mileage, &truck.ExcavatorType, &truck.BulldozerType,
 		&truck.Color, &truck.Vin, &truck.BodyId, &truck.BodyNameTM, &truck.BodyNameEN, &truck.BodyNameRU, &truck.Description,
 		&truck.CityId, &truck.CityNameTM, &truck.CityNameEN, &truck.CityNameRU, &truck.Name, &truck.Mail, &truck.PhoneNumber,
-		&truck.IsComment, &truck.IsExchange, &truck.IsCredit, &truck.Images, &truck.Status,
+		&truck.IsComment, &truck.IsExchange, &truck.IsCredit, &truck.Images, &truck.Status, &truck.Options,
 	)
 
 	if err != nil {

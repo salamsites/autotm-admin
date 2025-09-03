@@ -91,6 +91,7 @@ type Truck struct {
 	IsCredit        bool
 	Images          interface{}
 	Status          string
+	Options         []int64
 }
 
 type Moto struct {

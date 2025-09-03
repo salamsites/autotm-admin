@@ -229,6 +229,7 @@ func (s *CarsService) GetTrucks(ctx context.Context, limit, page int64, search, 
 			IsCredit:        truck.IsCredit,
 			Images:          truck.Images,
 			Status:          truck.Status,
+			Options:         truck.Options,
 		})
 	}
 
@@ -300,6 +301,7 @@ func (s *CarsService) GetTruckByID(ctx context.Context, id int64) (dtos.Truck, e
 		IsCredit:        truck.IsCredit,
 		Images:          truck.Images,
 		Status:          truck.Status,
+		Options:         truck.Options,
 	}
 
 	return result, nil
