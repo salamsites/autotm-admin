@@ -3,6 +3,7 @@ package repository
 import (
 	"autotm-admin/internal/models"
 	"context"
+	"database/sql"
 
 	"github.com/jackc/pgx/v5"
 	slog "github.com/salamsites/package-log"
@@ -49,10 +50,23 @@ func (r *UserPsqlRepository) GetUsersFromUserService(ctx context.Context, limit,
 	defer rows.Close()
 	for rows.Next() {
 		var user models.GetUser
-		if err = rows.Scan(&user.Id, &user.FullName, &user.Email, &user.PhoneNumber); err != nil {
+		var fullName, email, phoneNumber sql.NullString
+
+		if err = rows.Scan(
+			&user.Id,
+			&fullName,
+			&email,
+			&phoneNumber,
+		); err != nil {
 			r.logger.Errorf("get all users from user service scan err : %v", err)
 			return nil, 0, err
 		}
+
+		// Convert sql.NullString to string
+		user.FullName = fullName.String
+		user.Email = email.String
+		user.PhoneNumber = phoneNumber.String
+
 		users = append(users, user)
 	}
 

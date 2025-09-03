@@ -1,10 +1,10 @@
 package dtos
 
 type GetUser struct {
-	Id          int64   `json:"id"`
-	FullName    *string `json:"full_name"`
-	Email       *string `json:"email"`
-	PhoneNumber *string `json:"phone_number"`
+	Id          int64  `json:"id"`
+	FullName    string `json:"full_name"`
+	Email       string `json:"email"`
+	PhoneNumber string `json:"phone_number"`
 }
 
 type GetUsersResult struct {
