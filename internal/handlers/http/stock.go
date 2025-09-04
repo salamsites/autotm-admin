@@ -81,6 +81,11 @@ func (h *StockHandler) v1CreateStock(w http.ResponseWriter, r *http.Request) sht
 		return shttp.BadRequest.SetData(result)
 	}
 
+	if err := r.ParseMultipartForm(50 << 20); err != nil {
+		h.logger.Error("failed to parse multipart form", err)
+		return shttp.BadRequest.SetData("Invalid form data")
+	}
+
 	stock := dtos.CreateStockReq{
 		UserID:      userID,
 		PhoneNumber: r.FormValue("phone_number"),
@@ -89,12 +94,7 @@ func (h *StockHandler) v1CreateStock(w http.ResponseWriter, r *http.Request) sht
 		RegionID:    helpers.ParseInt64(r.FormValue("region_id")),
 		CityID:      helpers.ParseInt64(r.FormValue("city_id")),
 		Address:     r.FormValue("address"),
-		Status:      "accepted",
-	}
-
-	if err := r.ParseMultipartForm(50 << 20); err != nil {
-		h.logger.Error("failed to parse multipart form", err)
-		return shttp.BadRequest.SetData("Invalid form data")
+		Status:      "accepted", // initial status
 	}
 
 	trManager := manager.Must(trmpgx.NewDefaultFactory(h.clientPsql.Pool()))
@@ -103,43 +103,39 @@ func (h *StockHandler) v1CreateStock(w http.ResponseWriter, r *http.Request) sht
 	err := trManager.Do(r.Context(), func(ctx context.Context) error {
 		var err error
 		stockID, err = h.service.CreateStock(ctx, stock)
-		if err != nil {
-			h.logger.Error("unable to create stock", err)
-			return err
-		}
+		return err
+	})
+	if err != nil {
+		result.Message = fmt.Sprintf("unable to create stock: %v", err)
+		h.logger.Error("create stock transaction failed", err)
+		return shttp.InternalServerError.SetData(result)
+	}
 
+	go func(stockID dtos.ID) {
+		ctx := context.Background() // independent context
 		uploadResult, errUpload := h.minioFileClient.UploadFile(ctx, r, "image", stockID.ID, helpers.StockImagesSize, util.StockBucket)
 		if errUpload.StatusCode != 0 {
 			h.logger.Error("failed to upload images", errUpload)
-			return fmt.Errorf(errUpload.Message)
+			return
 		}
 
 		logoFileHeaders := r.MultipartForm.File["logo"]
-		var logoPath string
 		if len(logoFileHeaders) > 0 {
-			logoPath = fmt.Sprintf("%d/logo", stockID.ID)
+			logoPath := fmt.Sprintf("%d/logo", stockID.ID)
 			errLogo := h.minioImageClient.UploadImage(ctx, r, "logo", logoPath, helpers.StockLogoSize, util.StockBucket)
 			if errLogo.StatusCode != 0 {
 				h.logger.Error("failed to upload logo", errLogo)
-				return fmt.Errorf("failed to upload logo")
+				return
 			}
 		}
 
 		if errUpdate := h.service.UpdateStockFiles(ctx, stockID, uploadResult, helpers.StockLogoSize); errUpdate != nil {
 			h.logger.Error("unable to update stock files", errUpdate)
-			return fmt.Errorf("failed to update stock files")
 		}
-
-		return nil
-	})
-
-	if err != nil {
-		result.Message = err.Error()
-		return shttp.InternalServerError.SetData(result)
-	}
+	}(stockID)
 
 	result.Status = true
-	result.Message = "Created stock successfully"
+	result.Message = "Created stock successfully, files are uploading"
 	result.Data = stockID
 	return shttp.Success.SetData(result)
 }
