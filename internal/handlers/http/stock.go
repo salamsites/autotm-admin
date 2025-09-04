@@ -76,6 +76,7 @@ func (h *StockHandler) v1CreateStock(w http.ResponseWriter, r *http.Request) sht
 	regionID := helpers.ParseInt64(r.FormValue("region_id"))
 	cityID := helpers.ParseInt64(r.FormValue("city_id"))
 	address := r.FormValue("address")
+	status := r.FormValue("status")
 
 	if userID == 0 || storeName == "" {
 		result.Message = "user_id and store_name are required"
@@ -90,6 +91,7 @@ func (h *StockHandler) v1CreateStock(w http.ResponseWriter, r *http.Request) sht
 		RegionID:    regionID,
 		CityID:      cityID,
 		Address:     address,
+		Status:      status,
 	}
 
 	stockID, err := h.service.CreateStock(r.Context(), stock)
