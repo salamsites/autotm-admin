@@ -6,6 +6,7 @@ import (
 	"autotm-admin/internal/repository"
 	"autotm-admin/internal/services"
 	"context"
+
 	trmpgx "github.com/avito-tech/go-transaction-manager/drivers/pgxv5/v2"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -78,7 +79,7 @@ func Manager(logger *slog.Logger, clientPsql spsql.Client, minioImageClient smin
 	r.Route(stocksURL, func(subRouter chi.Router) {
 		stockRepo := repository.NewStockPsqlRepository(logger, clientPsql, trmpgx.DefaultCtxGetter)
 		stockService := services.NewStockService(logger, stockRepo, userService, pushService)
-		stockHandler := http.NewStockHandler(logger, newMiddleware, stockService, minioFileClient, minioImageClient)
+		stockHandler := http.NewStockHandler(logger, newMiddleware, clientPsql, stockService, minioFileClient, minioImageClient)
 		stockHandler.StockRegisterRoutes(subRouter)
 	})
 

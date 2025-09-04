@@ -55,6 +55,7 @@ func (s *StockService) CreateStock(ctx context.Context, stock dtos.CreateStockRe
 		s.logger.Errorf("create err: %v", err)
 		return id, err
 	}
+
 	id.ID = stockID
 	return id, nil
 }
