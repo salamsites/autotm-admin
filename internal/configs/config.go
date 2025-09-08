@@ -9,14 +9,23 @@ import (
 )
 
 type Config struct {
-	IsDebug     *bool   `yaml:"is_debug" env-required:"true"`
-	Listen      Listen  `yaml:"listen"`
-	Swagger     Swagger `yaml:"swagger"`
-	Storage     Storage `yaml:"storage"`
-	Log         Log     `yaml:"log"`
-	Auth        Auth    `yaml:"auth"`
-	Minio       Minio   `yaml:"minio"`
-	PushService string  `yaml:"push_service"`
+	IsDebug       *bool         `yaml:"is_debug" env-required:"true"`
+	Listen        Listen        `yaml:"listen"`
+	Swagger       Swagger       `yaml:"swagger"`
+	Storage       Storage       `yaml:"storage"`
+	Log           Log           `yaml:"log"`
+	Auth          Auth          `yaml:"auth"`
+	Minio         Minio         `yaml:"minio"`
+	PushService   string        `yaml:"push_service"`
+	Elasticsearch Elasticsearch `yaml:"elasticsearch"`
+}
+
+type Elasticsearch struct {
+	Addresses []string `yaml:"addresses" env-required:"true"`
+	Username  string   `yaml:"username" env-default:""`
+	Password  string   `yaml:"password" env-default:""`
+	Timeout   int      `yaml:"timeout" env-default:"30"`
+	Enable    bool     `yaml:"enable" env-default:"true"`
 }
 
 type Minio struct {

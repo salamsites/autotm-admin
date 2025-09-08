@@ -1,3 +1,0 @@
-[submodule "proto/autotm_push_service"]
-	path = proto/autotm_push_service
-	url = https://github.com/salamsites/autotm.git

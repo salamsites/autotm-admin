@@ -2,6 +2,7 @@ package repository
 
 import (
 	"autotm-admin/internal/dtos"
+	"autotm-admin/internal/models"
 	"context"
 
 	"github.com/salamsites/minio-pkg/util"
@@ -15,4 +16,5 @@ type StockService interface {
 	UpdateStock(ctx context.Context, stock dtos.UpdateStockReq) (dtos.ID, error)
 	DeleteStock(ctx context.Context, id int64) error
 	UpdateStockStatus(ctx context.Context, stock dtos.UpdateStockStatus) (dtos.ID, error)
+	SearchStocksES(ctx context.Context, query map[string]any, from, size int, sort []map[string]any) ([]models.Stock, int64, error)
 }

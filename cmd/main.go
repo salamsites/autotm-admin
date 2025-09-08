@@ -12,6 +12,8 @@ import (
 	"syscall"
 	"time"
 
+	esService "autotm-admin/internal/elasticsearch"
+	"github.com/Hajymuhammet/elasticsearch-package/elasticsearch"
 	_ "github.com/lib/pq"
 	"github.com/rs/cors"
 	sminio "github.com/salamsites/minio-pkg"
@@ -66,6 +68,7 @@ func main() {
 		logger.Info("Migration flag is disabled; skipping migrations.")
 	}
 
+	// minio
 	minioImageClient, errImage := file.NewImageClient(sminio.Options{
 		Endpoint:        cfg.Minio.Endpoint,
 		AccessKeyID:     cfg.Minio.AccessKeyID,
@@ -86,7 +89,37 @@ func main() {
 		logger.Fatal(errImage)
 	}
 
-	router := handlers.Manager(logger, psqlClient, minioImageClient, minioFileClient, cfg)
+	//elasticsearch
+	var stockESService *esService.StockESService
+	if cfg.Elasticsearch.Enable {
+		esConfig := elasticsearch.ClientConfig{
+			Addresses: cfg.Elasticsearch.Addresses,
+			Username:  cfg.Elasticsearch.Username,
+			Password:  cfg.Elasticsearch.Password,
+			Timeout:   time.Duration(cfg.Elasticsearch.Timeout) * time.Second,
+		}
+
+		esClient, err := elasticsearch.NewClient(esConfig)
+		if err != nil {
+			logger.Error("Elasticsearch client does not connect: %v", err)
+			logger.Info("Continuing without Elasticsearch support")
+		} else {
+			logger.Info("Elasticsearch client connected successfully")
+
+			stockESService = esService.NewStockESService(esClient)
+
+			esCtx := context.Background()
+			if err := stockESService.EnsureIndex(esCtx); err != nil {
+				logger.Error("Failed to ensure stock index: %v", err)
+			} else {
+				logger.Info("Stock index ensured successfully")
+			}
+		}
+	} else {
+		logger.Info("Elasticsearch is disabled in configuration")
+	}
+
+	router := handlers.Manager(logger, psqlClient, minioImageClient, minioFileClient, cfg, stockESService)
 
 	router.Get("/autotm-admin/swagger/*", httpSwagger.WrapHandler)
 

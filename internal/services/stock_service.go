@@ -2,6 +2,7 @@ package services
 
 import (
 	"autotm-admin/internal/dtos"
+	"autotm-admin/internal/elasticsearch"
 	"autotm-admin/internal/helpers"
 	"autotm-admin/internal/models"
 	"autotm-admin/internal/repository/storage"
@@ -19,14 +20,23 @@ type StockService struct {
 	repo        storage.StockRepository
 	userService repository.UserService
 	pushService repository.PushService
+	esService   *elasticsearch.StockESService
 }
 
-func NewStockService(logger *slog.Logger, repo storage.StockRepository, userService repository.UserService, pushService repository.PushService) *StockService {
+func NewStockService(logger *slog.Logger, repo storage.StockRepository, userService repository.UserService, pushService repository.PushService, esService interface{}) *StockService {
+	var stockESService *elasticsearch.StockESService
+	if esService != nil {
+		if es, ok := esService.(*elasticsearch.StockESService); ok {
+			stockESService = es
+		}
+	}
+
 	return &StockService{
 		logger:      logger,
 		repo:        repo,
 		userService: userService,
 		pushService: pushService,
+		esService:   stockESService,
 	}
 }
 
@@ -56,6 +66,15 @@ func (s *StockService) CreateStock(ctx context.Context, stock dtos.CreateStockRe
 		return id, err
 	}
 
+	if s.esService != nil {
+		go func() {
+			esCtx := context.Background()
+			esStock := models.ESStock(newStock) // Type conversion
+			if err := s.esService.IndexStock(esCtx, esStock); err != nil {
+				s.logger.Errorf("Failed to index stock in ES: %v", err)
+			}
+		}()
+	}
 	id.ID = stockID
 	return id, nil
 }
@@ -71,6 +90,28 @@ func (s *StockService) UpdateStockFiles(ctx context.Context, stockID dtos.ID, im
 			s.logger.Errorf("failed to update stock logo: %v", err)
 			return err
 		}
+	}
+
+	return nil
+}
+
+func (s *StockService) SyncAllStocksToES(ctx context.Context) error {
+	if s.esService == nil {
+		return fmt.Errorf("elasticsearch service not available")
+	}
+
+	stocks, _, err := s.repo.GetStocks(ctx, 10000, 0, "", "")
+	if err != nil {
+		return err
+	}
+
+	var esStocks []models.ESStock
+	for _, stock := range stocks {
+		esStocks = append(esStocks, models.ESStock(stock))
+	}
+
+	if err := s.esService.BulkIndexStocks(ctx, esStocks); err != nil {
+		return err
 	}
 
 	return nil
@@ -180,6 +221,16 @@ func (s *StockService) UpdateStock(ctx context.Context, stock dtos.UpdateStockRe
 		s.logger.Errorf("update stock err: %v", err)
 		return id, err
 	}
+
+	if s.esService != nil {
+		go func() {
+			esCtx := context.Background()
+			esStock := models.ESStock(newStock) // Type conversion
+			if err := s.esService.IndexStock(esCtx, esStock); err != nil {
+				s.logger.Errorf("Failed to update stock in ES: %v", err)
+			}
+		}()
+	}
 	id.ID = stockID
 	return id, nil
 }
@@ -206,6 +257,23 @@ func (s *StockService) UpdateStockStatus(ctx context.Context, stock dtos.UpdateS
 	if err != nil {
 		s.logger.Errorf("update stock status err: %v", err)
 		return id, err
+	}
+
+	if s.esService != nil {
+		go func() {
+			esCtx := context.Background()
+			// Stock'u getir
+			dbStock, err := s.repo.GetStockByID(esCtx, stock.ID)
+			if err != nil {
+				s.logger.Errorf("Failed to get stock for ES update: %v", err)
+				return
+			}
+
+			esStock := models.ESStock(dbStock)
+			if err := s.esService.IndexStock(esCtx, esStock); err != nil {
+				s.logger.Errorf("Failed to update stock status in ES: %v", err)
+			}
+		}()
 	}
 
 	go s.handlePushNotifications(stockID, stock.Message)
@@ -269,4 +337,58 @@ func (s *StockService) sendPushNotifications(ctx context.Context, stockID int64,
 	}
 
 	return nil
+}
+
+func (s *StockService) SearchStocksES(ctx context.Context, query map[string]any, from, size int, sort []map[string]any) ([]models.Stock, int64, error) {
+	if s.esService == nil {
+		return s.searchInPostgreSQL(ctx, query, from, size)
+	}
+
+	esStocks, total, err := s.esService.SearchStocks(ctx, query, from, size, sort)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	var stocks []models.Stock
+	for _, esStock := range esStocks {
+		stocks = append(stocks, models.Stock(esStock))
+	}
+
+	return stocks, total, nil
+}
+
+// Fallback PostgreSQL search metodu
+func (s *StockService) searchInPostgreSQL(ctx context.Context, query map[string]any, from, size int) ([]models.Stock, int64, error) {
+	searchTerm := ""
+	if q, ok := query["multi_match"].(map[string]any); ok {
+		if queryVal, ok := q["query"].(string); ok {
+			searchTerm = queryVal
+		}
+	}
+
+	status := ""
+	if boolQuery, ok := query["bool"].(map[string]any); ok {
+		if filter, ok := boolQuery["filter"].([]map[string]any); ok && len(filter) > 0 {
+			for _, f := range filter {
+				if term, ok := f["term"].(map[string]any); ok {
+					if statusVal, ok := term["status"].(string); ok {
+						status = statusVal
+					}
+				}
+			}
+		}
+	}
+
+	limit := int64(size)
+	page := int64(from/size) + 1
+	if page <= 0 {
+		page = 1
+	}
+
+	stocks, count, err := s.repo.GetStocks(ctx, limit, (page-1)*limit, searchTerm, status)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return stocks, count, nil
 }
