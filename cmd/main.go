@@ -4,16 +4,18 @@ import (
 	_ "autotm-admin/docs"
 	"autotm-admin/internal/configs"
 	"autotm-admin/internal/handlers"
+	"autotm-admin/internal/helpers"
 	"autotm-admin/internal/migrations"
 	"context"
+	"crypto/tls"
 	"log"
 	"net/http"
 	"os/signal"
 	"syscall"
 	"time"
 
-	esService "autotm-admin/internal/elasticsearch"
-	"github.com/Hajymuhammet/elasticsearch-package/elasticsearch"
+	esadapter "github.com/Hajymuhammet/elasticsearch-package/clients"
+	"github.com/Hajymuhammet/elasticsearch-package/index"
 	_ "github.com/lib/pq"
 	"github.com/rs/cors"
 	sminio "github.com/salamsites/minio-pkg"
@@ -89,37 +91,26 @@ func main() {
 		logger.Fatal(errImage)
 	}
 
-	//elasticsearch
-	var stockESService *esService.StockESService
-	if cfg.Elasticsearch.Enable {
-		esConfig := elasticsearch.ClientConfig{
-			Addresses: cfg.Elasticsearch.Addresses,
-			Username:  cfg.Elasticsearch.Username,
-			Password:  cfg.Elasticsearch.Password,
-			Timeout:   time.Duration(cfg.Elasticsearch.Timeout) * time.Second,
-		}
+	// Elasticsearch
+	es, err := esadapter.NewClient(esadapter.ClientConfig{
+		Addresses: cfg.Elasticsearch.Addresses,
+		Username:  cfg.Elasticsearch.Username,
+		Password:  cfg.Elasticsearch.Password,
+		Timeout:   cfg.Elasticsearch.Timeout,
+		TLSConfig: &tls.Config{
+			InsecureSkipVerify: cfg.Elasticsearch.Enable,
+		},
+	})
+	if err != nil {
+		log.Fatalf("new client ealsticsearch: %v", err)
+	}
+	logger.Info("elasticsearch connected successfully")
 
-		esClient, err := elasticsearch.NewClient(esConfig)
-		if err != nil {
-			logger.Error("Elasticsearch client does not connect: %v", err)
-			logger.Info("Continuing without Elasticsearch support")
-		} else {
-			logger.Info("Elasticsearch client connected successfully")
-
-			stockESService = esService.NewStockESService(esClient)
-
-			esCtx := context.Background()
-			if err := stockESService.EnsureIndex(esCtx); err != nil {
-				logger.Error("Failed to ensure stock index: %v", err)
-			} else {
-				logger.Info("Stock index ensured successfully")
-			}
-		}
-	} else {
-		logger.Info("Elasticsearch is disabled in configuration")
+	if err := index.EnsureCarIndex(es, helpers.CarIndexName); err != nil {
+		log.Fatalf("failed to ensure index: %v", err)
 	}
 
-	router := handlers.Manager(logger, psqlClient, minioImageClient, minioFileClient, cfg, stockESService)
+	router := handlers.Manager(logger, psqlClient, minioImageClient, minioFileClient, cfg, es)
 
 	router.Get("/autotm-admin/swagger/*", httpSwagger.WrapHandler)
 

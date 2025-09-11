@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/Hajymuhammet/elasticsearch-package/pkg/querybuilder"
 	trmpgx "github.com/avito-tech/go-transaction-manager/drivers/pgxv5/v2"
 	"github.com/avito-tech/go-transaction-manager/trm/v2/manager"
 	"github.com/go-chi/chi/v5"
@@ -49,8 +48,6 @@ func (h *StockHandler) StockRegisterRoutes(r chi.Router) {
 	r.Method("PUT", "/update-stock", h.middleware.Base(h.v1UpdateStock))
 	r.Method("DELETE", "/delete-stock", h.middleware.Base(h.v1DeleteStock))
 	r.Method("PUT", "/update-stock-status", h.middleware.Base(h.v1UpdateStockStatus))
-	r.Method("GET", "/search-stocks", h.middleware.Base(h.v1SearchStocks))
-	r.Method("POST", "/search-stocks-post", h.middleware.Base(h.v1SearchStocksPost))
 }
 
 // v1CreateStock
@@ -68,6 +65,9 @@ func (h *StockHandler) StockRegisterRoutes(r chi.Router) {
 // @Param address formData string false "Address"
 // @Param image formData []file true "Image file(s)"
 // @Param logo formData file false "Logo image file"
+// @Param description formData string false "Description"
+// @Param latitude formData string false "Location Latitude"
+// @Param longitude formData string false "Location Longitude"
 // @Success 200 {object} dtos.ID "Returns created stock ID"
 // @Failure 400 {object} string "Bad request"
 // @Failure 422 {object} string "Unprocessable entity"
@@ -97,7 +97,12 @@ func (h *StockHandler) v1CreateStock(w http.ResponseWriter, r *http.Request) sht
 		RegionID:    helpers.ParseInt64(r.FormValue("region_id")),
 		CityID:      helpers.ParseInt64(r.FormValue("city_id")),
 		Address:     r.FormValue("address"),
-		Status:      "accepted", // initial status
+		Status:      helpers.AcceptedStockStatus,
+		Description: r.FormValue("description"),
+		Location: dtos.Location{
+			Latitude:  r.FormValue("latitude"),
+			Longitude: r.FormValue("longitude"),
+		},
 	}
 
 	trManager := manager.Must(trmpgx.NewDefaultFactory(h.clientPsql.Pool()))
@@ -247,6 +252,9 @@ func (h *StockHandler) v1GetStockByID(w http.ResponseWriter, r *http.Request) sh
 // @Param image formData []file false "Image file(s)"
 // @Param logo formData file false "Logo image file"
 // @Param status formData string false "Status (waiting, accepted, blocked)"
+// @Param description formData string false "Description"
+// @Param latitude formData string false "Location Latitude"
+// @Param longitude formData string false "Location Longitude"
 // @Success 200 {object} dtos.ID "Returns updated stock ID"
 // @Failure 400 {object} string "Bad request"
 // @Failure 422 {object} string "Unprocessable entity"
@@ -287,6 +295,11 @@ func (h *StockHandler) v1UpdateStock(w http.ResponseWriter, r *http.Request) sht
 		CityID:      helpers.ParseInt64(r.FormValue("city_id")),
 		Address:     r.FormValue("address"),
 		Status:      r.FormValue("status"),
+		Description: r.FormValue("description"),
+		Location: dtos.Location{
+			Latitude:  r.FormValue("latitude"),
+			Longitude: r.FormValue("longitude"),
+		},
 	}
 
 	trManager := manager.Must(trmpgx.NewDefaultFactory(h.clientPsql.Pool()))
@@ -414,243 +427,5 @@ func (h *StockHandler) v1UpdateStockStatus(w http.ResponseWriter, r *http.Reques
 	result.Status = true
 	result.Message = "Successfully updated stock"
 	result.Data = id
-	return shttp.Success.SetData(result)
-}
-
-// v1SearchStocks
-// @Summary Search Stocks with Elasticsearch
-// @Description Search stocks using Elasticsearch with advanced query capabilities
-// @Tags Stock
-// @Accept json
-// @Produce json
-// @Param q query string false "Search query"
-// @Param status query string false "Status filter"
-// @Param region_id query int false "Region ID filter"
-// @Param city_id query int false "City ID filter"
-// @Param from query int false "From index for pagination"
-// @Param size query int false "Size of results for pagination"
-// @Param sort query string false "Sort field"
-// @Success 200 {object} dtos.StocksResult "Search results"
-// @Failure 400 {object} string "Bad request"
-// @Failure 500 {object} string "Internal server error"
-// @Router /stocks/search-stocks [get]
-func (h *StockHandler) v1SearchStocks(w http.ResponseWriter, r *http.Request) shttp.Response {
-	var result shttp.Result
-	result.Status = false
-
-	search := r.URL.Query().Get("q")
-	status := r.URL.Query().Get("status")
-	regionID := helpers.ParseInt64(r.URL.Query().Get("region_id"))
-	cityID := helpers.ParseInt64(r.URL.Query().Get("city_id"))
-
-	// Pagination
-	from, _ := strconv.Atoi(r.URL.Query().Get("from"))
-	size, _ := strconv.Atoi(r.URL.Query().Get("size"))
-	if size == 0 {
-		size = 10
-	}
-	if from < 0 {
-		from = 0
-	}
-
-	// Sort
-	var sort []map[string]any
-	sortField := r.URL.Query().Get("sort")
-	if sortField != "" {
-		sort = append(sort, map[string]any{sortField: "desc"})
-	}
-
-	// Build Elasticsearch query using QueryBuilder
-	qb := querybuilder.New()
-
-	// Build filters
-	var filters []map[string]any
-
-	if status != "" {
-		filters = append(filters, map[string]any{
-			"term": map[string]any{"status": status},
-		})
-	}
-
-	if regionID > 0 {
-		filters = append(filters, map[string]any{
-			"term": map[string]any{"region_id": regionID},
-		})
-	}
-
-	if cityID > 0 {
-		filters = append(filters, map[string]any{
-			"term": map[string]any{"city_id": cityID},
-		})
-	}
-
-	if search != "" {
-		// Use multi_match for search across multiple fields
-		searchQuery := map[string]any{
-			"multi_match": map[string]any{
-				"query": search,
-				"fields": []string{
-					"store_name", "user_name", "description", "address",
-					"city_name_tm", "city_name_en", "city_name_ru",
-					"region_name_tm", "region_name_en", "region_name_ru",
-				},
-			},
-		}
-
-		// If we have both search and filters, combine them with bool query
-		if len(filters) > 0 {
-			qb.Bool(
-				[]map[string]any{searchQuery}, // must (search)
-				nil,                           // should
-				nil,                           // must_not
-				filters,                       // filter
-			)
-		} else {
-			// Only search, no filters
-			qb.MultiMatch([]string{
-				"store_name", "user_name", "description", "address",
-				"city_name_tm", "city_name_en", "city_name_ru",
-				"region_name_tm", "region_name_en", "region_name_ru",
-			}, search)
-		}
-	} else if len(filters) > 0 {
-		// Only filters, no search
-		qb.Bool(
-			nil,     // must
-			nil,     // should
-			nil,     // must_not
-			filters, // filter
-		)
-	} else {
-		qb.Bool(nil, nil, nil, nil)
-	}
-
-	query := qb.Build()
-
-	stocks, total, err := h.service.SearchStocksES(r.Context(), query, from, size, sort)
-	if err != nil {
-		result.Message = err.Error()
-		h.logger.Error("unable to search stocks", err)
-		return shttp.InternalServerError.SetData(result)
-	}
-
-	var dtoStocks []dtos.Stock
-	for _, stock := range stocks {
-		dtoStocks = append(dtoStocks, dtos.Stock{
-			ID:           stock.ID,
-			UserID:       stock.UserID,
-			UserName:     stock.UserName,
-			PhoneNumber:  stock.PhoneNumber,
-			Email:        stock.Email,
-			StoreName:    stock.StoreName,
-			Images:       stock.Images,
-			Logo:         stock.Logo,
-			Address:      stock.Address,
-			CityID:       stock.CityID,
-			CityNameTM:   stock.CityNameTM,
-			CityNameEN:   stock.CityNameEN,
-			CityNameRU:   stock.CityNameRU,
-			RegionID:     stock.RegionID,
-			RegionNameTM: stock.RegionNameTM,
-			RegionNameEN: stock.RegionNameEN,
-			RegionNameRU: stock.RegionNameRU,
-			Status:       stock.Status,
-			Description:  stock.Description,
-		})
-	}
-
-	result.Status = true
-	result.Message = "Search completed successfully"
-	result.Data = dtos.StocksResult{
-		Stocks: dtoStocks,
-		Count:  total,
-	}
-	return shttp.Success.SetData(result)
-}
-
-// v1SearchStocksPost
-// @Summary Search Stocks with Elasticsearch (POST)
-// @Description Search stocks using Elasticsearch with advanced query capabilities via POST
-// @Tags Stock
-// @Accept json
-// @Produce json
-// @Param search body map[string]any true "Elasticsearch query DSL"
-// @Success 200 {object} dtos.StocksResult "Search results"
-// @Failure 400 {object} string "Bad request"
-// @Failure 500 {object} string "Internal server error"
-// @Router /stocks/search-stocks-post [post]
-func (h *StockHandler) v1SearchStocksPost(w http.ResponseWriter, r *http.Request) shttp.Response {
-	var result shttp.Result
-	result.Status = false
-
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		result.Message = err.Error()
-		h.logger.Error("unable to read request body", err)
-		return shttp.BadRequest.SetData(result)
-	}
-	defer r.Body.Close()
-
-	var query map[string]any
-	if err := json.Unmarshal(body, &query); err != nil {
-		result.Message = err.Error()
-		h.logger.Error("unable to unmarshal query", err)
-		return shttp.BadRequest.SetData(result)
-	}
-
-	from, _ := strconv.Atoi(r.URL.Query().Get("from"))
-	size, _ := strconv.Atoi(r.URL.Query().Get("size"))
-	if size == 0 {
-		size = 10
-	}
-	if from < 0 {
-		from = 0
-	}
-
-	// Sort
-	var sort []map[string]any
-	sortField := r.URL.Query().Get("sort")
-	if sortField != "" {
-		sort = append(sort, map[string]any{sortField: "desc"})
-	}
-
-	stocks, total, err := h.service.SearchStocksES(r.Context(), query, from, size, sort)
-	if err != nil {
-		result.Message = err.Error()
-		h.logger.Error("unable to search stocks", err)
-		return shttp.InternalServerError.SetData(result)
-	}
-
-	var dtoStocks []dtos.Stock
-	for _, stock := range stocks {
-		dtoStocks = append(dtoStocks, dtos.Stock{
-			ID:           stock.ID,
-			UserID:       stock.UserID,
-			UserName:     stock.UserName,
-			PhoneNumber:  stock.PhoneNumber,
-			Email:        stock.Email,
-			StoreName:    stock.StoreName,
-			Images:       stock.Images,
-			Logo:         stock.Logo,
-			Address:      stock.Address,
-			CityID:       stock.CityID,
-			CityNameTM:   stock.CityNameTM,
-			CityNameEN:   stock.CityNameEN,
-			CityNameRU:   stock.CityNameRU,
-			RegionID:     stock.RegionID,
-			RegionNameTM: stock.RegionNameTM,
-			RegionNameEN: stock.RegionNameEN,
-			RegionNameRU: stock.RegionNameRU,
-			Status:       stock.Status,
-			Description:  stock.Description,
-		})
-	}
-
-	result.Status = true
-	result.Message = "Search completed successfully"
-	result.Data = dtos.StocksResult{
-		Stocks: dtoStocks,
-		Count:  total,
-	}
 	return shttp.Success.SetData(result)
 }

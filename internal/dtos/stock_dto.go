@@ -1,28 +1,35 @@
 package dtos
 
 type CreateStockReq struct {
-	UserID      int64  `json:"user_id"`
-	PhoneNumber string `json:"phone_number"`
-	Email       string `json:"email"`
-	StoreName   string `json:"store_name"`
-	RegionID    int64  `json:"region_id"`
-	CityID      int64  `json:"city_id"`
-	Address     string `json:"address"`
-	Status      string `json:"status"`
-	Description string `json:"description"`
+	UserID      int64       `json:"user_id"`
+	PhoneNumber string      `json:"phone_number"`
+	Email       string      `json:"email"`
+	StoreName   string      `json:"store_name"`
+	RegionID    int64       `json:"region_id"`
+	CityID      int64       `json:"city_id"`
+	Address     string      `json:"address"`
+	Status      string      `json:"status"`
+	Description string      `json:"description"`
+	Location    interface{} `json:"location"`
 }
 
 type UpdateStockReq struct {
-	ID          int64  `json:"id"`
-	UserID      int64  `json:"user_id"`
-	PhoneNumber string `json:"phone_number"`
-	Email       string `json:"email"`
-	StoreName   string `json:"store_name"`
-	RegionID    int64  `json:"region_id"`
-	CityID      int64  `json:"city_id"`
-	Address     string `json:"address"`
-	Status      string `json:"status"`
-	Description string `json:"description"`
+	ID          int64       `json:"id"`
+	UserID      int64       `json:"user_id"`
+	PhoneNumber string      `json:"phone_number"`
+	Email       string      `json:"email"`
+	StoreName   string      `json:"store_name"`
+	RegionID    int64       `json:"region_id"`
+	CityID      int64       `json:"city_id"`
+	Address     string      `json:"address"`
+	Status      string      `json:"status"`
+	Description string      `json:"description"`
+	Location    interface{} `json:"location"`
+}
+
+type Location struct {
+	Latitude  string `json:"latitude"`
+	Longitude string `json:"longitude"`
 }
 
 type Stock struct {

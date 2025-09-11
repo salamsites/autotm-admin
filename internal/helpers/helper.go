@@ -14,3 +14,7 @@ func ParseInt64(s string) int64 {
 	}
 	return i
 }
+
+const (
+	AcceptedStockStatus = "accepted"
+)

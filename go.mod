@@ -3,7 +3,6 @@ module autotm-admin
 go 1.24.5
 
 require (
-	github.com/Hajymuhammet/elasticsearch-package v0.0.0-20250908052225-58bc3f0f307f
 	github.com/avito-tech/go-transaction-manager/drivers/pgxv5/v2 v2.0.1
 	github.com/avito-tech/go-transaction-manager/trm/v2 v2.0.1
 	github.com/elastic/go-elasticsearch/v8 v8.19.0
@@ -27,6 +26,7 @@ require (
 
 require (
 	github.com/BurntSushi/toml v1.2.1 // indirect
+	github.com/Hajymuhammet/elasticsearch-package v0.0.0-20250911080415-3e7036d3cec1 // indirect
 	github.com/Kodeworks/golang-image-ico v0.0.0-20141118225523-73f0f4cfade9 // indirect
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/adrium/goheif v0.0.0-20230113233934-ca402e77a786 // indirect

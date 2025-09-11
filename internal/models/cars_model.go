@@ -37,6 +37,7 @@ type Car struct {
 	Images         interface{}
 	Status         string
 }
+
 type Truck struct {
 	Id              int64
 	UserId          int64

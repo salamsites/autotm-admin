@@ -20,6 +20,7 @@ type Stock struct {
 	RegionNameRU string
 	Status       string
 	Description  string
+	Location     interface{}
 }
 
 type ESStock struct {
@@ -42,4 +43,5 @@ type ESStock struct {
 	RegionNameRU string      `json:"region_name_ru" es:"type=text"`
 	Status       string      `json:"status" es:"type=keyword"`
 	Description  string      `json:"description" es:"type=text"`
+	Location     interface{} `json:"location" es:"type=object"`
 }

@@ -136,7 +136,7 @@ CREATE TABLE IF NOT EXISTS stocks (
                     "city_id" INTEGER,
                     "address" TEXT,
                     "description" TEXT,
-                    "location" TEXT,
+                    "location" JSONB,
                     "status" stock_status DEFAULT 'waiting',
                     "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

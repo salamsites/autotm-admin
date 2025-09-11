@@ -30,8 +30,8 @@ func (r *StockPsqlRepository) CreateStock(ctx context.Context, stock models.Stoc
 
 	query := ` 
 			INSERT INTO stocks 
-			    (user_id, phone_number, email, store_name, address, region_id, city_id, status, description) 
-			VALUES (@user_id, @phone_number, @email, @store_name, @address, @region_id, @city_id, @status, @description) 
+			    (user_id, phone_number, email, store_name, address, region_id, city_id, status, description, location) 
+			VALUES (@user_id, @phone_number, @email, @store_name, @address, @region_id, @city_id, @status, @description, @location) 
 			RETURNING id;
 	`
 
@@ -45,6 +45,7 @@ func (r *StockPsqlRepository) CreateStock(ctx context.Context, stock models.Stoc
 		"city_id":      stock.CityID,
 		"status":       stock.Status,
 		"description":  stock.Description,
+		"location":     stock.Location,
 	}
 
 	err := r.client.QueryRow(ctx, query, args).Scan(&id)
@@ -236,8 +237,8 @@ func (r *StockPsqlRepository) UpdateStock(ctx context.Context, stock models.Stoc
 
 	query := `
 		UPDATE stocks SET 
-		    user_id = @user_id, phone_number = @phone_number, email = @email, store_name = @store_name, images = @images, 
-		    logo = @logo, address = @address, region_id = @region_id, city_id = @city_id, status = @status, description = @description
+		    user_id = @user_id, phone_number = @phone_number, email = @email, store_name = @store_name, images = @images, logo = @logo, 
+		    address = @address, region_id = @region_id, city_id = @city_id, status = @status, description = @description, location = @location
 		WHERE id = @id
 		RETURNING id
 	`
@@ -254,6 +255,7 @@ func (r *StockPsqlRepository) UpdateStock(ctx context.Context, stock models.Stoc
 		"city_id":      stock.CityID,
 		"status":       stock.Status,
 		"description":  stock.Description,
+		"location":     stock.Location,
 		"id":           stock.ID,
 	}
 	err := r.client.QueryRow(ctx, query, args).Scan(&stockID)

@@ -3,13 +3,13 @@ package handlers
 import (
 	"autotm-admin/internal/configs"
 	"autotm-admin/internal/handlers/http"
+	"autotm-admin/internal/helpers"
 	"autotm-admin/internal/repository"
 	"autotm-admin/internal/services"
 	"context"
 
-	esService "autotm-admin/internal/elasticsearch"
-
 	trmpgx "github.com/avito-tech/go-transaction-manager/drivers/pgxv5/v2"
+	es "github.com/elastic/go-elasticsearch/v8"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	sminio "github.com/salamsites/minio-pkg"
@@ -30,7 +30,7 @@ const (
 	carsURL     = baseURL + "/cars"
 )
 
-func Manager(logger *slog.Logger, clientPsql spsql.Client, minioImageClient sminio.ImageClient, minioFileClient sminio.FileClient, cfg *configs.Config, stockESService *esService.StockESService) chi.Router {
+func Manager(logger *slog.Logger, clientPsql spsql.Client, minioImageClient sminio.ImageClient, minioFileClient sminio.FileClient, cfg *configs.Config, esClient *es.Client) chi.Router {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
@@ -80,7 +80,7 @@ func Manager(logger *slog.Logger, clientPsql spsql.Client, minioImageClient smin
 
 	r.Route(stocksURL, func(subRouter chi.Router) {
 		stockRepo := repository.NewStockPsqlRepository(logger, clientPsql, trmpgx.DefaultCtxGetter)
-		stockService := services.NewStockService(logger, stockRepo, userService, pushService, stockESService)
+		stockService := services.NewStockService(logger, stockRepo, userService, pushService)
 		stockHandler := http.NewStockHandler(logger, newMiddleware, clientPsql, stockService, minioFileClient, minioImageClient)
 		stockHandler.StockRegisterRoutes(subRouter)
 	})
@@ -95,7 +95,7 @@ func Manager(logger *slog.Logger, clientPsql spsql.Client, minioImageClient smin
 	r.Route(carsURL, func(subRouter chi.Router) {
 		carsRepo := repository.NewCarsPsqlRepository(logger, clientPsql)
 		stockRepo := repository.NewStockPsqlRepository(logger, clientPsql, trmpgx.DefaultCtxGetter)
-		carsService := services.NewCarsService(logger, carsRepo, userService, pushService, stockRepo)
+		carsService := services.NewCarsService(logger, carsRepo, userService, pushService, stockRepo, esClient, helpers.CarIndexName)
 		carsHandler := http.NewCarsHandler(logger, newMiddleware, carsService)
 		carsHandler.CarsRegisterRoutes(subRouter)
 	})
