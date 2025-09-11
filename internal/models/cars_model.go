@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 type Car struct {
 	Id             int64
 	UserId         int64
@@ -36,6 +38,8 @@ type Car struct {
 	IsCredit       bool
 	Images         interface{}
 	Status         string
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
 }
 
 type Truck struct {

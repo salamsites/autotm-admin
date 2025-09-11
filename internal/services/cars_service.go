@@ -11,12 +11,16 @@ import (
 
 	"github.com/Hajymuhammet/elasticsearch-package/index"
 	ms "github.com/Hajymuhammet/elasticsearch-package/models"
+	trmpgx "github.com/avito-tech/go-transaction-manager/drivers/pgxv5/v2"
+	"github.com/avito-tech/go-transaction-manager/trm/v2/manager"
 	"github.com/elastic/go-elasticsearch/v8"
 	slog "github.com/salamsites/package-log"
+	spsql "github.com/salamsites/package-psql"
 )
 
 type CarsService struct {
 	logger       *slog.Logger
+	clientPsql   spsql.Client
 	repo         storage.CarsRepository
 	userService  repository.UserService
 	pushService  repository.PushService
@@ -25,9 +29,10 @@ type CarsService struct {
 	carIndexName string
 }
 
-func NewCarsService(logger *slog.Logger, repo storage.CarsRepository, userService repository.UserService, pushService repository.PushService, stockRepo storage.StockRepository, esClient *elasticsearch.Client, carIndexName string) *CarsService {
+func NewCarsService(logger *slog.Logger, clientPsql spsql.Client, repo storage.CarsRepository, userService repository.UserService, pushService repository.PushService, stockRepo storage.StockRepository, esClient *elasticsearch.Client, carIndexName string) *CarsService {
 	return &CarsService{
 		logger:       logger,
+		clientPsql:   clientPsql,
 		repo:         repo,
 		userService:  userService,
 		pushService:  pushService,
@@ -88,6 +93,8 @@ func (s *CarsService) GetCars(ctx context.Context, limit, page int64, search, st
 			IsCredit:       car.IsCredit,
 			Images:         car.Images,
 			Status:         car.Status,
+			CreatedAt:      car.CreatedAt,
+			UpdatedAt:      car.UpdatedAt,
 		})
 	}
 
@@ -142,6 +149,8 @@ func (s *CarsService) GetCarByID(ctx context.Context, id int64) (dtos.Car, error
 		IsCredit:       car.IsCredit,
 		Images:         car.Images,
 		Status:         car.Status,
+		CreatedAt:      car.CreatedAt,
+		UpdatedAt:      car.UpdatedAt,
 	}
 
 	return result, nil
@@ -149,74 +158,86 @@ func (s *CarsService) GetCarByID(ctx context.Context, id int64) (dtos.Car, error
 
 func (s *CarsService) UpdateCarStatus(ctx context.Context, req dtos.UpdateCarStatus) (dtos.ID, error) {
 	var id dtos.ID
+	trManager := manager.Must(trmpgx.NewDefaultFactory(s.clientPsql.Pool()))
 
-	validate := helpers.GetValidator()
-	if err := validate.Struct(req); err != nil {
-		s.logger.Errorf("validate err: %v", err)
-		return id, err
-	}
+	err := trManager.Do(ctx, func(ctx context.Context) error {
 
-	carId, err := s.repo.UpdateCarStatus(ctx, req.ID, req.Status)
+		validate := helpers.GetValidator()
+		if err := validate.Struct(req); err != nil {
+			s.logger.Errorf("validate err: %v", err)
+			return err
+		}
+
+		carId, err := s.repo.UpdateCarStatus(ctx, req.ID, req.Status)
+		if err != nil {
+			s.logger.Errorf("update car status err: %v", err)
+			return err
+		}
+
+		car, err := s.repo.GetCarByID(ctx, carId)
+		if err != nil {
+			s.logger.Errorf("get cars by id err: %w", err)
+			return err
+		}
+
+		carModel := &ms.Car{
+			ID:             car.Id,
+			UserId:         car.UserId,
+			UserName:       car.UserName,
+			StockId:        car.StockId,
+			StoreName:      car.StoreName,
+			BrandId:        car.BrandId,
+			BrandName:      car.BrandName,
+			ModelId:        car.ModelId,
+			ModelName:      car.ModelName,
+			Year:           car.Year,
+			Price:          car.Price,
+			Color:          car.Color,
+			Vin:            car.Vin,
+			Description:    car.Description,
+			CityId:         car.CityId,
+			CityNameTM:     car.CityNameTM,
+			CityNameEN:     car.CityNameEN,
+			CityNameRU:     car.CityNameRU,
+			Name:           car.Name,
+			Mail:           car.Mail,
+			PhoneNumber:    car.PhoneNumber,
+			IsComment:      car.IsComment,
+			IsExchange:     car.IsExchange,
+			IsCredit:       car.IsCredit,
+			Images:         car.Images,
+			Status:         car.Status,
+			CreatedAt:      car.CreatedAt,
+			UpdatedAt:      car.UpdatedAt,
+			Mileage:        car.Mileage,
+			EngineCapacity: car.EngineCapacity,
+			EngineType:     car.EngineType,
+			BodyId:         car.BodyId,
+			BodyNameTM:     car.BodyNameTM,
+			BodyNameEN:     car.BodyNameEN,
+			BodyNameRU:     car.BodyNameRU,
+			Transmission:   car.Transmission,
+			DriveType:      car.DriveType,
+		}
+
+		if err := index.IndexCar(s.esClient, s.carIndexName, carModel); err != nil {
+			s.logger.Errorf("ES index error: %v", err)
+		} else {
+			s.logger.Infof("Car indexed successfully in Elasticsearch")
+		}
+
+		go s.handlePushNotifications(req.StockID, req.Message)
+
+		id.ID = carId
+
+		return nil
+	})
+
 	if err != nil {
-		s.logger.Errorf("update car status err: %v", err)
+		s.logger.Errorf("update id err: %v", err)
 		return id, err
 	}
 
-	car, err := s.repo.GetCarByID(ctx, carId)
-	if err != nil {
-		s.logger.Errorf("get cars by id err: %w", err)
-		return id, err
-	}
-
-	carModel := &ms.Car{
-		ID:             car.Id,
-		UserId:         car.UserId,
-		UserName:       car.UserName,
-		StockId:        car.StockId,
-		StoreName:      car.StoreName,
-		BrandId:        car.BrandId,
-		BrandName:      car.BrandName,
-		ModelId:        car.ModelId,
-		ModelName:      car.ModelName,
-		Year:           car.Year,
-		Price:          car.Price,
-		Color:          car.Color,
-		Vin:            car.Vin,
-		Description:    car.Description,
-		CityId:         car.CityId,
-		CityNameTM:     car.CityNameTM,
-		CityNameEN:     car.CityNameEN,
-		CityNameRU:     car.CityNameRU,
-		Name:           car.Name,
-		Mail:           car.Mail,
-		PhoneNumber:    car.PhoneNumber,
-		IsComment:      car.IsComment,
-		IsExchange:     car.IsExchange,
-		IsCredit:       car.IsCredit,
-		Images:         car.Images,
-		Status:         car.Status,
-		CreatedAt:      time.Now(),
-		UpdatedAt:      time.Now(),
-		Mileage:        car.Mileage,
-		EngineCapacity: car.EngineCapacity,
-		EngineType:     car.EngineType,
-		BodyId:         car.BodyId,
-		BodyNameTM:     car.BodyNameTM,
-		BodyNameEN:     car.BodyNameEN,
-		BodyNameRU:     car.BodyNameRU,
-		Transmission:   car.Transmission,
-		DriveType:      car.DriveType,
-	}
-
-	if err := index.IndexCar(s.esClient, s.carIndexName, carModel); err != nil {
-		s.logger.Errorf("ES index error: %v", err)
-	} else {
-		s.logger.Infof("Car indexed successfully in Elasticsearch")
-	}
-
-	go s.handlePushNotifications(req.StockID, req.Message)
-
-	id.ID = carId
 	return id, nil
 }
 

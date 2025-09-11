@@ -1,5 +1,7 @@
 package dtos
 
+import "time"
+
 type Car struct {
 	Id             int64       `json:"id"`
 	UserId         int64       `json:"user_id"`
@@ -36,6 +38,8 @@ type Car struct {
 	IsCredit       bool        `json:"is_credit"`
 	Images         interface{} `json:"images"`
 	Status         string      `json:"status"`
+	CreatedAt      time.Time   `json:"created_at"`
+	UpdatedAt      time.Time   `json:"updated_at"`
 }
 
 type CarsResp struct {

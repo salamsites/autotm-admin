@@ -33,7 +33,7 @@ func (r *CarsPsqlRepository) GetCars(ctx context.Context, limit, page int64, sea
 			cr.model_id, m.name, cr.year, cr.mileage, cr.color, cr.engine_capacity, cr.engine_type,
 			cr.body_id, bt.name_tm, bt.name_en, bt.name_ru, cr.transmission, cr.drive_type, cr.vin, 
 			cr.description, cr.city_id, cs.name_tm, cs.name_en, cs.name_ru, cr.name, cr.mail, cr.phone_number, 
-			cr.price, cr.is_comment, cr.is_exchange, cr.is_credit, cr.images, cr.status
+			cr.price, cr.is_comment, cr.is_exchange, cr.is_credit, cr.images, cr.status, cr.created_at, cr.updated_at
 		FROM cars cr
 			LEFT JOIN users u ON u.id = cr.user_id 
 			LEFT JOIN stocks s ON s.id = cr.stock_id
@@ -106,6 +106,8 @@ func (r *CarsPsqlRepository) GetCars(ctx context.Context, limit, page int64, sea
 			&car.IsCredit,
 			&car.Images,
 			&car.Status,
+			&car.CreatedAt,
+			&car.UpdatedAt,
 		)
 		if err != nil {
 			r.logger.Errorf("Error getting cars: %s", err)
@@ -152,7 +154,7 @@ func (r *CarsPsqlRepository) GetCarByID(ctx context.Context, id int64) (models.C
 			cr.model_id, m.name, cr.year, cr.mileage, cr.color, cr.engine_capacity, cr.engine_type,
 			cr.body_id, bt.name_tm, bt.name_en, bt.name_ru, cr.transmission, cr.drive_type, cr.vin, 
 			cr.description, cr.city_id, cs.name_tm, cs.name_en, cs.name_ru, cr.name, cr.mail, cr.phone_number, 
-			cr.price, cr.is_comment, cr.is_exchange, cr.is_credit, cr.images, cr.status
+			cr.price, cr.is_comment, cr.is_exchange, cr.is_credit, cr.images, cr.status, cr.created_at, cr.updated_at
 		FROM cars cr
 			LEFT JOIN users u ON u.id = cr.user_id 
 			LEFT JOIN stocks s ON s.id = cr.stock_id
@@ -168,10 +170,10 @@ func (r *CarsPsqlRepository) GetCarByID(ctx context.Context, id int64) (models.C
 	}
 
 	err := r.client.QueryRow(ctx, query, args).Scan(&car.Id, &car.UserId, &car.UserName, &car.StockId, &car.StoreName,
-		&car.BrandId, &car.Name, &car.ModelId, &car.Name, &car.Name, &car.Year, &car.Mileage, &car.Color,
+		&car.BrandId, &car.BrandName, &car.ModelId, &car.ModelName, &car.Year, &car.Mileage, &car.Color,
 		&car.EngineCapacity, &car.EngineType, &car.BodyId, &car.BodyNameTM, &car.BodyNameEN, &car.BodyNameRU, &car.Transmission,
 		&car.DriveType, &car.Vin, &car.Description, &car.CityId, &car.CityNameTM, &car.CityNameEN, &car.CityNameRU, &car.Name, &car.Mail,
-		&car.PhoneNumber, &car.Price, &car.IsComment, &car.IsExchange, &car.IsCredit, &car.Images, &car.Status,
+		&car.PhoneNumber, &car.Price, &car.IsComment, &car.IsExchange, &car.IsCredit, &car.Images, &car.Status, &car.CreatedAt, &car.UpdatedAt,
 	)
 
 	if err != nil {
