@@ -3,7 +3,6 @@ package handlers
 import (
 	"autotm-admin/internal/configs"
 	"autotm-admin/internal/handlers/http"
-	"autotm-admin/internal/helpers"
 	"autotm-admin/internal/repository"
 	"autotm-admin/internal/services"
 	"context"
@@ -95,7 +94,7 @@ func Manager(logger *slog.Logger, clientPsql spsql.Client, minioImageClient smin
 	r.Route(carsURL, func(subRouter chi.Router) {
 		carsRepo := repository.NewCarsPsqlRepository(logger, clientPsql)
 		stockRepo := repository.NewStockPsqlRepository(logger, clientPsql, trmpgx.DefaultCtxGetter)
-		carsService := services.NewCarsService(logger, clientPsql, carsRepo, userService, pushService, stockRepo, esClient, helpers.CarIndexName)
+		carsService := services.NewCarsService(logger, clientPsql, carsRepo, userService, pushService, stockRepo, esClient)
 		carsHandler := http.NewCarsHandler(logger, newMiddleware, carsService)
 		carsHandler.CarsRegisterRoutes(subRouter)
 	})

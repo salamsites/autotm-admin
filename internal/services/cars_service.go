@@ -19,26 +19,24 @@ import (
 )
 
 type CarsService struct {
-	logger       *slog.Logger
-	clientPsql   spsql.Client
-	repo         storage.CarsRepository
-	userService  repository.UserService
-	pushService  repository.PushService
-	stockRepo    storage.StockRepository
-	esClient     *elasticsearch.Client
-	carIndexName string
+	logger      *slog.Logger
+	clientPsql  spsql.Client
+	repo        storage.CarsRepository
+	userService repository.UserService
+	pushService repository.PushService
+	stockRepo   storage.StockRepository
+	esClient    *elasticsearch.Client
 }
 
-func NewCarsService(logger *slog.Logger, clientPsql spsql.Client, repo storage.CarsRepository, userService repository.UserService, pushService repository.PushService, stockRepo storage.StockRepository, esClient *elasticsearch.Client, carIndexName string) *CarsService {
+func NewCarsService(logger *slog.Logger, clientPsql spsql.Client, repo storage.CarsRepository, userService repository.UserService, pushService repository.PushService, stockRepo storage.StockRepository, esClient *elasticsearch.Client) *CarsService {
 	return &CarsService{
-		logger:       logger,
-		clientPsql:   clientPsql,
-		repo:         repo,
-		userService:  userService,
-		pushService:  pushService,
-		stockRepo:    stockRepo,
-		esClient:     esClient,
-		carIndexName: carIndexName,
+		logger:      logger,
+		clientPsql:  clientPsql,
+		repo:        repo,
+		userService: userService,
+		pushService: pushService,
+		stockRepo:   stockRepo,
+		esClient:    esClient,
 	}
 }
 
@@ -207,8 +205,6 @@ func (s *CarsService) UpdateCarStatus(ctx context.Context, req dtos.UpdateCarSta
 			IsCredit:       car.IsCredit,
 			Images:         car.Images,
 			Status:         car.Status,
-			CreatedAt:      car.CreatedAt,
-			UpdatedAt:      car.UpdatedAt,
 			Mileage:        car.Mileage,
 			EngineCapacity: car.EngineCapacity,
 			EngineType:     car.EngineType,
@@ -218,10 +214,12 @@ func (s *CarsService) UpdateCarStatus(ctx context.Context, req dtos.UpdateCarSta
 			BodyNameRU:     car.BodyNameRU,
 			Transmission:   car.Transmission,
 			DriveType:      car.DriveType,
+			CreatedAt:      car.CreatedAt,
+			UpdatedAt:      car.UpdatedAt,
 		}
 
-		if err := index.IndexCar(s.esClient, s.carIndexName, carModel); err != nil {
-			s.logger.Errorf("ES index error: %v", err)
+		if err := index.IndexCar(s.esClient, helpers.CarIndexName, carModel); err != nil {
+			s.logger.Errorf("ES index error: %w", err)
 		} else {
 			s.logger.Infof("Car indexed successfully in Elasticsearch")
 		}
@@ -234,7 +232,7 @@ func (s *CarsService) UpdateCarStatus(ctx context.Context, req dtos.UpdateCarSta
 	})
 
 	if err != nil {
-		s.logger.Errorf("update id err: %v", err)
+		s.logger.Errorf("update id car err: %v", err)
 		return id, err
 	}
 
@@ -309,7 +307,8 @@ func (s *CarsService) GetTrucks(ctx context.Context, limit, page int64, search, 
 			IsCredit:        truck.IsCredit,
 			Images:          truck.Images,
 			Status:          truck.Status,
-			Options:         truck.Options,
+			CreatedAt:       truck.CreatedAt,
+			UpdatedAt:       truck.UpdatedAt,
 		})
 	}
 
@@ -381,30 +380,112 @@ func (s *CarsService) GetTruckByID(ctx context.Context, id int64) (dtos.Truck, e
 		IsCredit:        truck.IsCredit,
 		Images:          truck.Images,
 		Status:          truck.Status,
-		Options:         truck.Options,
+		CreatedAt:       truck.CreatedAt,
+		UpdatedAt:       truck.UpdatedAt,
 	}
 
 	return result, nil
 }
 
-func (s *CarsService) UpdateTruckStatus(ctx context.Context, truck dtos.UpdateTruckStatus) (dtos.ID, error) {
+func (s *CarsService) UpdateTruckStatus(ctx context.Context, req dtos.UpdateTruckStatus) (dtos.ID, error) {
 	var id dtos.ID
 
-	validate := helpers.GetValidator()
-	if err := validate.Struct(truck); err != nil {
-		s.logger.Errorf("validate err: %v", err)
-		return id, err
-	}
+	trManager := manager.Must(trmpgx.NewDefaultFactory(s.clientPsql.Pool()))
 
-	truckId, err := s.repo.UpdateTruckStatus(ctx, truck.ID, truck.Status)
+	err := trManager.Do(ctx, func(ctx context.Context) error {
+		validate := helpers.GetValidator()
+		if err := validate.Struct(req); err != nil {
+			s.logger.Errorf("validate err: %v", err)
+			return err
+		}
+
+		truckId, err := s.repo.UpdateTruckStatus(ctx, req.ID, req.Status)
+		if err != nil {
+			s.logger.Errorf("update truck status err: %v", err)
+			return err
+		}
+
+		truck, err := s.repo.GetTruckByID(ctx, truckId)
+		if err != nil {
+			s.logger.Errorf("get truck by id err: %w", err)
+			return err
+		}
+
+		truckModel := &ms.Truck{
+			Id:              truck.Id,
+			UserId:          truck.UserId,
+			UserName:        truck.UserName,
+			StockId:         truck.StockId,
+			StoreName:       truck.StoreName,
+			BrandId:         truck.BrandId,
+			BrandName:       truck.BrandName,
+			LoadCapacity:    truck.LoadCapacity,
+			Price:           truck.Price,
+			BodyType:        truck.BodyType,
+			DriveType:       truck.DriveType,
+			Transmission:    truck.Transmission,
+			EngineType:      truck.EngineType,
+			ModelId:         truck.ModelId,
+			ModelName:       truck.ModelName,
+			Year:            truck.Year,
+			Seats:           truck.Seats,
+			CabType:         truck.CabType,
+			WheelFormula:    truck.WheelFormula,
+			Chassis:         truck.Chassis,
+			CabSuspension:   truck.CabSuspension,
+			BusType:         truck.BusType,
+			SuspensionType:  truck.SuspensionType,
+			Brakes:          truck.Brakes,
+			Axles:           truck.Axles,
+			EngineHours:     truck.EngineHours,
+			VehicleType:     truck.VehicleType,
+			EngineCapacity:  truck.EngineCapacity,
+			ForkliftType:    truck.ForkliftType,
+			LiftingCapacity: truck.LiftingCapacity,
+			Mileage:         truck.Mileage,
+			ExcavatorType:   truck.ExcavatorType,
+			BulldozerType:   truck.BulldozerType,
+			Color:           truck.Color,
+			Vin:             truck.Vin,
+			BodyId:          truck.BodyId,
+			BodyNameTM:      truck.BodyNameTM,
+			BodyNameEN:      truck.BodyNameEN,
+			BodyNameRU:      truck.BodyNameRU,
+			Description:     truck.Description,
+			CityId:          truck.CityId,
+			CityNameTM:      truck.CityNameTM,
+			CityNameEN:      truck.CityNameEN,
+			CityNameRU:      truck.CityNameRU,
+			Name:            truck.Name,
+			Mail:            truck.Mail,
+			PhoneNumber:     truck.PhoneNumber,
+			IsComment:       truck.IsComment,
+			IsExchange:      truck.IsExchange,
+			IsCredit:        truck.IsCredit,
+			Images:          truck.Images,
+			Status:          truck.Status,
+			CreatedAt:       truck.CreatedAt,
+			UpdatedAt:       truck.UpdatedAt,
+		}
+
+		if err := index.IndexTruck(s.esClient, helpers.TruckIndexName, truckModel); err != nil {
+			s.logger.Errorf("ES index error: %w", err)
+		} else {
+			s.logger.Infof("Truck indexed successfully in Elasticsearch")
+		}
+
+		go s.handlePushNotifications(req.StockID, req.Message)
+
+		id.ID = truckId
+
+		return nil
+	})
+
 	if err != nil {
-		s.logger.Errorf("update truck status err: %v", err)
+		s.logger.Errorf("update id truck err: %v", err)
 		return id, err
 	}
 
-	go s.handlePushNotifications(truck.StockID, truck.Message)
-
-	id.ID = truckId
 	return id, nil
 }
 
@@ -455,12 +536,14 @@ func (s *CarsService) GetMotors(ctx context.Context, limit, page int64, search, 
 			Name:                moto.Name,
 			Mail:                moto.Mail,
 			PhoneNumber:         moto.PhoneNumber,
-			Options:             moto.Options,
 			IsComment:           moto.IsComment,
 			IsExchange:          moto.IsExchange,
 			IsCredit:            moto.IsCredit,
 			Images:              moto.Images,
 			Status:              moto.Status,
+			Options:             moto.Options,
+			CreatedAt:           moto.CreatedAt,
+			UpdatedAt:           moto.UpdatedAt,
 		})
 	}
 
@@ -511,35 +594,104 @@ func (s *CarsService) GetMotoByID(ctx context.Context, id int64) (dtos.Moto, err
 		Name:                moto.Name,
 		Mail:                moto.Mail,
 		PhoneNumber:         moto.PhoneNumber,
-		Options:             moto.Options,
 		IsComment:           moto.IsComment,
 		IsExchange:          moto.IsExchange,
 		IsCredit:            moto.IsCredit,
 		Images:              moto.Images,
 		Status:              moto.Status,
+		Options:             moto.Options,
+		CreatedAt:           moto.CreatedAt,
+		UpdatedAt:           moto.UpdatedAt,
 	}
 
 	return result, nil
 }
 
-func (s *CarsService) UpdateMotoStatus(ctx context.Context, moto dtos.UpdateMotoStatus) (dtos.ID, error) {
+func (s *CarsService) UpdateMotoStatus(ctx context.Context, req dtos.UpdateMotoStatus) (dtos.ID, error) {
 	var id dtos.ID
 
-	validate := helpers.GetValidator()
-	if err := validate.Struct(moto); err != nil {
-		s.logger.Errorf("validate err: %v", err)
-		return id, err
-	}
+	trManager := manager.Must(trmpgx.NewDefaultFactory(s.clientPsql.Pool()))
 
-	motoId, err := s.repo.UpdateMotoStatus(ctx, moto.ID, moto.Status)
+	err := trManager.Do(ctx, func(ctx context.Context) error {
+
+		validate := helpers.GetValidator()
+		if err := validate.Struct(req); err != nil {
+			s.logger.Errorf("validate err: %v", err)
+			return err
+		}
+
+		motoId, err := s.repo.UpdateMotoStatus(ctx, req.ID, req.Status)
+		if err != nil {
+			s.logger.Errorf("update moto status err: %v", err)
+			return err
+		}
+
+		moto, err := s.repo.GetMotoByID(ctx, motoId)
+		if err != nil {
+			s.logger.Errorf("get moto by id err: %w", err)
+			return err
+		}
+
+		motoModel := &ms.Moto{
+			Id:                  moto.Id,
+			UserId:              moto.UserId,
+			UserName:            moto.UserName,
+			StockId:             moto.StockId,
+			StoreName:           moto.StoreName,
+			BodyId:              moto.BodyId,
+			BodyNameTM:          moto.BodyNameTM,
+			BodyNameEN:          moto.BodyNameEN,
+			BodyNameRU:          moto.BodyNameRU,
+			BrandId:             moto.BrandId,
+			BrandName:           moto.BrandName,
+			ModelId:             moto.ModelId,
+			ModelName:           moto.ModelName,
+			TypeMotorcycles:     moto.TypeMotorcycles,
+			Year:                moto.Year,
+			Price:               moto.Price,
+			Volume:              moto.Volume,
+			EngineType:          moto.EngineType,
+			NumberOfClockCycles: moto.NumberOfClockCycles,
+			Mileage:             moto.Mileage,
+			AirType:             moto.AirType,
+			Color:               moto.Color,
+			Vin:                 moto.Vin,
+			Description:         moto.Description,
+			CityId:              moto.CityId,
+			CityNameTM:          moto.CityNameTM,
+			CityNameEN:          moto.CityNameEN,
+			CityNameRU:          moto.CityNameRU,
+			Name:                moto.Name,
+			Mail:                moto.Mail,
+			PhoneNumber:         moto.PhoneNumber,
+			IsComment:           moto.IsComment,
+			IsExchange:          moto.IsExchange,
+			IsCredit:            moto.IsCredit,
+			Images:              moto.Images,
+			Status:              moto.Status,
+			Options:             moto.Options,
+			CreatedAt:           moto.CreatedAt,
+			UpdatedAt:           moto.UpdatedAt,
+		}
+
+		if err := index.IndexMoto(s.esClient, helpers.MotoIndexName, motoModel); err != nil {
+			s.logger.Errorf("ES index error: %w", err)
+		} else {
+			s.logger.Infof("Moto indexed successfully in Elasticsearch")
+		}
+
+		go s.handlePushNotifications(req.StockID, req.Message)
+
+		id.ID = motoId
+
+		return nil
+	})
+
 	if err != nil {
-		s.logger.Errorf("update moto status err: %v", err)
+		s.logger.Errorf("update id moto err: %v", err)
 		return id, err
 	}
 
-	go s.handlePushNotifications(moto.StockID, moto.Message)
-
-	id.ID = motoId
 	return id, nil
 }
 

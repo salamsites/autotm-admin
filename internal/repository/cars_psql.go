@@ -208,28 +208,6 @@ func (r *CarsPsqlRepository) UpdateCarStatus(ctx context.Context, id int64, stat
 	return carId, nil
 }
 
-func (r *CarsPsqlRepository) GetUserByCarId(ctx context.Context, carId int64) (int64, error) {
-	var userId int64
-
-	query := `
-		SELECT 
-			user_id
-		FROM cars
-		WHERE id = @car_id
-	`
-
-	args := pgx.NamedArgs{
-		"car_id": carId,
-	}
-
-	err := r.client.QueryRow(ctx, query, args).Scan(&userId)
-	if err != nil {
-		r.logger.Errorf("get user by car id err: %v", err)
-		return userId, err
-	}
-	return userId, nil
-}
-
 func (r *CarsPsqlRepository) GetTrucks(ctx context.Context, limit, page int64, search, status string) ([]models.Truck, int64, error) {
 	var (
 		trucks []models.Truck
@@ -238,13 +216,13 @@ func (r *CarsPsqlRepository) GetTrucks(ctx context.Context, limit, page int64, s
 
 	query := `
 		SELECT
-			t.id, t.user_id, u.full_name, t.stock_id, s.store_name, t.brand_id, b.name,
-			t.load_capacity, t.price, t.body_type, t.drive_type, t.transmission, t.engine_type,
-			t.model_id, m.name, t.year, t.seats, t.cab_type, t.wheel_formula, t.chassis, t.cab_suspension,
-			t.bus_type, t.suspension_type, t.brakes, t.axles, t.engine_hours, t.vehicle_type, t.engine_capacity,
-			t.forklift_type, t.lifting_capacity, t.mileage, t.excavator_type, t.bulldozer_type, t.color, t.vin, 
-			t.body_id, bt.name_tm, bt.name_en, bt.name_ru, t.description, t.city_id, cs.name_tm, cs.name_en, cs.name_ru, 
-			t.name, t.mail, t.phone_number, t.is_comment, t.is_exchange, t.is_credit, t.images, t.status, t.options
+			t.id, t.user_id, u.full_name, t.stock_id, s.store_name, t.brand_id, b.name, t.load_capacity, t.price, 
+			t.body_type, t.drive_type, t.transmission, t.engine_type, t.model_id, m.name, t.year, t.seats, 
+			t.cab_type, t.wheel_formula, t.chassis, t.cab_suspension, t.bus_type, t.suspension_type, t.brakes, 
+			t.axles, t.engine_hours, t.vehicle_type, t.engine_capacity, t.forklift_type, t.lifting_capacity, 
+			t.mileage, t.excavator_type, t.bulldozer_type, t.color, t.vin, t.body_id, bt.name_tm, bt.name_en, bt.name_ru, 
+			t.description, t.city_id, cs.name_tm, cs.name_en, cs.name_ru, t.name, t.mail, t.phone_number, t.is_comment, 
+			t.is_exchange, t.is_credit, t.images, t.status, t.created_at, t.updated_at
 		FROM trucks t
 			LEFT JOIN users u ON u.id = t.user_id 
 			LEFT JOIN stocks s ON s.id = t.stock_id
@@ -334,7 +312,8 @@ func (r *CarsPsqlRepository) GetTrucks(ctx context.Context, limit, page int64, s
 			&truck.IsCredit,
 			&truck.Images,
 			&truck.Status,
-			&truck.Options,
+			&truck.CreatedAt,
+			&truck.UpdatedAt,
 		)
 		if err != nil {
 			r.logger.Errorf("Error getting cars: %s", err)
@@ -383,7 +362,8 @@ func (r *CarsPsqlRepository) GetTruckByID(ctx context.Context, id int64) (models
 			t.bus_type, t.suspension_type, t.brakes, t.axles, t.engine_hours, t.vehicle_type, t.engine_capacity,
 			t.forklift_type, t.lifting_capacity, t.mileage, t.excavator_type, t.bulldozer_type, t.color, t.vin, 
 			t.body_id, bt.name_tm, bt.name_en, bt.name_ru, t.description, t.city_id, cs.name_tm, cs.name_en, cs.name_ru, 
-			t.name, t.mail, t.phone_number, t.is_comment, t.is_exchange, t.is_credit, t.images, t.status, t.options
+			t.name, t.mail, t.phone_number, t.is_comment, t.is_exchange, t.is_credit, t.images, t.status,
+			t.created_at, t.updated_at
 		FROM trucks t
 			LEFT JOIN users u ON u.id = t.user_id 
 			LEFT JOIN stocks s ON s.id = t.stock_id
@@ -405,7 +385,7 @@ func (r *CarsPsqlRepository) GetTruckByID(ctx context.Context, id int64) (models
 		&truck.EngineCapacity, &truck.ForkliftType, &truck.LiftingCapacity, &truck.Mileage, &truck.ExcavatorType, &truck.BulldozerType,
 		&truck.Color, &truck.Vin, &truck.BodyId, &truck.BodyNameTM, &truck.BodyNameEN, &truck.BodyNameRU, &truck.Description,
 		&truck.CityId, &truck.CityNameTM, &truck.CityNameEN, &truck.CityNameRU, &truck.Name, &truck.Mail, &truck.PhoneNumber,
-		&truck.IsComment, &truck.IsExchange, &truck.IsCredit, &truck.Images, &truck.Status, &truck.Options,
+		&truck.IsComment, &truck.IsExchange, &truck.IsCredit, &truck.Images, &truck.Status, &truck.CreatedAt, &truck.UpdatedAt,
 	)
 
 	if err != nil {
@@ -440,28 +420,6 @@ func (r *CarsPsqlRepository) UpdateTruckStatus(ctx context.Context, id int64, st
 	return truckId, nil
 }
 
-func (r *CarsPsqlRepository) GetUserByTruckId(ctx context.Context, truckId int64) (int64, error) {
-	var userId int64
-
-	query := `
-		SELECT 
-			user_id
-		FROM trucks
-		WHERE id = @truck_id
-	`
-
-	args := pgx.NamedArgs{
-		"truck_id": truckId,
-	}
-
-	err := r.client.QueryRow(ctx, query, args).Scan(&userId)
-	if err != nil {
-		r.logger.Errorf("get user by truck id err: %v", err)
-		return userId, err
-	}
-	return userId, nil
-}
-
 func (r *CarsPsqlRepository) GetMotors(ctx context.Context, limit, page int64, search, status string) ([]models.Moto, int64, error) {
 	var (
 		motors []models.Moto
@@ -475,7 +433,8 @@ func (r *CarsPsqlRepository) GetMotors(ctx context.Context, limit, page int64, s
 			ms.number_of_clock_cycles, ms.model_id, m.name, ms.air_type, ms.color, ms.vin, 
 			ms.description, ms.city_id, cs.name_tm, cs.name_en, cs.name_ru,
 			ms.name, ms.mail, ms.phone_number, ms.options, ms.is_comment, 
-			ms.is_exchange, ms.is_credit, ms.images, ms.status
+			ms.is_exchange, ms.is_credit, ms.images, ms.status,
+			ms.options, ms.created_at, ms.updated_at
 		FROM motos ms
 			LEFT JOIN users u ON u.id = ms.user_id 
 			LEFT JOIN stocks s ON s.id = ms.stock_id
@@ -545,6 +504,9 @@ func (r *CarsPsqlRepository) GetMotors(ctx context.Context, limit, page int64, s
 			&motor.IsCredit,
 			&motor.Images,
 			&motor.Status,
+			&motor.Options,
+			&motor.CreatedAt,
+			&motor.UpdatedAt,
 		)
 		if err != nil {
 			r.logger.Errorf("Error getting motors: %s", err)
@@ -593,6 +555,7 @@ func (r *CarsPsqlRepository) GetMotoByID(ctx context.Context, id int64) (models.
 			ms.description, ms.city_id, cs.name_tm, cs.name_en, cs.name_ru,
 			ms.name, ms.mail, ms.phone_number, ms.options, ms.is_comment, 
 			ms.is_exchange, ms.is_credit, ms.images, ms.status
+			ms.options, ms.created_at, ms.updated_at
 		FROM motos ms
 			LEFT JOIN users u ON u.id = ms.user_id 
 			LEFT JOIN stocks s ON s.id = ms.stock_id
@@ -639,6 +602,9 @@ func (r *CarsPsqlRepository) GetMotoByID(ctx context.Context, id int64) (models.
 		&motor.IsCredit,
 		&motor.Images,
 		&motor.Status,
+		&motor.Options,
+		&motor.CreatedAt,
+		&motor.UpdatedAt,
 	)
 
 	if err != nil {
@@ -647,28 +613,6 @@ func (r *CarsPsqlRepository) GetMotoByID(ctx context.Context, id int64) (models.
 	}
 
 	return motor, nil
-}
-
-func (r *CarsPsqlRepository) GetUserByMotoId(ctx context.Context, motoId int64) (int64, error) {
-	var userId int64
-
-	query := `
-		SELECT 
-			user_id
-		FROM motos
-		WHERE id = @moto_id
-	`
-
-	args := pgx.NamedArgs{
-		"moto_id": motoId,
-	}
-
-	err := r.client.QueryRow(ctx, query, args).Scan(&userId)
-	if err != nil {
-		r.logger.Errorf("get user by moto id err: %v", err)
-		return userId, err
-	}
-	return userId, nil
 }
 
 func (r *CarsPsqlRepository) UpdateMotoStatus(ctx context.Context, id int64, status string) (int64, error) {

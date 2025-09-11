@@ -95,7 +95,8 @@ type Truck struct {
 	IsCredit        bool
 	Images          interface{}
 	Status          string
-	Options         []int64
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
 }
 
 type Moto struct {
@@ -136,4 +137,6 @@ type Moto struct {
 	IsCredit            bool
 	Images              interface{}
 	Status              string
+	CreatedAt           time.Time
+	UpdatedAt           time.Time
 }

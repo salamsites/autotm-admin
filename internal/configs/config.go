@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"sync"
-	"time"
 
 	"github.com/ilyakaznacheev/cleanenv"
 )
@@ -22,11 +21,10 @@ type Config struct {
 }
 
 type Elasticsearch struct {
-	Addresses []string      `yaml:"addresses" env-required:"true"`
-	Username  string        `yaml:"username" env-default:""`
-	Password  string        `yaml:"password" env-default:""`
-	Timeout   time.Duration `yaml:"timeout" env-default:"30"`
-	Enable    bool          `yaml:"enable" env-default:"true"`
+	Addresses []string `yaml:"addresses" env-required:"true"`
+	Username  string   `yaml:"username" env-default:""`
+	Password  string   `yaml:"password" env-default:""`
+	Enable    bool     `yaml:"enable" env-default:"true"`
 }
 
 type Minio struct {

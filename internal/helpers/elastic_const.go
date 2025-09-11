@@ -1,5 +1,7 @@
 package helpers
 
 const (
-	CarIndexName = "cars"
+	CarIndexName   = "cars"
+	TruckIndexName = "trucks"
+	MotoIndexName  = "motos"
 )

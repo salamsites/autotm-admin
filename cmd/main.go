@@ -91,12 +91,12 @@ func main() {
 		logger.Fatal(errImage)
 	}
 
-	// Elasticsearch
+	// Elasticsearch Start
 	es, err := esadapter.NewClient(esadapter.ClientConfig{
 		Addresses: cfg.Elasticsearch.Addresses,
 		Username:  cfg.Elasticsearch.Username,
 		Password:  cfg.Elasticsearch.Password,
-		Timeout:   cfg.Elasticsearch.Timeout,
+		Timeout:   10 * time.Second,
 		TLSConfig: &tls.Config{
 			InsecureSkipVerify: cfg.Elasticsearch.Enable,
 		},
@@ -107,8 +107,18 @@ func main() {
 	logger.Info("elasticsearch connected successfully")
 
 	if err := index.EnsureCarIndex(es, helpers.CarIndexName); err != nil {
-		log.Fatalf("failed to ensure index: %v", err)
+		log.Fatalf("failed to ensure cars index: %v", err)
 	}
+
+	if err := index.EnsureTruckIndex(es, helpers.TruckIndexName); err != nil {
+		log.Fatalf("failed to ensure trucks index: %v", err)
+	}
+
+	if err := index.EnsureMotoIndex(es, helpers.MotoIndexName); err != nil {
+		log.Fatalf("failed to ensure motos index: %v", err)
+	}
+
+	// Elasticsearch End
 
 	router := handlers.Manager(logger, psqlClient, minioImageClient, minioFileClient, cfg, es)
 
