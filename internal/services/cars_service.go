@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/Hajymuhammet/elasticsearch-package/filter"
 	"github.com/Hajymuhammet/elasticsearch-package/index"
 	ms "github.com/Hajymuhammet/elasticsearch-package/models"
 	trmpgx "github.com/avito-tech/go-transaction-manager/drivers/pgxv5/v2"
@@ -750,4 +751,58 @@ func (s *CarsService) sendPushNotifications(ctx context.Context, stockID int64, 
 	}
 
 	return nil
+}
+
+func (s *CarsService) SearchCars(ctx context.Context, ft *filter.CarFilter) ([]dtos.Car, error) {
+	cars, err := filter.SearchCars(s.esClient, helpers.CarIndexName, ft)
+	if err != nil {
+		s.logger.Errorf("search cars ES err: %v", err)
+		return nil, err
+	}
+
+	dtoCars := make([]dtos.Car, len(cars))
+
+	for i, car := range cars {
+		dtoCars[i] = dtos.Car{
+			Id:             car.ID,
+			UserId:         car.UserId,
+			UserName:       car.UserName,
+			StockId:        car.StockId,
+			StoreName:      car.StoreName,
+			BrandId:        car.BrandId,
+			BrandName:      car.BrandName,
+			ModelId:        car.ModelId,
+			ModelName:      car.ModelName,
+			Year:           car.Year,
+			Price:          car.Price,
+			Color:          car.Color,
+			Vin:            car.Vin,
+			Description:    car.Description,
+			CityId:         car.CityId,
+			CityNameTM:     car.CityNameTM,
+			CityNameEN:     car.CityNameEN,
+			CityNameRU:     car.CityNameRU,
+			Name:           car.Name,
+			Mail:           car.Mail,
+			PhoneNumber:    car.PhoneNumber,
+			IsComment:      car.IsComment,
+			IsExchange:     car.IsExchange,
+			IsCredit:       car.IsCredit,
+			Images:         car.Images,
+			Status:         car.Status,
+			Mileage:        car.Mileage,
+			EngineCapacity: car.EngineCapacity,
+			EngineType:     car.EngineType,
+			BodyId:         car.BodyId,
+			BodyNameTM:     car.BodyNameTM,
+			BodyNameEN:     car.BodyNameEN,
+			BodyNameRU:     car.BodyNameRU,
+			Transmission:   car.Transmission,
+			DriveType:      car.DriveType,
+			CreatedAt:      car.CreatedAt,
+			UpdatedAt:      car.UpdatedAt,
+		}
+	}
+
+	return dtoCars, nil
 }

@@ -7,7 +7,9 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"time"
 
+	"github.com/Hajymuhammet/elasticsearch-package/filter"
 	"github.com/go-chi/chi/v5"
 	shttp "github.com/salamsites/package-http"
 	slog "github.com/salamsites/package-log"
@@ -32,6 +34,7 @@ func (h *CarsHandler) CarsRegisterRoutes(r chi.Router) {
 	r.Method("GET", "/get-cars", h.middleware.Base(h.v1GetCars))
 	r.Method("GET", "/get-car-by-id", h.middleware.Base(h.v1GetCarById))
 	r.Method("PUT", "/update-car-status", h.middleware.Base(h.v1UpdateCarStatus))
+	r.Method("GET", "/search-cars", h.middleware.Base(h.v1SearchCars))
 
 	//trucks
 	r.Method("GET", "/get-trucks", h.middleware.Base(h.v1GetTrucks))
@@ -438,4 +441,127 @@ func (h *CarsHandler) v1UpdateMotoStatus(w http.ResponseWriter, r *http.Request)
 	result.Message = "Successfully updated moto"
 	result.Data = id
 	return shttp.Success.SetData(result)
+}
+
+// v1SearchCars
+// @Summary Search Cars
+// @Description Search cars with filter params
+// @Tags Cars
+// @Accept json
+// @Produce json
+// @Param brand_id query []int64 false "Brand IDs"
+// @Param model_id query []int64 false "Model IDs"
+// @Param year_min query int false "Minimum year"
+// @Param year_max query int false "Maximum year"
+// @Param price_min query int false "Minimum price"
+// @Param price_max query int false "Maximum price"
+// @Param city_id query []int64 false "City IDs"
+// @Param engine_type query []string false "Engine types"
+// @Param transmission query []string false "Transmission types"
+// @Param drive_type query []string false "Drive types"
+// @Param body_id query []int64 false "Body IDs"
+// @Param mileage_min query int false "Minimum mileage"
+// @Param mileage_max query int false "Maximum mileage"
+// @Param engine_capacity_min query float64 false "Minimum engine capacity"
+// @Param engine_capacity_max query float64 false "Maximum engine capacity"
+// @Param color query []string false "Colors"
+// @Param is_exchange query bool false "Is exchange"
+// @Param is_credit query bool false "Is credit"
+// @Param status query []string false "Status"
+// @Param created_at_min query string false "Created at min (RFC3339)"
+// @Param created_at_max query string false "Created at max (RFC3339)"
+// @Success 200 {array} dtos.Car "List of cars filtered"
+// @Failure 400 {object} string "Bad request"
+// @Failure 500 {object} string "Internal server error"
+// @Router /cars/search-cars [get]
+func (h *CarsHandler) v1SearchCars(w http.ResponseWriter, r *http.Request) shttp.Response {
+	q := r.URL.Query()
+	var ft filter.CarFilter
+
+	// Helper parse funcs
+	parseIntSlice := func(values []string) []int64 {
+		var res []int64
+		for _, v := range values {
+			if id, err := strconv.ParseInt(v, 10, 64); err == nil {
+				res = append(res, id)
+			}
+		}
+		return res
+	}
+
+	parseFloatPtr := func(value string) *float64 {
+		if value == "" {
+			return nil
+		}
+		if f, err := strconv.ParseFloat(value, 64); err == nil {
+			return &f
+		}
+		return nil
+	}
+
+	parseIntPtr := func(value string) *int64 {
+		if value == "" {
+			return nil
+		}
+		if i, err := strconv.ParseInt(value, 10, 64); err == nil {
+			return &i
+		}
+		return nil
+	}
+
+	// Fill filter
+	ft.BrandID = parseIntSlice(q["brand_id"])
+	ft.ModelID = parseIntSlice(q["model_id"])
+	ft.YearMin = parseIntPtr(q.Get("year_min"))
+	ft.YearMax = parseIntPtr(q.Get("year_max"))
+	ft.PriceMin = parseIntPtr(q.Get("price_min"))
+	ft.PriceMax = parseIntPtr(q.Get("price_max"))
+	ft.CityID = parseIntSlice(q["city_id"])
+	ft.EngineType = q["engine_type"]
+	ft.Transmission = q["transmission"]
+	ft.DriveType = q["drive_type"]
+	ft.BodyID = parseIntSlice(q["body_id"])
+	ft.MileageMin = parseIntPtr(q.Get("mileage_min"))
+	ft.MileageMax = parseIntPtr(q.Get("mileage_max"))
+	ft.EngineCapacityMin = parseFloatPtr(q.Get("engine_capacity_min"))
+	ft.EngineCapacityMax = parseFloatPtr(q.Get("engine_capacity_max"))
+	ft.Color = q["color"]
+
+	if v := q.Get("is_exchange"); v != "" {
+		val := v == "true"
+		ft.IsExchange = &val
+	}
+	if v := q.Get("is_credit"); v != "" {
+		val := v == "true"
+		ft.IsCredit = &val
+	}
+
+	ft.Status = q["status"]
+
+	if v := q.Get("created_at_min"); v != "" {
+		if t, err := time.Parse(time.RFC3339, v); err == nil {
+			ft.CreatedAtMin = t
+		}
+	}
+	if v := q.Get("created_at_max"); v != "" {
+		if t, err := time.Parse(time.RFC3339, v); err == nil {
+			ft.CreatedAtMax = t
+		}
+	}
+
+	// Call service (SearchCars from your ES package)
+	cars, err := h.service.SearchCars(r.Context(), &ft)
+	if err != nil {
+		h.logger.Error("unable to search cars", err)
+		return shttp.InternalServerError.SetData(shttp.Result{
+			Status:  false,
+			Message: err.Error(),
+		})
+	}
+
+	return shttp.Success.SetData(shttp.Result{
+		Status:  true,
+		Message: "Successfully searched cars",
+		Data:    cars,
+	})
 }
