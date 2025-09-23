@@ -68,7 +68,7 @@ type Truck struct {
 	BrandName       *string     `json:"brand_name"`
 	ModelId         int64       `json:"model_id"`
 	ModelName       *string     `json:"model_name"`
-	LoadCapacity    *float64    `json:"load_capacity"`
+	LoadCapacity    *string     `json:"load_capacity"`
 	Price           int64       `json:"price"`
 	BodyType        *string     `json:"body_type"`
 	DriveType       *string     `json:"drive_type"`
@@ -142,7 +142,7 @@ type Moto struct {
 	Price               int64       `json:"price"`
 	Volume              int64       `json:"volume"`
 	EngineType          *string     `json:"engine_type"`
-	NumberOfClockCycles *int32      `json:"number_of_clock_cycles"`
+	NumberOfClockCycles *int64      `json:"number_of_clock_cycles"`
 	Mileage             *int64      `json:"mileage"`
 	AirType             *string     `json:"air_type"`
 	Color               string      `json:"color"`
@@ -161,6 +161,7 @@ type Moto struct {
 	IsCredit            bool        `json:"is_credit"`
 	Images              interface{} `json:"images"`
 	Status              string      `json:"status"`
+	LoadCapacity        *float64    `json:"load_capacity"`
 	CreatedAt           time.Time   `json:"created_at"`
 	UpdatedAt           time.Time   `json:"updated_at"`
 }

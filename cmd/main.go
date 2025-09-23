@@ -102,7 +102,7 @@ func main() {
 		},
 	})
 	if err != nil {
-		log.Fatalf("new client ealsticsearch: %v", err)
+		log.Fatalf("new client elasticsearch: %v", err)
 	}
 	logger.Info("elasticsearch connected successfully")
 

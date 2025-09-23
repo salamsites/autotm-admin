@@ -6,6 +6,10 @@ import (
 )
 
 type CarsRepository interface {
+	// All Cars
+	//GetAllMyFeeds(ctx context.Context, limit, page int64, search, status string) ([]models.GetAllFeeds, error)
+
+	// Auto
 	GetCars(ctx context.Context, limit, page int64, search, status string) ([]models.Car, int64, error)
 	GetCarByID(ctx context.Context, id int64) (models.Car, error)
 	UpdateCarStatus(ctx context.Context, id int64, status string) (int64, error)

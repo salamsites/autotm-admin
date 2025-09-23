@@ -56,7 +56,7 @@ type Truck struct {
 	BrandName       *string
 	ModelId         int64
 	ModelName       *string
-	LoadCapacity    *float64
+	LoadCapacity    *string
 	Price           int64
 	BodyType        *string
 	DriveType       *string
@@ -118,7 +118,7 @@ type Moto struct {
 	Price               int64
 	Volume              int64
 	EngineType          *string
-	NumberOfClockCycles *int32
+	NumberOfClockCycles *int64
 	Mileage             *int64
 	AirType             *string
 	Color               string
@@ -137,6 +137,21 @@ type Moto struct {
 	IsCredit            bool
 	Images              interface{}
 	Status              string
+	LoadCapacity        *float64
 	CreatedAt           time.Time
 	UpdatedAt           time.Time
+}
+
+type GetAllFeeds struct {
+	Id        int
+	Type      string
+	Stock     Stock
+	Brand     Brand
+	Model     Model
+	Name      *string
+	Price     int64
+	Year      int
+	Status    string
+	Images    interface{}
+	CreatedAt time.Time
 }
