@@ -1,3 +1,4 @@
 [submodule "push_service_pb"]
 	path = push_service_pb
 	url = https://github.com/merdanovsoyench/push_service_pb.git
+	branch = main
