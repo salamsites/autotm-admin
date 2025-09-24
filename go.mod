@@ -26,7 +26,7 @@ require (
 
 require (
 	github.com/BurntSushi/toml v1.2.1 // indirect
-	github.com/Hajymuhammet/elasticsearch-package v0.0.0-20250919132634-8eb9a572cae2 // indirect
+	github.com/Hajymuhammet/elasticsearch-package v0.0.0-20250923134833-a2bd8c4c0cbf // indirect
 	github.com/Kodeworks/golang-image-ico v0.0.0-20141118225523-73f0f4cfade9 // indirect
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/adrium/goheif v0.0.0-20230113233934-ca402e77a786 // indirect

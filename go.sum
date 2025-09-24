@@ -10,6 +10,8 @@ github.com/Hajymuhammet/elasticsearch-package v0.0.0-20250911093703-3f4fd5d3e66f
 github.com/Hajymuhammet/elasticsearch-package v0.0.0-20250911093703-3f4fd5d3e66f/go.mod h1:ZP7AYWIrYnUo9Nm93+c1TjwVjONE44OtsU7ojPjeBxU=
 github.com/Hajymuhammet/elasticsearch-package v0.0.0-20250919132634-8eb9a572cae2 h1:0WJ4IQuPpTt6uvdf/SNXrBf3zul1V5RokvPY1xRsZQA=
 github.com/Hajymuhammet/elasticsearch-package v0.0.0-20250919132634-8eb9a572cae2/go.mod h1:ZP7AYWIrYnUo9Nm93+c1TjwVjONE44OtsU7ojPjeBxU=
+github.com/Hajymuhammet/elasticsearch-package v0.0.0-20250923134833-a2bd8c4c0cbf h1:xZpZuLcFKZE9uG9fjxASsWScCJPrz/mia5bV9B0PEao=
+github.com/Hajymuhammet/elasticsearch-package v0.0.0-20250923134833-a2bd8c4c0cbf/go.mod h1:ZP7AYWIrYnUo9Nm93+c1TjwVjONE44OtsU7ojPjeBxU=
 github.com/Kodeworks/golang-image-ico v0.0.0-20141118225523-73f0f4cfade9 h1:1ltqoej5GtaWF8jaiA49HwsZD459jqm9YFz9ZtMFpQA=
 github.com/Kodeworks/golang-image-ico v0.0.0-20141118225523-73f0f4cfade9/go.mod h1:7uhhqiBaR4CpN0k9rMjOtjpcfGd6DG2m04zQxKnWQ0I=
 github.com/KyleBanks/depth v1.2.1 h1:5h8fQADFrWtarTdtDudMmGsC7GPbOAu6RVB3ffsVFHc=
