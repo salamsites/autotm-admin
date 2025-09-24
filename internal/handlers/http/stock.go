@@ -436,7 +436,7 @@ func (h *StockHandler) v1UpdateStockStatus(w http.ResponseWriter, r *http.Reques
 // @Summary Stock logo
 // @Description 100x100
 // @Description original
-// @Tags Stocks
+// @Tags Stock
 // @ID get_delete_logo
 // @Security ApiKeyAuth
 // @Produce json
@@ -479,7 +479,7 @@ func (h *StockHandler) v1DeleteStockLogo(w http.ResponseWriter, r *http.Request)
 // @Summary Stock Image
 // @Description 100x100
 // @Description original
-// @Tags Stocks
+// @Tags Stock
 // @ID get_delete_image
 // @Security ApiKeyAuth
 // @Produce json
