@@ -296,7 +296,7 @@ func (s *StockService) DeleteStockLogo(ctx context.Context, stockId int64) error
 		}
 
 		path := helpers.GetStockLogoDir(stockId)
-		err = s.minioImageClient.RemoveImage(ctx, path, util.StockBucket)
+		err = s.minioImageClient.RemoveImage(ctx, path, util.FileBucket)
 		if err != nil {
 			s.logger.Error(err)
 			return err
