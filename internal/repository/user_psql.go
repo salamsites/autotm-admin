@@ -95,7 +95,7 @@ func (r *UserPsqlRepository) GetUserFirebaseToken(ctx context.Context, userIDs [
 	`
 
 	args := pgx.NamedArgs{
-		"user_id": userIDs,
+		"user_ids": userIDs,
 	}
 
 	rows, err := r.client.Query(ctx, query, args)

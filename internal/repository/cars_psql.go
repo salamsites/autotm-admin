@@ -435,7 +435,7 @@ func (r *CarsPsqlRepository) GetMotors(ctx context.Context, limit, page int64, s
 			ms.name, ms.mail, ms.phone_number, ms.options, ms.is_comment, 
 			ms.is_exchange, ms.is_credit, ms.images, ms.status,
 			ms.options, ms.created_at, ms.updated_at
-		FROM motos ms
+		FROM motoes ms
 			LEFT JOIN users u ON u.id = ms.user_id 
 			LEFT JOIN stocks s ON s.id = ms.stock_id
 			LEFT JOIN brands b ON b.id = ms.brand_id
@@ -517,7 +517,7 @@ func (r *CarsPsqlRepository) GetMotors(ctx context.Context, limit, page int64, s
 	queryCount := `
 			SELECT 
     			COUNT(ms.id) 
-			FROM motos ms
+			FROM motoes ms
 				LEFT JOIN users u ON u.id = ms.user_id 
 				LEFT JOIN stocks s ON s.id = ms.stock_id
 				LEFT JOIN brands b ON b.id = ms.brand_id
@@ -556,7 +556,7 @@ func (r *CarsPsqlRepository) GetMotoByID(ctx context.Context, id int64) (models.
 			ms.name, ms.mail, ms.phone_number, ms.options, ms.is_comment, 
 			ms.is_exchange, ms.is_credit, ms.images, ms.status
 			ms.options, ms.created_at, ms.updated_at
-		FROM motos ms
+		FROM motoes ms
 			LEFT JOIN users u ON u.id = ms.user_id 
 			LEFT JOIN stocks s ON s.id = ms.stock_id
 			LEFT JOIN brands b ON b.id = ms.brand_id
@@ -619,7 +619,7 @@ func (r *CarsPsqlRepository) UpdateMotoStatus(ctx context.Context, id int64, sta
 	var motoId int64
 
 	query := `
-   		UPDATE motos SET
+   		UPDATE motoes SET
    		     status = @status
    		WHERE id = @id
    		RETURNING id

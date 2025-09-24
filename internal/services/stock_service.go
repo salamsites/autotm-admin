@@ -222,13 +222,17 @@ func (s *StockService) UpdateStockStatus(ctx context.Context, stock dtos.UpdateS
 		return id, err
 	}
 
-	go s.handlePushNotifications(stockID, stock.Message)
+	go func(stockID int64, message string) {
+		if err := s.handlePushNotifications(stockID, message); err != nil {
+			s.logger.Errorf("push notification stock error: %w", err)
+		}
+	}(stockID, stock.Message)
 
 	id.ID = stockID
 	return id, nil
 }
 
-func (s *StockService) handlePushNotifications(stockID int64, message string) {
+func (s *StockService) handlePushNotifications(stockID int64, message string) error {
 	ctx := context.Background()
 	const maxRetries = 3
 	retryDelay := time.Second * 2
@@ -237,19 +241,20 @@ func (s *StockService) handlePushNotifications(stockID int64, message string) {
 		err := s.sendPushNotifications(ctx, stockID, message)
 		if err == nil {
 			s.logger.Infof("Push notifications sent successfully for stock %d", stockID)
-			return
+			return err
 		}
 
 		s.logger.Warnf("Push attempt %d failed for stock %d: %v", attempt, stockID, err)
 
 		if attempt == maxRetries {
 			s.logger.Errorf("All push attempts failed for stock %d: %v", stockID, err)
-			return
+			return err
 		}
 
 		time.Sleep(retryDelay)
 		retryDelay *= 2 // Exponential backoff
 	}
+	return nil
 }
 
 func (s *StockService) sendPushNotifications(ctx context.Context, stockID int64, message string) error {

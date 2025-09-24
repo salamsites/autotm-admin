@@ -8,6 +8,7 @@ import (
 	"autotm-admin/internal/migrations"
 	"context"
 	"crypto/tls"
+	"fmt"
 	"log"
 	"net/http"
 	"os/signal"
@@ -24,6 +25,7 @@ import (
 	slog "github.com/salamsites/package-log"
 	spsql "github.com/salamsites/package-psql"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
+	"google.golang.org/grpc"
 )
 
 // @title AutoTM-Admin
@@ -117,10 +119,18 @@ func main() {
 	if err := index.EnsureMotoIndex(es, helpers.MotoIndexName); err != nil {
 		log.Fatalf("failed to ensure motos index: %v", err)
 	}
-
 	// Elasticsearch End
 
-	router := handlers.Manager(logger, psqlClient, minioImageClient, minioFileClient, cfg, es)
+	// grpc repo
+	grpcAddr := fmt.Sprintf("%s%s", cfg.GrpcRepo.Host, cfg.GrpcRepo.Port)
+	conn, err := grpc.Dial(grpcAddr, grpc.WithInsecure())
+	if err != nil {
+		logger.Errorf("did not connect: %v", err)
+		panic(err)
+	}
+	defer conn.Close()
+
+	router := handlers.Manager(logger, conn, psqlClient, minioImageClient, minioFileClient, cfg, es)
 
 	router.Get("/autotm-admin/swagger/*", httpSwagger.WrapHandler)
 

@@ -16,8 +16,13 @@ type Config struct {
 	Log           Log           `yaml:"log"`
 	Auth          Auth          `yaml:"auth"`
 	Minio         Minio         `yaml:"minio"`
-	PushService   string        `yaml:"push_service"`
 	Elasticsearch Elasticsearch `yaml:"elasticsearch"`
+	GrpcRepo      GrpcRepo      `yaml:"grpc_repo" env-required:"true"`
+}
+
+type GrpcRepo struct {
+	Host string `yaml:"host" env-required:"true"`
+	Port string `yaml:"port" env-required:"true"`
 }
 
 type Elasticsearch struct {

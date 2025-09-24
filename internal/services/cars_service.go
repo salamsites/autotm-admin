@@ -226,8 +226,6 @@ func (s *CarsService) UpdateCarStatus(ctx context.Context, req dtos.UpdateCarSta
 			s.logger.Infof("Car indexed successfully in Elasticsearch")
 		}
 
-		go s.handlePushNotifications(req.StockID, req.Message)
-
 		id.ID = carId
 
 		return nil
@@ -237,6 +235,12 @@ func (s *CarsService) UpdateCarStatus(ctx context.Context, req dtos.UpdateCarSta
 		s.logger.Errorf("update id car err: %v", err)
 		return id, err
 	}
+
+	go func(stockID int64, message string) {
+		if err := s.handlePushNotifications(stockID, message); err != nil {
+			s.logger.Errorf("push notification car error: %w", err)
+		}
+	}(req.StockID, req.Message)
 
 	return id, nil
 }
@@ -476,8 +480,6 @@ func (s *CarsService) UpdateTruckStatus(ctx context.Context, req dtos.UpdateTruc
 			s.logger.Infof("Truck indexed successfully in Elasticsearch")
 		}
 
-		go s.handlePushNotifications(req.StockID, req.Message)
-
 		id.ID = truckId
 
 		return nil
@@ -487,6 +489,12 @@ func (s *CarsService) UpdateTruckStatus(ctx context.Context, req dtos.UpdateTruc
 		s.logger.Errorf("update id truck err: %v", err)
 		return id, err
 	}
+
+	go func(stockID int64, message string) {
+		if err := s.handlePushNotifications(stockID, message); err != nil {
+			s.logger.Errorf("push notification truck error: %w", err)
+		}
+	}(req.StockID, req.Message)
 
 	return id, nil
 }
@@ -682,8 +690,6 @@ func (s *CarsService) UpdateMotoStatus(ctx context.Context, req dtos.UpdateMotoS
 			s.logger.Infof("Moto indexed successfully in Elasticsearch")
 		}
 
-		go s.handlePushNotifications(req.StockID, req.Message)
-
 		id.ID = motoId
 
 		return nil
@@ -694,10 +700,16 @@ func (s *CarsService) UpdateMotoStatus(ctx context.Context, req dtos.UpdateMotoS
 		return id, err
 	}
 
+	go func(stockID int64, message string) {
+		if err := s.handlePushNotifications(stockID, message); err != nil {
+			s.logger.Errorf("push notification moto error: %w", err)
+		}
+	}(req.StockID, req.Message)
+
 	return id, nil
 }
 
-func (s *CarsService) handlePushNotifications(stockID int64, message string) {
+func (s *CarsService) handlePushNotifications(stockID int64, message string) error {
 	ctx := context.Background()
 	const maxRetries = 3
 	retryDelay := time.Second * 2
@@ -706,19 +718,20 @@ func (s *CarsService) handlePushNotifications(stockID int64, message string) {
 		err := s.sendPushNotifications(ctx, stockID, message)
 		if err == nil {
 			s.logger.Infof("Push notifications sent successfully for stock %d", stockID)
-			return
+			return err
 		}
 
 		s.logger.Warnf("Push attempt %d failed for stock %d: %v", attempt, stockID, err)
 
 		if attempt == maxRetries {
 			s.logger.Errorf("All push attempts failed for stock %d: %v", stockID, err)
-			return
+			return err
 		}
 
 		time.Sleep(retryDelay)
 		retryDelay *= 2 // Exponential backoff
 	}
+	return nil
 }
 
 func (s *CarsService) sendPushNotifications(ctx context.Context, stockID int64, message string) error {
