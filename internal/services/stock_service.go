@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"time"
 
+	pb "autotm-admin/push_service_pb"
 	trmpgx "github.com/avito-tech/go-transaction-manager/drivers/pgxv5/v2"
 	"github.com/avito-tech/go-transaction-manager/trm/v2/manager"
 	sminio "github.com/salamsites/minio-pkg"
@@ -25,11 +26,11 @@ type StockService struct {
 	minioImageClient sminio.ImageClient
 	minioFileClient  sminio.FileClient
 	userService      repository.UserService
-	pushService      repository.PushService
+	pushService      pb.PushServiceClient
 }
 
 func NewStockService(logger *slog.Logger, clientPsql spsql.Client, repo storage.StockRepository, minioImageClient sminio.ImageClient,
-	minioFileClient sminio.FileClient, userService repository.UserService, pushService repository.PushService) *StockService {
+	minioFileClient sminio.FileClient, userService repository.UserService, pushService pb.PushServiceClient) *StockService {
 	return &StockService{
 		logger:           logger,
 		clientPsql:       clientPsql,
@@ -272,12 +273,10 @@ func (s *StockService) sendPushNotifications(ctx context.Context, stockID int64,
 		return nil
 	}
 
-	reqPush := dtos.ReqSendPushDTO{
+	if _, err := s.pushService.SendMultiPush(ctx, &pb.SendMultiPushRequest{
 		Message: message,
 		Tokens:  tokens,
-	}
-
-	if err := s.pushService.SendMultiPush(ctx, reqPush); err != nil {
+	}); err != nil {
 		return fmt.Errorf("send push: %w", err)
 	}
 

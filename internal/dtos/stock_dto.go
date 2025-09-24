@@ -64,8 +64,3 @@ type UpdateStockStatus struct {
 	Status  string `json:"status"`
 	Message string `json:"message"`
 }
-
-type ReqSendPushDTO struct {
-	Message string   `json:"message"`
-	Tokens  []string `json:"tokens"`
-}

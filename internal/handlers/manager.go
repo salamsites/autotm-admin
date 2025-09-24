@@ -7,6 +7,7 @@ import (
 	"autotm-admin/internal/services"
 	"context"
 
+	pb "autotm-admin/push_service_pb"
 	trmpgx "github.com/avito-tech/go-transaction-manager/drivers/pgxv5/v2"
 	es "github.com/elastic/go-elasticsearch/v8"
 	"github.com/go-chi/chi/v5"
@@ -15,6 +16,7 @@ import (
 	shttp "github.com/salamsites/package-http"
 	slog "github.com/salamsites/package-log"
 	spsql "github.com/salamsites/package-psql"
+	"google.golang.org/grpc"
 )
 
 const (
@@ -29,14 +31,14 @@ const (
 	carsURL     = baseURL + "/cars"
 )
 
-func Manager(logger *slog.Logger, clientPsql spsql.Client, minioImageClient sminio.ImageClient, minioFileClient sminio.FileClient, cfg *configs.Config, esClient *es.Client) chi.Router {
+func Manager(logger *slog.Logger, grpcConn *grpc.ClientConn, clientPsql spsql.Client, minioImageClient sminio.ImageClient, minioFileClient sminio.FileClient, cfg *configs.Config, esClient *es.Client) chi.Router {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
 	newMiddleware := shttp.NewMiddleware(logger, cfg.Auth.JwtRegistration, nil)
 
-	pushService := services.NewPushService(logger, cfg)
+	pushService := pb.NewPushServiceClient(grpcConn)
 	repo := repository.NewUserPsqlRepository(logger, clientPsql)
 	userService := services.NewUserService(logger, repo)
 
