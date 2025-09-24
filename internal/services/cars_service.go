@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"time"
 
-	pb "autotm-admin/push_service_pb"
+	pushPb "autotm-admin/push_service_pb"
 	"github.com/Hajymuhammet/elasticsearch-package/filter"
 	"github.com/Hajymuhammet/elasticsearch-package/index"
 	ms "github.com/Hajymuhammet/elasticsearch-package/models"
@@ -25,12 +25,12 @@ type CarsService struct {
 	clientPsql  spsql.Client
 	repo        storage.CarsRepository
 	userService repository.UserService
-	pushService pb.PushServiceClient
+	pushService pushPb.PushServiceClient
 	stockRepo   storage.StockRepository
 	esClient    *elasticsearch.Client
 }
 
-func NewCarsService(logger *slog.Logger, clientPsql spsql.Client, repo storage.CarsRepository, userService repository.UserService, pushService pb.PushServiceClient, stockRepo storage.StockRepository, esClient *elasticsearch.Client) *CarsService {
+func NewCarsService(logger *slog.Logger, clientPsql spsql.Client, repo storage.CarsRepository, userService repository.UserService, pushService pushPb.PushServiceClient, stockRepo storage.StockRepository, esClient *elasticsearch.Client) *CarsService {
 	return &CarsService{
 		logger:      logger,
 		clientPsql:  clientPsql,
@@ -742,7 +742,7 @@ func (s *CarsService) sendPushNotifications(ctx context.Context, stockID int64, 
 		return nil
 	}
 
-	if _, err := s.pushService.SendMultiPush(ctx, &pb.SendMultiPushRequest{
+	if _, err := s.pushService.SendMultiPush(ctx, &pushPb.SendMultiPushRequest{
 		Message: message,
 		Tokens:  tokens,
 	}); err != nil {
