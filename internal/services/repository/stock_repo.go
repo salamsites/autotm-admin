@@ -15,4 +15,6 @@ type StockService interface {
 	UpdateStock(ctx context.Context, stock dtos.UpdateStockReq) (dtos.ID, error)
 	DeleteStock(ctx context.Context, id int64) error
 	UpdateStockStatus(ctx context.Context, stock dtos.UpdateStockStatus) (dtos.ID, error)
+	DeleteStockLogo(ctx context.Context, stockId int64) error
+	DeleteStockImage(ctx context.Context, stockId, generateId int64) error
 }

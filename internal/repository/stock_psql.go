@@ -338,3 +338,47 @@ func (r *StockPsqlRepository) GetStockFollowers(ctx context.Context, stockId int
 
 	return userIDs, nil
 }
+
+func (r *StockPsqlRepository) DeleteStockLogo(ctx context.Context, stockId int64) error {
+	query := `update stocks set logo = @logo where id = @stock_id`
+	args := pgx.NamedArgs{
+		"stock_id": stockId,
+		"logo":     nil,
+	}
+	_, err := r.client.Exec(ctx, query, args)
+	if err != nil {
+		r.logger.Errorf("err delete stock logo: %w", err)
+		return err
+	}
+	return nil
+}
+
+func (p *StockPsqlRepository) DeleteStockImage(ctx context.Context, stockId int64, path string) error {
+	conn := p.getter.DefaultTrOrDB(ctx, p.client.Pool())
+
+	query := `
+		UPDATE stocks
+		SET images = jsonb_set(
+			images::jsonb,
+			'{content}',
+			(
+				SELECT jsonb_agg(elem)
+				FROM jsonb_array_elements(images::jsonb -> 'content') elem
+				WHERE elem->>'path' != @path
+			)
+		)
+		WHERE id = @stock_id;
+	`
+
+	args := pgx.NamedArgs{
+		"stock_id": stockId,
+		"path":     path,
+	}
+
+	_, err := conn.Exec(ctx, query, args)
+	if err != nil {
+		p.logger.Error(err)
+		return err
+	}
+	return nil
+}

@@ -17,4 +17,6 @@ type StockRepository interface {
 	DeleteStock(ctx context.Context, id int64) error
 	UpdateStockStatus(ctx context.Context, id int64, status string) (int64, error)
 	GetStockFollowers(ctx context.Context, stockId int64) ([]int64, error)
+	DeleteStockLogo(ctx context.Context, stockId int64) error
+	DeleteStockImage(ctx context.Context, stockId int64, path string) error
 }

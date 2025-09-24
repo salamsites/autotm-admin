@@ -79,7 +79,7 @@ func Manager(logger *slog.Logger, clientPsql spsql.Client, minioImageClient smin
 
 	r.Route(stocksURL, func(subRouter chi.Router) {
 		stockRepo := repository.NewStockPsqlRepository(logger, clientPsql, trmpgx.DefaultCtxGetter)
-		stockService := services.NewStockService(logger, stockRepo, userService, pushService)
+		stockService := services.NewStockService(logger, clientPsql, stockRepo, minioImageClient, minioFileClient, userService, pushService)
 		stockHandler := http.NewStockHandler(logger, newMiddleware, clientPsql, stockService, minioFileClient, minioImageClient)
 		stockHandler.StockRegisterRoutes(subRouter)
 	})

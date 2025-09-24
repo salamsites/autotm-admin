@@ -1,6 +1,10 @@
 package helpers
 
-import "github.com/salamsites/minio-pkg/util"
+import (
+	"fmt"
+
+	"github.com/salamsites/minio-pkg/util"
+)
 
 var FileSizes = []util.Size{
 	{
@@ -29,4 +33,12 @@ var StockImagesSize = []util.Size{
 		Height:  500,
 		Quality: 100,
 	},
+}
+
+func GetStockLogoDir(stockId int64) string {
+	return fmt.Sprintf("%d/logo", stockId)
+}
+
+func GetStockImageDir(stockId, generateId int64) string {
+	return fmt.Sprintf("%d/%d", stockId, generateId)
 }

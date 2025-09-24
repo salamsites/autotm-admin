@@ -48,6 +48,8 @@ func (h *StockHandler) StockRegisterRoutes(r chi.Router) {
 	r.Method("PUT", "/update-stock", h.middleware.Base(h.v1UpdateStock))
 	r.Method("DELETE", "/delete-stock", h.middleware.Base(h.v1DeleteStock))
 	r.Method("PUT", "/update-stock-status", h.middleware.Base(h.v1UpdateStockStatus))
+	r.Method("DELETE", "/{stock_id}", h.middleware.Base(h.v1DeleteStockLogo))
+	r.Method("DELETE", "/{stock_id}/{generate_id}", h.middleware.Base(h.v1DeleteStockImage))
 }
 
 // v1CreateStock
@@ -427,5 +429,100 @@ func (h *StockHandler) v1UpdateStockStatus(w http.ResponseWriter, r *http.Reques
 	result.Status = true
 	result.Message = "Successfully updated stock"
 	result.Data = id
+	return shttp.Success.SetData(result)
+}
+
+// Delete Stock logo
+// @Summary Stock logo
+// @Description 100x100
+// @Description original
+// @Tags Stocks
+// @ID get_delete_logo
+// @Security ApiKeyAuth
+// @Produce json
+// @Accept application/json
+// @Param stock_id path string true "Example: 1234 (int64 also available)"
+// @Success 200 {object} string "OK"
+// @Failure 500 {object} string "Internal server error"
+// @Failure 403 {object} string "You do not have permission to delete this stock."
+// @Failure 404 {object} string "Not found"
+// @Router /stocks/{stock_id} [delete]
+func (h *StockHandler) v1DeleteStockLogo(w http.ResponseWriter, r *http.Request) shttp.Response {
+	var result shttp.Result
+
+	strId := chi.URLParam(r, "stock_id")
+	stockId, err := strconv.ParseInt(strId, 10, 64)
+	if err != nil {
+		result.Message = "Invalid stock_id parameter: " + err.Error()
+		result.Status = false
+		return shttp.BadRequest.SetData(result)
+	}
+
+	err = h.service.DeleteStockLogo(r.Context(), stockId)
+	if err != nil {
+		if err.Error() == "invalid stockId" {
+			result.Message = "You do not have permission to delete this stock."
+			result.Status = false
+			return shttp.Forbidden.SetData(result)
+		}
+		result.Message = err.Error()
+		result.Status = false
+		h.logger.Errorln(err)
+		return shttp.InternalServerError.SetData(result)
+	}
+	result.Status = true
+	result.Message = "Delete stock logo successfully"
+	return shttp.Success.SetData(result)
+}
+
+// Delete Stock Image
+// @Summary Stock Image
+// @Description 100x100
+// @Description original
+// @Tags Stocks
+// @ID get_delete_image
+// @Security ApiKeyAuth
+// @Produce json
+// @Accept application/json
+// @Param stock_id path string true "Example: 1234 (int64 also available)"
+// @Param generate_id path string true "Example: 1754898563197 (int64 also available)"
+// @Success 200 {object} string "OK"
+// @Failure 500 {object} string "Internal server error"
+// @Failure 403 {object} string "You do not have permission to delete this stock."
+// @Failure 404 {object} string "Not found"
+// @Router /stocks/{stock_id}/{generate_id} [delete]
+func (h *StockHandler) v1DeleteStockImage(w http.ResponseWriter, r *http.Request) shttp.Response {
+	var result shttp.Result
+
+	strId := chi.URLParam(r, "stock_id")
+	stockId, err := strconv.ParseInt(strId, 10, 64)
+	if err != nil {
+		result.Message = "Invalid stock_id parameter: " + err.Error()
+		result.Status = false
+		return shttp.BadRequest.SetData(result)
+	}
+
+	strId = chi.URLParam(r, "generate_id")
+	generateId, err := strconv.ParseInt(strId, 10, 64)
+	if err != nil {
+		result.Message = "Invalid generate_id parameter: " + err.Error()
+		result.Status = false
+		return shttp.BadRequest.SetData(result)
+	}
+
+	err = h.service.DeleteStockImage(r.Context(), stockId, generateId)
+	if err != nil {
+		if err.Error() == "invalid stockId" {
+			result.Message = "You do not have permission to delete this stock."
+			result.Status = false
+			return shttp.Forbidden.SetData(result)
+		}
+		result.Message = err.Error()
+		result.Status = false
+		h.logger.Errorln(err)
+		return shttp.InternalServerError.SetData(result)
+	}
+	result.Status = true
+	result.Message = "Delete stock image successfully"
 	return shttp.Success.SetData(result)
 }

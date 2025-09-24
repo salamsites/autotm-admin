@@ -10,23 +10,34 @@ import (
 	"fmt"
 	"time"
 
+	trmpgx "github.com/avito-tech/go-transaction-manager/drivers/pgxv5/v2"
+	"github.com/avito-tech/go-transaction-manager/trm/v2/manager"
+	sminio "github.com/salamsites/minio-pkg"
 	"github.com/salamsites/minio-pkg/util"
 	slog "github.com/salamsites/package-log"
+	spsql "github.com/salamsites/package-psql"
 )
 
 type StockService struct {
-	logger      *slog.Logger
-	repo        storage.StockRepository
-	userService repository.UserService
-	pushService repository.PushService
+	logger           *slog.Logger
+	clientPsql       spsql.Client
+	repo             storage.StockRepository
+	minioImageClient sminio.ImageClient
+	minioFileClient  sminio.FileClient
+	userService      repository.UserService
+	pushService      repository.PushService
 }
 
-func NewStockService(logger *slog.Logger, repo storage.StockRepository, userService repository.UserService, pushService repository.PushService) *StockService {
+func NewStockService(logger *slog.Logger, clientPsql spsql.Client, repo storage.StockRepository, minioImageClient sminio.ImageClient,
+	minioFileClient sminio.FileClient, userService repository.UserService, pushService repository.PushService) *StockService {
 	return &StockService{
-		logger:      logger,
-		repo:        repo,
-		userService: userService,
-		pushService: pushService,
+		logger:           logger,
+		clientPsql:       clientPsql,
+		repo:             repo,
+		minioImageClient: minioImageClient,
+		minioFileClient:  minioFileClient,
+		userService:      userService,
+		pushService:      pushService,
 	}
 }
 
@@ -271,4 +282,49 @@ func (s *StockService) sendPushNotifications(ctx context.Context, stockID int64,
 	}
 
 	return nil
+}
+
+func (s *StockService) DeleteStockLogo(ctx context.Context, stockId int64) error {
+	trManager := manager.Must(trmpgx.NewDefaultFactory(s.clientPsql.Pool()))
+
+	return trManager.Do(ctx, func(ctx context.Context) error {
+
+		err := s.repo.DeleteStockLogo(ctx, stockId)
+		if err != nil {
+			s.logger.Error(err)
+			return err
+		}
+
+		path := helpers.GetStockLogoDir(stockId)
+		err = s.minioImageClient.RemoveImage(ctx, path, util.StockBucket)
+		if err != nil {
+			s.logger.Error(err)
+			return err
+		}
+
+		return nil
+	})
+}
+
+func (s *StockService) DeleteStockImage(ctx context.Context, stockId, generateId int64) error {
+	trManager := manager.Must(trmpgx.NewDefaultFactory(s.clientPsql.Pool()))
+
+	return trManager.Do(ctx, func(ctx context.Context) error {
+
+		path := helpers.GetStockImageDir(stockId, generateId)
+
+		err := s.repo.DeleteStockImage(ctx, stockId, path)
+		if err != nil {
+			s.logger.Error(err)
+			return err
+		}
+
+		err = s.minioImageClient.RemoveImage(ctx, path, util.StockBucket)
+		if err != nil {
+			s.logger.Error(err)
+			return err
+		}
+
+		return nil
+	})
 }
