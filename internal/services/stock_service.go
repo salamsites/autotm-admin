@@ -279,13 +279,15 @@ func (s *StockService) sendPushNotifications(ctx context.Context, stockID int64,
 		return nil
 	}
 
-	if _, err := s.pushService.SendMultiPush(ctx, &pb.SendMultiPushRequest{
+	res, err := s.pushService.SendMultiPush(ctx, &pb.SendMultiPushRequest{
 		Message: message,
 		Tokens:  tokens,
-	}); err != nil {
+	})
+	if err != nil {
 		return fmt.Errorf("send push: %w", err)
 	}
 
+	fmt.Println("response--->", res)
 	fmt.Println("tokens--->", tokens)
 	return nil
 }
