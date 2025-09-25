@@ -518,7 +518,7 @@ func (r *BrandPsqlRepository) GetDescriptions(ctx context.Context, limit, page i
 			SELECT 
 				id, name_tm, name_en, name_ru, category
             FROM descriptions
-			WHERE category = @category
+			WHERE category = @category AND
 			    (name_tm ILIKE '%' || @search || '%' OR name_en ILIKE '%' || @search || '%' OR name_ru ILIKE '%' || @search || '%')
 			ORDER BY created_at DESC
 			LIMIT @limit OFFSET @offset;
@@ -549,7 +549,7 @@ func (r *BrandPsqlRepository) GetDescriptions(ctx context.Context, limit, page i
 			SELECT 
 			    COUNT(*) 
 			FROM descriptions 
-			WHERE category = @category
+			WHERE category = @category AND
 				(name_tm ILIKE '%' || @search || '%' OR name_en ILIKE '%' || @search || '%' OR name_ru ILIKE '%' || @search || '%')	
 		`
 
