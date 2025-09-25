@@ -438,7 +438,6 @@ func (h *StockHandler) v1UpdateStockStatus(w http.ResponseWriter, r *http.Reques
 // @Description original
 // @Tags Stock
 // @ID get_delete_logo
-// @Security ApiKeyAuth
 // @Produce json
 // @Accept application/json
 // @Param stock_id path string true "Example: 1234 (int64 also available)"
@@ -481,7 +480,6 @@ func (h *StockHandler) v1DeleteStockLogo(w http.ResponseWriter, r *http.Request)
 // @Description original
 // @Tags Stock
 // @ID get_delete_image
-// @Security ApiKeyAuth
 // @Produce json
 // @Accept application/json
 // @Param stock_id path string true "Example: 1234 (int64 also available)"

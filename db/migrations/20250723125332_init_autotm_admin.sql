@@ -307,7 +307,7 @@ ALTER TABLE trucks OWNER TO autotm;
 
 
 -- +goose StatementBegin
-CREATE TABLE IF NOT EXISTS motos (
+CREATE TABLE IF NOT EXISTS motoes (
         "id" BIGSERIAL PRIMARY KEY,
         "user_id" BIGINT,
         "stock_id" BIGINT,

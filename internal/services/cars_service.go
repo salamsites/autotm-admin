@@ -10,6 +10,7 @@ import (
 	"time"
 
 	pushPb "autotm-admin/push_service_pb"
+
 	"github.com/Hajymuhammet/elasticsearch-package/filter"
 	"github.com/Hajymuhammet/elasticsearch-package/index"
 	ms "github.com/Hajymuhammet/elasticsearch-package/models"
@@ -236,11 +237,13 @@ func (s *CarsService) UpdateCarStatus(ctx context.Context, req dtos.UpdateCarSta
 		return id, err
 	}
 
-	go func(stockID int64, message string) {
-		if err := s.handlePushNotifications(stockID, message); err != nil {
-			s.logger.Errorf("push notification car error: %w", err)
-		}
-	}(req.StockID, req.Message)
+	if req.StockID != 0 {
+		go func(stockID int64, message string) {
+			if err := s.handlePushNotifications(stockID, message); err != nil {
+				s.logger.Errorf("push notification car error: %w", err)
+			}
+		}(req.StockID, req.Message)
+	}
 
 	return id, nil
 }
@@ -490,11 +493,13 @@ func (s *CarsService) UpdateTruckStatus(ctx context.Context, req dtos.UpdateTruc
 		return id, err
 	}
 
-	go func(stockID int64, message string) {
-		if err := s.handlePushNotifications(stockID, message); err != nil {
-			s.logger.Errorf("push notification truck error: %w", err)
-		}
-	}(req.StockID, req.Message)
+	if req.StockID != 0 {
+		go func(stockID int64, message string) {
+			if err := s.handlePushNotifications(stockID, message); err != nil {
+				s.logger.Errorf("push notification truck error: %w", err)
+			}
+		}(req.StockID, req.Message)
+	}
 
 	return id, nil
 }
@@ -700,11 +705,13 @@ func (s *CarsService) UpdateMotoStatus(ctx context.Context, req dtos.UpdateMotoS
 		return id, err
 	}
 
-	go func(stockID int64, message string) {
-		if err := s.handlePushNotifications(stockID, message); err != nil {
-			s.logger.Errorf("push notification moto error: %w", err)
-		}
-	}(req.StockID, req.Message)
+	if req.StockID != 0 {
+		go func(stockID int64, message string) {
+			if err := s.handlePushNotifications(stockID, message); err != nil {
+				s.logger.Errorf("push notification moto error: %w", err)
+			}
+		}(req.StockID, req.Message)
+	}
 
 	return id, nil
 }
