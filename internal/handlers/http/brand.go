@@ -745,9 +745,10 @@ func (h *BrandHandler) v1UpdateDescription(w http.ResponseWriter, r *http.Reques
 // @Accept json
 // @Produce json
 // @Param id query int true "Description ID to delete"
+// @Param category query string true "Description Category to delete (auto, moto, truck)"
 // @Success 200 {object} string "Description deleted successfully"
 // @Failure 400 {object} string "Bad request"
-// @Failure 404 {object} string "Body Type not found"
+// @Failure 404 {object} string "Description not found"
 // @Failure 500 {object} string "Internal server error"
 // @Router /brand/delete-description [delete]
 func (h *BrandHandler) v1DeleteDescription(w http.ResponseWriter, r *http.Request) shttp.Response {
@@ -759,15 +760,19 @@ func (h *BrandHandler) v1DeleteDescription(w http.ResponseWriter, r *http.Reques
 		result.Message = "id is required"
 		return shttp.BadRequest.SetData(result)
 	}
-
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
 		result.Message = err.Error()
 		h.logger.Error("invalid description ID", err)
 		return shttp.BadRequest.SetData(result)
 	}
+	category := r.URL.Query().Get("category")
+	if category == "" {
+		result.Message = "category type is required"
+		return shttp.BadRequest.SetData(result)
+	}
 
-	err = h.service.DeleteDescription(r.Context(), id)
+	err = h.service.DeleteDescription(r.Context(), id, category)
 	if err != nil {
 		result.Message = err.Error()
 		h.logger.Error("unable to delete description", err)

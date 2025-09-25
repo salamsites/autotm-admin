@@ -309,10 +309,10 @@ func (s *BrandService) CreateDescription(ctx context.Context, description dtos.C
 	}
 
 	newDescription := models.Description{
-		NameTM:   description.NameTM,
-		NameEN:   description.NameEN,
-		NameRU:   description.NameRU,
-		Category: description.Category,
+		NameTM:     description.NameTM,
+		NameEN:     description.NameEN,
+		NameRU:     description.NameRU,
+		Categories: description.Categories,
 	}
 
 	descriptionID, err := s.repo.CreateDescription(ctx, newDescription)
@@ -340,11 +340,11 @@ func (s *BrandService) GetDescriptions(ctx context.Context, limit, page int64, s
 	var dtoDescriptions []dtos.Description
 	for _, b := range descriptions {
 		dtoDescriptions = append(dtoDescriptions, dtos.Description{
-			ID:       b.ID,
-			NameTM:   b.NameTM,
-			NameEN:   b.NameEN,
-			NameRU:   b.NameRU,
-			Category: b.Category,
+			ID:         b.ID,
+			NameTM:     b.NameTM,
+			NameEN:     b.NameEN,
+			NameRU:     b.NameRU,
+			Categories: b.Categories,
 		})
 	}
 
@@ -364,11 +364,11 @@ func (s *BrandService) UpdateDescription(ctx context.Context, description dtos.U
 	}
 
 	newDescription := models.Description{
-		ID:       description.ID,
-		NameTM:   description.NameTM,
-		NameEN:   description.NameEN,
-		NameRU:   description.NameRU,
-		Category: description.Category,
+		ID:         description.ID,
+		NameTM:     description.NameTM,
+		NameEN:     description.NameEN,
+		NameRU:     description.NameRU,
+		Categories: description.Categories,
 	}
 
 	descriptionID, err := s.repo.UpdateDescription(ctx, newDescription)
@@ -381,8 +381,8 @@ func (s *BrandService) UpdateDescription(ctx context.Context, description dtos.U
 	return id, nil
 }
 
-func (s *BrandService) DeleteDescription(ctx context.Context, id int64) error {
-	err := s.repo.DeleteDescription(ctx, id)
+func (s *BrandService) DeleteDescription(ctx context.Context, id int64, category string) error {
+	err := s.repo.DeleteDescription(ctx, id, category)
 	if err != nil {
 		s.logger.Errorf("delete description err: %v", err)
 		return err

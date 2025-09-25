@@ -488,24 +488,51 @@ func (r *BrandPsqlRepository) DeleteModel(ctx context.Context, id int64) error {
 	return nil
 }
 
-func (r *BrandPsqlRepository) CreateDescription(ctx context.Context, description models.Description) (int64, error) {
-	var id int64
+func (r *BrandPsqlRepository) CreateDescription(ctx context.Context, req models.Description) (int64, error) {
+	var descriptionID int64
 
-	query := ` INSERT INTO descriptions (name_tm, name_en, name_ru, category) VALUES (@name_tm, @name_en, @name_ru, @category) RETURNING id `
+	tx, err := r.client.Begin(ctx)
+	if err != nil {
+		return 0, err
+	}
+	defer tx.Rollback(ctx)
+
+	query := ` 
+		INSERT INTO descriptions 
+     				(name_tm, name_en, name_ru) 
+ 		VALUES (@name_tm, @name_en, @name_ru) 
+ 		RETURNING id 
+	`
 
 	args := pgx.NamedArgs{
-		"name_tm":  description.NameTM,
-		"name_en":  description.NameEN,
-		"name_ru":  description.NameRU,
-		"category": description.Category,
+		"name_tm": req.NameTM,
+		"name_en": req.NameEN,
+		"name_ru": req.NameRU,
 	}
 
-	err := r.client.QueryRow(ctx, query, args).Scan(&id)
+	err = tx.QueryRow(ctx, query, args).Scan(&descriptionID)
 	if err != nil {
-		r.logger.Errorf("Error creating description: %s", err.Error())
-		return id, err
+		r.logger.Errorf("create description err: %v", err)
+		return descriptionID, err
 	}
-	return id, nil
+
+	for _, category := range req.Categories {
+		_, err = tx.Exec(ctx,
+			`INSERT INTO description_categories (description_id, category) VALUES ($1, $2)`,
+			descriptionID, category,
+		)
+		if err != nil {
+			r.logger.Errorf("create description_categories err: %v", err)
+			return 0, err
+		}
+	}
+
+	err = tx.Commit(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	return descriptionID, nil
 }
 
 func (r *BrandPsqlRepository) GetDescriptions(ctx context.Context, limit, page int64, search, category string) ([]models.Description, int64, error) {
@@ -515,14 +542,17 @@ func (r *BrandPsqlRepository) GetDescriptions(ctx context.Context, limit, page i
 	)
 
 	query := `
-			SELECT 
-				id, name_tm, name_en, name_ru, category
-            FROM descriptions
-			WHERE category = @category AND
-			    (name_tm ILIKE '%' || @search || '%' OR name_en ILIKE '%' || @search || '%' OR name_ru ILIKE '%' || @search || '%')
-			ORDER BY created_at DESC
-			LIMIT @limit OFFSET @offset;
-		`
+		SELECT 
+		    d.id, d.name_tm, d.name_en, d.name_ru,
+		    ARRAY_AGG(dc.category) AS categories
+		FROM descriptions d
+		LEFT JOIN description_categories dc ON dc.description_id = d.id
+		WHERE  dc.category = @category AND
+			(d.name_tm ILIKE '%' || @search || '%' OR d.name_en ILIKE '%' || @search || '%' OR d.name_ru ILIKE '%' || @search || '%')
+		GROUP BY d.id
+		ORDER BY d.created_at DESC
+		LIMIT @limit OFFSET @offset;
+	`
 
 	args := pgx.NamedArgs{
 		"category": category,
@@ -530,6 +560,7 @@ func (r *BrandPsqlRepository) GetDescriptions(ctx context.Context, limit, page i
 		"limit":    limit,
 		"offset":   page,
 	}
+
 	rows, err := r.client.Query(ctx, query, args)
 	if err != nil {
 		r.logger.Errorf("get descriptions query err : %v", err)
@@ -538,7 +569,7 @@ func (r *BrandPsqlRepository) GetDescriptions(ctx context.Context, limit, page i
 	defer rows.Close()
 	for rows.Next() {
 		var description models.Description
-		if err = rows.Scan(&description.ID, &description.NameTM, &description.NameEN, &description.NameRU, &description.Category); err != nil {
+		if err := rows.Scan(&description.ID, &description.NameTM, &description.NameEN, &description.NameRU, &description.Categories); err != nil {
 			r.logger.Errorf("get descriptions scan err : %v", err)
 			return nil, 0, err
 		}
@@ -547,10 +578,11 @@ func (r *BrandPsqlRepository) GetDescriptions(ctx context.Context, limit, page i
 
 	queryCount := `
 			SELECT 
-			    COUNT(*) 
-			FROM descriptions 
-			WHERE category = @category AND
-				(name_tm ILIKE '%' || @search || '%' OR name_en ILIKE '%' || @search || '%' OR name_ru ILIKE '%' || @search || '%')	
+			    COUNT(d.id) 
+			FROM descriptions d
+			LEFT JOIN description_categories dc ON dc.description_id = d.id
+			WHERE  dc.category = @category AND
+				(d.name_tm ILIKE '%' || @search || '%' OR d.name_en ILIKE '%' || @search || '%' OR d.name_ru ILIKE '%' || @search || '%')
 		`
 
 	argsCount := pgx.NamedArgs{
@@ -566,39 +598,67 @@ func (r *BrandPsqlRepository) GetDescriptions(ctx context.Context, limit, page i
 }
 
 func (r *BrandPsqlRepository) UpdateDescription(ctx context.Context, description models.Description) (int64, error) {
-	var descriptionID int64
+	tx, err := r.client.Begin(ctx)
+	if err != nil {
+		return 0, err
+	}
+	defer tx.Rollback(ctx)
+
+	var id int64
 
 	query := `
 		UPDATE descriptions SET 
-		    name_tm = @name_tm, name_en = @name_en, name_ru = @name_ru, 
-		    category = @category, updated_at = NOW()
+		    name_tm = @name_tm, name_en = @name_en, name_ru = @name_ru, updated_at = NOW()
 		WHERE id = @id
 		RETURNING id
 	`
 
 	args := pgx.NamedArgs{
-		"name_tm":  description.NameTM,
-		"name_en":  description.NameEN,
-		"name_ru":  description.NameRU,
-		"category": description.Category,
-		"id":       description.ID,
+		"name_tm": description.NameTM,
+		"name_en": description.NameEN,
+		"name_ru": description.NameRU,
+		"id":      description.ID,
 	}
-	err := r.client.QueryRow(ctx, query, args).Scan(&descriptionID)
+	errUpdate := tx.QueryRow(ctx, query, args).Scan(&id)
+	if errUpdate != nil {
+		r.logger.Errorf("update description err: %v", err)
+		return 0, errUpdate
+	}
+
+	_, err = tx.Exec(ctx, `DELETE FROM description_categories WHERE description_id = $1`, description.ID)
 	if err != nil {
-		r.logger.Errorf("update descriptions err: %v", err)
-		return descriptionID, err
+		r.logger.Errorf("delete old description_category err: %v", err)
+		return 0, err
 	}
-	return descriptionID, nil
+
+	for _, category := range description.Categories {
+		_, err = tx.Exec(ctx,
+			`INSERT INTO description_categories (description_id, category) VALUES ($1, $2)`,
+			description.ID, category,
+		)
+		if err != nil {
+			r.logger.Errorf("update description_categorys err: %v", err)
+			return 0, err
+		}
+	}
+	err = tx.Commit(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	return id, nil
 }
 
-func (r *BrandPsqlRepository) DeleteDescription(ctx context.Context, id int64) error {
-	query := `DELETE FROM descriptions WHERE id = @id`
+func (r *BrandPsqlRepository) DeleteDescription(ctx context.Context, id int64, category string) error {
+	query := `DELETE FROM description_categories WHERE description_id = @description_id AND category = @category`
+
 	args := pgx.NamedArgs{
-		"id": id,
+		"description_id": id,
+		"category":       category,
 	}
 	_, err := r.client.Exec(ctx, query, args)
 	if err != nil {
-		r.logger.Errorf("delete descriptions err: %v", err)
+		r.logger.Errorf("delete description category err: %v", err)
 		return err
 	}
 	return nil

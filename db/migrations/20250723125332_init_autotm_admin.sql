@@ -163,10 +163,26 @@ CREATE TABLE IF NOT EXISTS descriptions (
                         "name_tm" TEXT,
                         "name_en" TEXT,
                         "name_ru" TEXT,
-                        "category" category_type NOT NULL,
                         "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- +goose StatementBegin
+CREATE TABLE IF NOT EXISTS description_categories (
+                        "description_id" INTEGER NOT NULL,
+                        "category" category_type NOT NULL,
+                        PRIMARY KEY (description_id, category),
+                        CONSTRAINT description_id_fk
+                            FOREIGN KEY (description_id)
+                                REFERENCES descriptions(id)
+                                    ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+-- +goose StatementEnd
+
+-- +goose StatementBegin
+ALTER TABLE description_categories OWNER TO autotm;
+-- +goose StatementEnd
 
 -- +goose StatementBegin
 CREATE TABLE IF NOT EXISTS cars (
