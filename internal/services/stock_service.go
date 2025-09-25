@@ -11,6 +11,7 @@ import (
 	"time"
 
 	pb "autotm-admin/push_service_pb"
+
 	trmpgx "github.com/avito-tech/go-transaction-manager/drivers/pgxv5/v2"
 	"github.com/avito-tech/go-transaction-manager/trm/v2/manager"
 	sminio "github.com/salamsites/minio-pkg"
@@ -285,6 +286,7 @@ func (s *StockService) sendPushNotifications(ctx context.Context, stockID int64,
 		return fmt.Errorf("send push: %w", err)
 	}
 
+	fmt.Println("tokens--->", tokens)
 	return nil
 }
 
