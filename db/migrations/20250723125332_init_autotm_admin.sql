@@ -177,7 +177,6 @@ CREATE TABLE IF NOT EXISTS description_categories (
                                 REFERENCES descriptions(id)
                                     ON UPDATE CASCADE ON DELETE CASCADE
 );
-
 -- +goose StatementEnd
 
 -- +goose StatementBegin
