@@ -279,16 +279,22 @@ func (s *StockService) sendPushNotifications(ctx context.Context, stockID int64,
 		return nil
 	}
 
-	res, err := s.pushService.SendMultiPush(ctx, &pb.SendMultiPushRequest{
-		Message: message,
-		Tokens:  tokens,
-	})
-	if err != nil {
-		return fmt.Errorf("send push: %w", err)
+	var successCount int
+	for _, token := range tokens {
+		_, err := s.pushService.SendPush(ctx, &pb.SendPushRequest{
+			Message: message,
+			Token:   token,
+		})
+		if err != nil {
+			s.logger.Warnf("Failed to send push to token %s: %v", token, err)
+			continue
+		}
+		successCount++
+		s.logger.Debugf("Push sent successfully to token %s", token)
 	}
 
-	fmt.Println("response--->", res)
-	fmt.Println("tokens--->", tokens)
+	s.logger.Infof("Push notifications sent: %d successful, %d failed for stock %d",
+		successCount, len(tokens)-successCount, stockID)
 	return nil
 }
 

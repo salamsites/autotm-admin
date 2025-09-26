@@ -91,7 +91,7 @@ func (r *UserPsqlRepository) GetUserFirebaseToken(ctx context.Context, userIDs [
 			firebase_token
         FROM user_devices
  		WHERE user_id = ANY(@user_ids)
- 			AND firebase_token IS NOT NULL AND firebase_token = 'cUNv-CuoQQOZWrlWrtQsmn:APA91bEvnJPsHNqiTHrerRD7tHApmsKBU7cQ5neM7DabYvR5vy0QDjCJKNcXw6RHyW24pFYfSxLFVF4zMMgt6ymwrg-mT9J6Lb2bhZpGbAjLZ0mPTg1ioes';
+ 			AND firebase_token IS NOT NULL AND firebase_token != '';
 	`
 
 	args := pgx.NamedArgs{
