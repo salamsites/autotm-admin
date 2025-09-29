@@ -27,7 +27,7 @@ type CreateUserReq struct {
 	Login    string `json:"login" validate:"required"`
 	Password string `json:"password,omitempty" validate:"required"`
 	RoleID   int64  `json:"role_id" validate:"required"`
-	Status   bool   `json:"status" validate:"required"`
+	Status   bool   `json:"status" validate:"boolean"`
 }
 
 type UpdateUserReq struct {
