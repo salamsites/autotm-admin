@@ -33,6 +33,16 @@ var StockImagesSize = []util.Size{
 		Height:  500,
 		Quality: 100,
 	},
+	{
+		Width:   500,
+		Height:  0,
+		Quality: 80,
+	},
+	{
+		Width:   200,
+		Height:  0,
+		Quality: 90,
+	},
 }
 
 func GetStockLogoDir(stockId int64) string {
