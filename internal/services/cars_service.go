@@ -221,7 +221,7 @@ func (s *CarsService) UpdateCarStatus(ctx context.Context, req dtos.UpdateCarSta
 			UpdatedAt:      car.UpdatedAt,
 		}
 
-		if err := index.IndexCar(s.esClient, helpers.CarIndexName, carModel); err != nil {
+		if err := index.UpdateCar(s.esClient, helpers.CarIndexName, carModel); err != nil {
 			s.logger.Errorf("ES index error: %w", err)
 		} else {
 			s.logger.Infof("Car indexed successfully in Elasticsearch")
@@ -477,7 +477,7 @@ func (s *CarsService) UpdateTruckStatus(ctx context.Context, req dtos.UpdateTruc
 			UpdatedAt:       truck.UpdatedAt,
 		}
 
-		if err := index.IndexTruck(s.esClient, helpers.TruckIndexName, truckModel); err != nil {
+		if err := index.UpdateTruck(s.esClient, helpers.TruckIndexName, truckModel); err != nil {
 			s.logger.Errorf("ES index error: %w", err)
 		} else {
 			s.logger.Infof("Truck indexed successfully in Elasticsearch")
@@ -689,7 +689,7 @@ func (s *CarsService) UpdateMotoStatus(ctx context.Context, req dtos.UpdateMotoS
 			UpdatedAt:           moto.UpdatedAt,
 		}
 
-		if err := index.IndexMoto(s.esClient, helpers.MotoIndexName, motoModel); err != nil {
+		if err := index.UpdateMoto(s.esClient, helpers.MotoIndexName, motoModel); err != nil {
 			s.logger.Errorf("ES index error: %w", err)
 		} else {
 			s.logger.Infof("Moto indexed successfully in Elasticsearch")
