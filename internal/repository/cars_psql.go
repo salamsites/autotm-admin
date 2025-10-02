@@ -3,6 +3,7 @@ package repository
 import (
 	"autotm-admin/internal/models"
 	"context"
+	"strings"
 
 	"github.com/jackc/pgx/v5"
 	slog "github.com/salamsites/package-log"
@@ -41,19 +42,50 @@ func (r *CarsPsqlRepository) GetCars(ctx context.Context, limit, page int64, sea
 			LEFT JOIN models m ON m.id = cr.model_id
 			LEFT JOIN body_types bt ON bt.id = cr.body_id
 			LEFT JOIN cities cs ON cs.id = cr.city_id
-		WHERE (u.full_name ILIKE '%' || @search || '%' OR s.store_name ILIKE '%' || @search || '%' OR b.name ILIKE '%' || @search || '%'
-			OR m.name ILIKE '%' || @search || '%')
 	`
 
+	conditions := []string{}
 	args := pgx.NamedArgs{
 		"search": search,
 		"limit":  limit,
 		"offset": page,
 	}
 
+	// Search condition
+	if search != "" {
+		searchCondition := `
+			(u.full_name ILIKE '%' || @search || '%' OR 
+			 s.store_name ILIKE '%' || @search || '%' OR 
+			 b.name ILIKE '%' || @search || '%' OR
+			 m.name ILIKE '%' || @search || '%' OR
+			 bt.name_tm ILIKE '%' || @search || '%' OR
+			 bt.name_en ILIKE '%' || @search || '%' OR
+			 bt.name_ru ILIKE '%' || @search || '%' OR
+			 cs.name_tm ILIKE '%' || @search || '%' OR
+			 cs.name_en ILIKE '%' || @search || '%' OR
+			 cs.name_ru ILIKE '%' || @search || '%' OR
+			 cr.color ILIKE '%' || @search || '%' OR
+			 cr.engine_type ILIKE '%' || @search || '%' OR
+			 cr.transmission ILIKE '%' || @search || '%' OR
+			 cr.drive_type ILIKE '%' || @search || '%' OR
+			 cr.vin ILIKE '%' || @search || '%' OR
+			 cr.description ILIKE '%' || @search || '%' OR
+			 cr.name ILIKE '%' || @search || '%' OR
+			 cr.phone_number ILIKE '%' || @search || '%' OR
+			 CAST(cr.year AS TEXT) ILIKE '%' || @search || '%' OR
+			 CAST(cr.price AS TEXT) ILIKE '%' || @search || '%')
+		`
+		conditions = append(conditions, searchCondition)
+		args["search"] = search
+	}
+
 	if status != "" {
-		query += " AND cr.status = @status "
+		conditions = append(conditions, "cr.status = @status")
 		args["status"] = status
+	}
+
+	if len(conditions) > 0 {
+		query += " WHERE " + strings.Join(conditions, " AND ")
 	}
 
 	query += `
@@ -126,18 +158,20 @@ func (r *CarsPsqlRepository) GetCars(ctx context.Context, limit, page int64, sea
 				LEFT JOIN models m ON m.id = cr.model_id
 				LEFT JOIN body_types bt ON bt.id = cr.body_id
 				LEFT JOIN cities cs ON cs.id = cr.city_id
-			WHERE (u.full_name ILIKE '%' || @search || '%' OR s.store_name ILIKE '%' || @search || '%')
 		`
-	argsCount := pgx.NamedArgs{
-		"search": search,
+	countArgs := pgx.NamedArgs{}
+	if search != "" {
+		countArgs["search"] = search
 	}
-
 	if status != "" {
-		queryCount += " AND cr.status = @status "
-		argsCount["status"] = status
+		countArgs["status"] = status
 	}
 
-	err = r.client.QueryRow(ctx, queryCount, argsCount).Scan(&count)
+	if len(conditions) > 0 {
+		queryCount += " WHERE " + strings.Join(conditions, " AND ")
+	}
+
+	err = r.client.QueryRow(ctx, queryCount, countArgs).Scan(&count)
 	if err != nil {
 		r.logger.Errorf("Error getting cars count: %s", err)
 		return nil, 0, err
