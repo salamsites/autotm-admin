@@ -35,7 +35,7 @@ type Location struct {
 type Stock struct {
 	ID           int64       `json:"id"`
 	UserID       int64       `json:"user_id"`
-	UserName     string      `json:"user_name"`
+	UserName     *string     `json:"user_name"`
 	PhoneNumber  string      `json:"phone_number"`
 	Email        string      `json:"email"`
 	StoreName    string      `json:"store_name"`

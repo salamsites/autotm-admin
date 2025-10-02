@@ -41,7 +41,8 @@ func (r *CarsPsqlRepository) GetCars(ctx context.Context, limit, page int64, sea
 			LEFT JOIN models m ON m.id = cr.model_id
 			LEFT JOIN body_types bt ON bt.id = cr.body_id
 			LEFT JOIN cities cs ON cs.id = cr.city_id
-		WHERE (u.full_name ILIKE '%' || @search || '%' OR s.store_name ILIKE '%' || @search || '%')
+		WHERE (u.full_name ILIKE '%' || @search || '%' OR s.store_name ILIKE '%' || @search || '%' OR b.name ILIKE '%' || @search || '%'
+			OR m.name ILIKE '%' || @search || '%')
 	`
 
 	args := pgx.NamedArgs{

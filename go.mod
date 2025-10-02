@@ -3,7 +3,7 @@ module autotm-admin
 go 1.24.5
 
 require (
-	github.com/Hajymuhammet/elasticsearch-package v0.0.0-20250923134833-a2bd8c4c0cbf
+		github.com/Hajymuhammet/elasticsearch-package v0.0.0-20250923134833-a2bd8c4c0cbf
 	github.com/avito-tech/go-transaction-manager/drivers/pgxv5/v2 v2.0.1
 	github.com/avito-tech/go-transaction-manager/trm/v2 v2.0.1
 	github.com/elastic/go-elasticsearch/v8 v8.19.0
