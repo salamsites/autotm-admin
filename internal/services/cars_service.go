@@ -222,7 +222,7 @@ func (s *CarsService) UpdateCarStatus(ctx context.Context, req dtos.UpdateCarSta
 		}
 
 		if err := index.UpdateCar(s.esClient, helpers.CarIndexName, carModel); err != nil {
-			s.logger.Errorf("ES index error: %w", err)
+			s.logger.Errorf("ES index error: %v", err)
 		} else {
 			s.logger.Infof("Car indexed successfully in Elasticsearch")
 		}
