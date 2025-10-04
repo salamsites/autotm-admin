@@ -265,18 +265,50 @@ func (r *CarsPsqlRepository) GetTrucks(ctx context.Context, limit, page int64, s
 			LEFT JOIN models m ON m.id = t.model_id
 			LEFT JOIN body_types bt ON bt.id = t.body_id
 			LEFT JOIN cities cs ON cs.id = t.city_id
-		WHERE (u.full_name ILIKE '%' || @search || '%' OR s.store_name ILIKE '%' || @search || '%')
 	`
 
+	conditions := []string{}
 	args := pgx.NamedArgs{
 		"search": search,
 		"limit":  limit,
 		"offset": page,
 	}
 
+	// Search condition
+	if search != "" {
+		searchCondition := `
+			(u.full_name ILIKE '%' || @search || '%' OR 
+			 s.store_name ILIKE '%' || @search || '%' OR 
+			 b.name ILIKE '%' || @search || '%' OR
+			 m.name ILIKE '%' || @search || '%' OR
+			 bt.name_tm ILIKE '%' || @search || '%' OR
+			 bt.name_en ILIKE '%' || @search || '%' OR
+			 bt.name_ru ILIKE '%' || @search || '%' OR
+			 cs.name_tm ILIKE '%' || @search || '%' OR
+			 cs.name_en ILIKE '%' || @search || '%' OR
+			 cs.name_ru ILIKE '%' || @search || '%' OR
+			 t.color ILIKE '%' || @search || '%' OR
+			 t.engine_type ILIKE '%' || @search || '%' OR
+			 t.transmission ILIKE '%' || @search || '%' OR
+			 t.drive_type ILIKE '%' || @search || '%' OR
+			 t.vin ILIKE '%' || @search || '%' OR
+			 t.description ILIKE '%' || @search || '%' OR
+			 t.name ILIKE '%' || @search || '%' OR
+			 t.phone_number ILIKE '%' || @search || '%' OR
+			 CAST(t.year AS TEXT) ILIKE '%' || @search || '%' OR
+			 CAST(t.price AS TEXT) ILIKE '%' || @search || '%')
+		`
+		conditions = append(conditions, searchCondition)
+		args["search"] = search
+	}
+
 	if status != "" {
-		query += " AND t.status = @status "
+		conditions = append(conditions, "t.status = @status")
 		args["status"] = status
+	}
+
+	if len(conditions) > 0 {
+		query += " WHERE " + strings.Join(conditions, " AND ")
 	}
 
 	query += `
@@ -366,18 +398,20 @@ func (r *CarsPsqlRepository) GetTrucks(ctx context.Context, limit, page int64, s
 				LEFT JOIN models m ON m.id = t.model_id
 				LEFT JOIN body_types bt ON bt.id = t.body_id
 				LEFT JOIN cities cs ON cs.id = t.city_id
-			WHERE (u.full_name ILIKE '%' || @search || '%' OR s.store_name ILIKE '%' || @search || '%')
 		`
-	argsCount := pgx.NamedArgs{
-		"search": search,
+	countArgs := pgx.NamedArgs{}
+	if search != "" {
+		countArgs["search"] = search
 	}
-
 	if status != "" {
-		queryCount += " AND t.status = @status "
-		argsCount["status"] = status
+		countArgs["status"] = status
 	}
 
-	err = r.client.QueryRow(ctx, queryCount, argsCount).Scan(&count)
+	if len(conditions) > 0 {
+		queryCount += " WHERE " + strings.Join(conditions, " AND ")
+	}
+
+	err = r.client.QueryRow(ctx, queryCount, countArgs).Scan(&count)
 	if err != nil {
 		r.logger.Errorf("Error getting trucks count: %s", err)
 		return nil, 0, err
@@ -477,18 +511,50 @@ func (r *CarsPsqlRepository) GetMotors(ctx context.Context, limit, page int64, s
 			LEFT JOIN models m ON m.id = ms.model_id
 			LEFT JOIN body_types bt ON bt.id = ms.body_id
 			LEFT JOIN cities cs ON cs.id = ms.city_id
-		WHERE (u.full_name ILIKE '%' || @search || '%' OR s.store_name ILIKE '%' || @search || '%')
 	`
 
+	conditions := []string{}
 	args := pgx.NamedArgs{
 		"search": search,
 		"limit":  limit,
 		"offset": page,
 	}
 
+	// Search condition
+	if search != "" {
+		searchCondition := `
+			(u.full_name ILIKE '%' || @search || '%' OR 
+			 s.store_name ILIKE '%' || @search || '%' OR 
+			 b.name ILIKE '%' || @search || '%' OR
+			 m.name ILIKE '%' || @search || '%' OR
+			 bt.name_tm ILIKE '%' || @search || '%' OR
+			 bt.name_en ILIKE '%' || @search || '%' OR
+			 bt.name_ru ILIKE '%' || @search || '%' OR
+			 cs.name_tm ILIKE '%' || @search || '%' OR
+			 cs.name_en ILIKE '%' || @search || '%' OR
+			 cs.name_ru ILIKE '%' || @search || '%' OR
+			 ms.color ILIKE '%' || @search || '%' OR
+			 ms.engine_type ILIKE '%' || @search || '%' OR
+			 ms.transmission ILIKE '%' || @search || '%' OR
+			 ms.drive_type ILIKE '%' || @search || '%' OR
+			 ms.vin ILIKE '%' || @search || '%' OR
+			 ms.description ILIKE '%' || @search || '%' OR
+			 ms.name ILIKE '%' || @search || '%' OR
+			 ms.phone_number ILIKE '%' || @search || '%' OR
+			 CAST(ms.year AS TEXT) ILIKE '%' || @search || '%' OR
+			 CAST(ms.price AS TEXT) ILIKE '%' || @search || '%')
+		`
+		conditions = append(conditions, searchCondition)
+		args["search"] = search
+	}
+
 	if status != "" {
-		query += " AND ms.status = @status "
+		conditions = append(conditions, "ms.status = @status")
 		args["status"] = status
+	}
+
+	if len(conditions) > 0 {
+		query += " WHERE " + strings.Join(conditions, " AND ")
 	}
 
 	query += `
@@ -561,16 +627,19 @@ func (r *CarsPsqlRepository) GetMotors(ctx context.Context, limit, page int64, s
 				LEFT JOIN cities cs ON cs.id = ms.city_id
 			WHERE (u.full_name ILIKE '%' || @search || '%' OR s.store_name ILIKE '%' || @search || '%')
 		`
-	argsCount := pgx.NamedArgs{
-		"search": search,
+	countArgs := pgx.NamedArgs{}
+	if search != "" {
+		countArgs["search"] = search
 	}
-
 	if status != "" {
-		queryCount += " AND ms.status = @status "
-		argsCount["status"] = status
+		countArgs["status"] = status
 	}
 
-	err = r.client.QueryRow(ctx, queryCount, argsCount).Scan(&count)
+	if len(conditions) > 0 {
+		queryCount += " WHERE " + strings.Join(conditions, " AND ")
+	}
+
+	err = r.client.QueryRow(ctx, queryCount, countArgs).Scan(&count)
 	if err != nil {
 		r.logger.Errorf("Error getting motos count: %s", err)
 		return nil, 0, err

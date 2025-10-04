@@ -35,7 +35,7 @@ type UpdateUserReq struct {
 	Username string `json:"username"`
 	Login    string `json:"login"`
 	Password string `json:"password,omitempty"`
-	RoleID   int64  `json:"role_id"`
+	RoleID   int64  `json:"role_id" validate:"required"`
 	Status   bool   `json:"status"`
 }
 type User struct {
