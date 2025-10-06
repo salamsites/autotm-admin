@@ -657,7 +657,7 @@ func (r *CarsPsqlRepository) GetMotoByID(ctx context.Context, id int64) (models.
 			ms.number_of_clock_cycles, t.model_id, m.name, ms.air_type, ms.color, ms.vin, 
 			ms.description, ms.city_id, cs.name_tm, cs.name_en, cs.name_ru,
 			ms.name, ms.mail, ms.phone_number, ms.options, ms.is_comment, 
-			ms.is_exchange, ms.is_credit, ms.images, ms.status
+			ms.is_exchange, ms.is_credit, ms.images, ms.status,
 			ms.options, ms.created_at, ms.updated_at
 		FROM motoes ms
 			LEFT JOIN users u ON u.id = ms.user_id 
@@ -711,7 +711,7 @@ func (r *CarsPsqlRepository) GetMotoByID(ctx context.Context, id int64) (models.
 	)
 
 	if err != nil {
-		r.logger.Errorf("Error getting truck by id: %s", err)
+		r.logger.Errorf("Error getting moto by id: %s", err)
 		return motor, err
 	}
 

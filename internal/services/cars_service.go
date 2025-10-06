@@ -238,11 +238,9 @@ func (s *CarsService) UpdateCarStatus(ctx context.Context, req dtos.UpdateCarSta
 	}
 
 	if req.StockID != 0 {
-		go func(stockID int64, message string) {
-			if err := s.handlePushNotifications(stockID, message); err != nil {
-				s.logger.Errorf("push notification car error: %w", err)
-			}
-		}(req.StockID, req.Message)
+		if err := s.handlePushNotifications(req.StockID, req.Message); err != nil {
+			s.logger.Errorf("push notification car error: %w", err)
+		}
 	}
 
 	return id, nil
@@ -478,7 +476,7 @@ func (s *CarsService) UpdateTruckStatus(ctx context.Context, req dtos.UpdateTruc
 		}
 
 		if err := index.UpdateTruck(s.esClient, helpers.TruckIndexName, truckModel); err != nil {
-			s.logger.Errorf("ES index error: %w", err)
+			s.logger.Errorf("ES index error: %v", err)
 		} else {
 			s.logger.Infof("Truck indexed successfully in Elasticsearch")
 		}
@@ -494,11 +492,9 @@ func (s *CarsService) UpdateTruckStatus(ctx context.Context, req dtos.UpdateTruc
 	}
 
 	if req.StockID != 0 {
-		go func(stockID int64, message string) {
-			if err := s.handlePushNotifications(stockID, message); err != nil {
-				s.logger.Errorf("push notification truck error: %w", err)
-			}
-		}(req.StockID, req.Message)
+		if err := s.handlePushNotifications(req.StockID, req.Message); err != nil {
+			s.logger.Errorf("push notification truck error: %w", err)
+		}
 	}
 
 	return id, nil
@@ -694,6 +690,13 @@ func (s *CarsService) UpdateMotoStatus(ctx context.Context, req dtos.UpdateMotoS
 			UpdatedAt:           moto.UpdatedAt,
 		}
 
+		// Elasticsearch update
+		if err := index.UpdateMoto(s.esClient, helpers.MotoIndexName, motoModel); err != nil {
+			s.logger.Errorf("Elasticsearch update failed: %v", err)
+		} else {
+			s.logger.Infof("Moto indexed successfully in Elasticsearch")
+		}
+
 		id.ID = motoId
 		return nil
 	})
@@ -703,21 +706,12 @@ func (s *CarsService) UpdateMotoStatus(ctx context.Context, req dtos.UpdateMotoS
 		return id, err
 	}
 
-	go func() {
-		// Elasticsearch update
-		if err := index.UpdateMoto(s.esClient, helpers.MotoIndexName, motoModel); err != nil {
-			s.logger.Errorf("Elasticsearch update failed: %v", err)
-		} else {
-			s.logger.Infof("Moto indexed successfully in Elasticsearch")
+	// Push notification
+	if req.StockID != 0 {
+		if err := s.handlePushNotifications(req.StockID, req.Message); err != nil {
+			s.logger.Errorf("push notification error: %v", err)
 		}
-
-		// Push notification
-		if req.StockID != 0 {
-			if err := s.handlePushNotifications(req.StockID, req.Message); err != nil {
-				s.logger.Errorf("push notification error: %v", err)
-			}
-		}
-	}()
+	}
 
 	return id, nil
 }
