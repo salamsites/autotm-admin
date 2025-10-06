@@ -239,7 +239,7 @@ func (s *CarsService) UpdateCarStatus(ctx context.Context, req dtos.UpdateCarSta
 	} else {
 		s.logger.Infof("Car indexed successfully in Elasticsearch")
 	}
-	
+
 	if req.StockID != 0 {
 		if err := s.handlePushNotifications(req.StockID, req.Message); err != nil {
 			s.logger.Errorf("push notification car error: %w", err)
@@ -724,7 +724,7 @@ func (s *CarsService) UpdateMotoStatus(ctx context.Context, req dtos.UpdateMotoS
 
 func (s *CarsService) handlePushNotifications(stockID int64, message string) error {
 	ctx := context.Background()
-	const maxRetries = 3
+	const maxRetries = 2
 	retryDelay := time.Second * 2
 
 	for attempt := 1; attempt <= maxRetries; attempt++ {

@@ -223,11 +223,9 @@ func (s *StockService) UpdateStockStatus(ctx context.Context, stock dtos.UpdateS
 		return id, err
 	}
 
-	go func(stockID int64, message string) {
-		if err := s.handlePushNotifications(stockID, message); err != nil {
-			s.logger.Errorf("push notification stock error: %w", err)
-		}
-	}(stockID, stock.Message)
+	if err := s.handlePushNotifications(stockID, stock.Message); err != nil {
+		s.logger.Errorf("push notification stock error: %v", err)
+	}
 
 	id.ID = stockID
 	return id, nil
