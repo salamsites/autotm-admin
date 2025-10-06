@@ -625,7 +625,6 @@ func (r *CarsPsqlRepository) GetMotors(ctx context.Context, limit, page int64, s
 				LEFT JOIN models m ON m.id = ms.model_id
 				LEFT JOIN body_types bt ON bt.id = ms.body_id
 				LEFT JOIN cities cs ON cs.id = ms.city_id
-			WHERE (u.full_name ILIKE '%' || @search || '%' OR s.store_name ILIKE '%' || @search || '%')
 		`
 	countArgs := pgx.NamedArgs{}
 	if search != "" {

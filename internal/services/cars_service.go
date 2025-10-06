@@ -623,31 +623,36 @@ func (s *CarsService) GetMotoByID(ctx context.Context, id int64) (dtos.Moto, err
 }
 
 func (s *CarsService) UpdateMotoStatus(ctx context.Context, req dtos.UpdateMotoStatus) (dtos.ID, error) {
-	var id dtos.ID
+	var (
+		id        dtos.ID
+		motoModel *ms.Moto
+	)
 
 	trManager := manager.Must(trmpgx.NewDefaultFactory(s.clientPsql.Pool()))
 
 	err := trManager.Do(ctx, func(ctx context.Context) error {
-
 		validate := helpers.GetValidator()
 		if err := validate.Struct(req); err != nil {
-			s.logger.Errorf("validate err: %v", err)
+			s.logger.Errorf("validation error: %v", err)
 			return err
 		}
 
+		// Update status in DB
 		motoId, err := s.repo.UpdateMotoStatus(ctx, req.ID, req.Status)
 		if err != nil {
-			s.logger.Errorf("update moto status err: %v", err)
+			s.logger.Errorf("update moto status error: %v", err)
 			return err
 		}
 
+		// Get updated moto from DB
 		moto, err := s.repo.GetMotoByID(ctx, motoId)
 		if err != nil {
-			s.logger.Errorf("get moto by id err: %w", err)
+			s.logger.Errorf("get moto by id error: %v", err)
 			return err
 		}
 
-		motoModel := &ms.Moto{
+		// Prepare data for Elasticsearch (outside the transaction)
+		motoModel = &ms.Moto{
 			Id:                  moto.Id,
 			UserId:              moto.UserId,
 			UserName:            moto.UserName,
@@ -689,29 +694,30 @@ func (s *CarsService) UpdateMotoStatus(ctx context.Context, req dtos.UpdateMotoS
 			UpdatedAt:           moto.UpdatedAt,
 		}
 
-		if err := index.UpdateMoto(s.esClient, helpers.MotoIndexName, motoModel); err != nil {
-			s.logger.Errorf("ES index error: %w", err)
-		} else {
-			s.logger.Infof("Moto indexed successfully in Elasticsearch")
-		}
-
 		id.ID = motoId
-
 		return nil
 	})
 
 	if err != nil {
-		s.logger.Errorf("update id moto err: %v", err)
+		s.logger.Errorf("update moto transaction failed: %v", err)
 		return id, err
 	}
 
-	if req.StockID != 0 {
-		go func(stockID int64, message string) {
-			if err := s.handlePushNotifications(stockID, message); err != nil {
-				s.logger.Errorf("push notification moto error: %w", err)
+	go func() {
+		// Elasticsearch update
+		if err := index.UpdateMoto(s.esClient, helpers.MotoIndexName, motoModel); err != nil {
+			s.logger.Errorf("Elasticsearch update failed: %v", err)
+		} else {
+			s.logger.Infof("Moto indexed successfully in Elasticsearch")
+		}
+
+		// Push notification
+		if req.StockID != 0 {
+			if err := s.handlePushNotifications(req.StockID, req.Message); err != nil {
+				s.logger.Errorf("push notification error: %v", err)
 			}
-		}(req.StockID, req.Message)
-	}
+		}
+	}()
 
 	return id, nil
 }
