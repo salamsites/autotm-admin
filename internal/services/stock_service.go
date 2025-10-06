@@ -233,7 +233,7 @@ func (s *StockService) UpdateStockStatus(ctx context.Context, stock dtos.UpdateS
 
 func (s *StockService) handlePushNotifications(stockID int64, message string) error {
 	ctx := context.Background()
-	const maxRetries = 3
+	const maxRetries = 2
 	retryDelay := time.Second * 2
 
 	for attempt := 1; attempt <= maxRetries; attempt++ {
