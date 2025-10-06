@@ -158,7 +158,10 @@ func (s *CarsService) GetCarByID(ctx context.Context, id int64) (dtos.Car, error
 }
 
 func (s *CarsService) UpdateCarStatus(ctx context.Context, req dtos.UpdateCarStatus) (dtos.ID, error) {
-	var id dtos.ID
+	var (
+		id       dtos.ID
+		carModel *ms.Car
+	)
 	trManager := manager.Must(trmpgx.NewDefaultFactory(s.clientPsql.Pool()))
 
 	err := trManager.Do(ctx, func(ctx context.Context) error {
@@ -181,7 +184,7 @@ func (s *CarsService) UpdateCarStatus(ctx context.Context, req dtos.UpdateCarSta
 			return err
 		}
 
-		carModel := &ms.Car{
+		carModel = &ms.Car{
 			ID:             car.Id,
 			UserId:         car.UserId,
 			UserName:       car.UserName,
@@ -221,12 +224,6 @@ func (s *CarsService) UpdateCarStatus(ctx context.Context, req dtos.UpdateCarSta
 			UpdatedAt:      car.UpdatedAt,
 		}
 
-		if err := index.UpdateCar(s.esClient, helpers.CarIndexName, carModel); err != nil {
-			s.logger.Errorf("ES index error: %v", err)
-		} else {
-			s.logger.Infof("Car indexed successfully in Elasticsearch")
-		}
-
 		id.ID = carId
 
 		return nil
@@ -237,6 +234,12 @@ func (s *CarsService) UpdateCarStatus(ctx context.Context, req dtos.UpdateCarSta
 		return id, err
 	}
 
+	if err := index.UpdateCar(s.esClient, helpers.CarIndexName, carModel); err != nil {
+		s.logger.Errorf("ES index error: %v", err)
+	} else {
+		s.logger.Infof("Car indexed successfully in Elasticsearch")
+	}
+	
 	if req.StockID != 0 {
 		if err := s.handlePushNotifications(req.StockID, req.Message); err != nil {
 			s.logger.Errorf("push notification car error: %w", err)
@@ -395,7 +398,10 @@ func (s *CarsService) GetTruckByID(ctx context.Context, id int64) (dtos.Truck, e
 }
 
 func (s *CarsService) UpdateTruckStatus(ctx context.Context, req dtos.UpdateTruckStatus) (dtos.ID, error) {
-	var id dtos.ID
+	var (
+		id         dtos.ID
+		truckModel *ms.Truck
+	)
 
 	trManager := manager.Must(trmpgx.NewDefaultFactory(s.clientPsql.Pool()))
 
@@ -418,7 +424,7 @@ func (s *CarsService) UpdateTruckStatus(ctx context.Context, req dtos.UpdateTruc
 			return err
 		}
 
-		truckModel := &ms.Truck{
+		truckModel = &ms.Truck{
 			Id:              truck.Id,
 			UserId:          truck.UserId,
 			UserName:        truck.UserName,
@@ -475,12 +481,6 @@ func (s *CarsService) UpdateTruckStatus(ctx context.Context, req dtos.UpdateTruc
 			UpdatedAt:       truck.UpdatedAt,
 		}
 
-		if err := index.UpdateTruck(s.esClient, helpers.TruckIndexName, truckModel); err != nil {
-			s.logger.Errorf("ES index error: %v", err)
-		} else {
-			s.logger.Infof("Truck indexed successfully in Elasticsearch")
-		}
-
 		id.ID = truckId
 
 		return nil
@@ -489,6 +489,12 @@ func (s *CarsService) UpdateTruckStatus(ctx context.Context, req dtos.UpdateTruc
 	if err != nil {
 		s.logger.Errorf("update id truck err: %v", err)
 		return id, err
+	}
+
+	if err := index.UpdateTruck(s.esClient, helpers.TruckIndexName, truckModel); err != nil {
+		s.logger.Errorf("ES index error: %v", err)
+	} else {
+		s.logger.Infof("Truck indexed successfully in Elasticsearch")
 	}
 
 	if req.StockID != 0 {
@@ -690,13 +696,6 @@ func (s *CarsService) UpdateMotoStatus(ctx context.Context, req dtos.UpdateMotoS
 			UpdatedAt:           moto.UpdatedAt,
 		}
 
-		// Elasticsearch update
-		if err := index.UpdateMoto(s.esClient, helpers.MotoIndexName, motoModel); err != nil {
-			s.logger.Errorf("Elasticsearch update failed: %v", err)
-		} else {
-			s.logger.Infof("Moto indexed successfully in Elasticsearch")
-		}
-
 		id.ID = motoId
 		return nil
 	})
@@ -704,6 +703,13 @@ func (s *CarsService) UpdateMotoStatus(ctx context.Context, req dtos.UpdateMotoS
 	if err != nil {
 		s.logger.Errorf("update moto transaction failed: %v", err)
 		return id, err
+	}
+
+	// Elasticsearch update
+	if err := index.UpdateMoto(s.esClient, helpers.MotoIndexName, motoModel); err != nil {
+		s.logger.Errorf("Elasticsearch update failed: %v", err)
+	} else {
+		s.logger.Infof("Moto indexed successfully in Elasticsearch")
 	}
 
 	// Push notification
