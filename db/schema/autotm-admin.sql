@@ -84,7 +84,7 @@ CREATE TABLE IF NOT EXISTS admin_users (
             CONSTRAINT role_id_fk
                 FOREIGN KEY (role_id)
                      REFERENCES roles(id)
-                        ON UPDATE CASCADE ON DELETE SET NULL
+                        ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 
