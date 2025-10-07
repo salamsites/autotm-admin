@@ -108,7 +108,7 @@ CREATE TABLE IF NOT EXISTS cities (
             CONSTRAINT region_id_fk
                 FOREIGN KEY (region_id)
                     REFERENCES regions(id)
-                        ON UPDATE CASCADE ON DELETE SET NULL
+                        ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS sliders (
