@@ -171,7 +171,6 @@ func (s *SettingsService) InitSuperAdmin(ctx context.Context) error {
 
 	superRole := models.Role{
 		Name: superAdminLogin,
-		Role: []byte(`{"permissions":"all"}`),
 	}
 
 	roleID, err := s.repo.CreateRole(ctx, superRole)
