@@ -2,7 +2,6 @@ package services
 
 import (
 	"autotm-admin/internal/dtos"
-	"autotm-admin/internal/helpers"
 	"autotm-admin/internal/models"
 	"autotm-admin/internal/repository/storage"
 	"context"
@@ -27,11 +26,6 @@ func NewSlidersService(logger *slog.Logger, repo storage.SlidersRepository, mini
 
 func (s *SlidersService) CreateSlider(ctx context.Context, slider dtos.CreateSliderReq) (dtos.ID, error) {
 	var id dtos.ID
-	validate := helpers.GetValidator()
-	if err := validate.Struct(slider); err != nil {
-		s.logger.Errorf("validate err: %v", err)
-		return id, err
-	}
 
 	newSlider := models.Slider{
 		ImagePathTM: slider.ImagePathTM,
@@ -87,11 +81,6 @@ func (s *SlidersService) GetAllSliders(ctx context.Context, limit, page int64, p
 
 func (s *SlidersService) UpdateSlider(ctx context.Context, slider dtos.UpdateSliderReq) (dtos.ID, error) {
 	var id dtos.ID
-	validate := helpers.GetValidator()
-	if err := validate.Struct(slider); err != nil {
-		s.logger.Errorf("validate err: %v", err)
-		return id, err
-	}
 
 	newSlider := models.Slider{
 		ID:          slider.ID,

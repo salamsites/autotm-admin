@@ -2,6 +2,7 @@ package http
 
 import (
 	"autotm-admin/internal/dtos"
+	"autotm-admin/internal/helpers"
 	"autotm-admin/internal/services/repository"
 	"encoding/json"
 	"io"
@@ -166,6 +167,15 @@ func (h *CarsHandler) v1UpdateCarStatus(w http.ResponseWriter, r *http.Request) 
 		return shttp.UnprocessableEntity.SetData(result)
 	}
 
+	// Validate
+	validate := helpers.GetValidator()
+	err := validate.Struct(carDTO)
+	if err != nil {
+		result.Message = err.Error()
+		h.logger.Errorln(err)
+		return shttp.BadRequest.SetData(result)
+	}
+
 	id, err := h.service.UpdateCarStatus(r.Context(), carDTO)
 	if err != nil {
 		result.Message = err.Error()
@@ -298,6 +308,15 @@ func (h *CarsHandler) v1UpdateTruckStatus(w http.ResponseWriter, r *http.Request
 		return shttp.UnprocessableEntity.SetData(result)
 	}
 
+	// Validate
+	validate := helpers.GetValidator()
+	err := validate.Struct(truckDTO)
+	if err != nil {
+		result.Message = err.Error()
+		h.logger.Errorln(err)
+		return shttp.BadRequest.SetData(result)
+	}
+
 	id, err := h.service.UpdateTruckStatus(r.Context(), truckDTO)
 	if err != nil {
 		result.Message = err.Error()
@@ -428,6 +447,15 @@ func (h *CarsHandler) v1UpdateMotoStatus(w http.ResponseWriter, r *http.Request)
 		result.Message = errData.Error()
 		h.logger.Error("unable to unmarshal request body", errData)
 		return shttp.UnprocessableEntity.SetData(result)
+	}
+
+	// Validate
+	validate := helpers.GetValidator()
+	err := validate.Struct(motoDTO)
+	if err != nil {
+		result.Message = err.Error()
+		h.logger.Errorln(err)
+		return shttp.BadRequest.SetData(result)
 	}
 
 	id, err := h.service.UpdateMotoStatus(r.Context(), motoDTO)

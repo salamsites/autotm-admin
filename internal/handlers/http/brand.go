@@ -2,6 +2,7 @@ package http
 
 import (
 	"autotm-admin/internal/dtos"
+	"autotm-admin/internal/helpers"
 	"autotm-admin/internal/services/repository"
 	"encoding/json"
 	"io"
@@ -83,6 +84,15 @@ func (h *BrandHandler) v1CreateBodyType(w http.ResponseWriter, r *http.Request) 
 		result.Message = errData.Error()
 		h.logger.Error("unable to unmarshal request body", errData)
 		return shttp.UnprocessableEntity.SetData(result)
+	}
+
+	// Validate
+	validate := helpers.GetValidator()
+	err := validate.Struct(bodyTypeDTO)
+	if err != nil {
+		result.Message = err.Error()
+		h.logger.Errorln(err)
+		return shttp.BadRequest.SetData(result)
 	}
 
 	id, err := h.service.CreateBodyType(r.Context(), bodyTypeDTO)
@@ -179,6 +189,15 @@ func (h *BrandHandler) v1UpdateBodyType(w http.ResponseWriter, r *http.Request) 
 		return shttp.UnprocessableEntity.SetData(result)
 	}
 
+	// Validate
+	validate := helpers.GetValidator()
+	err := validate.Struct(bodyTypeDTO)
+	if err != nil {
+		result.Message = err.Error()
+		h.logger.Errorln(err)
+		return shttp.BadRequest.SetData(result)
+	}
+
 	id, err := h.service.UpdateBodyType(r.Context(), bodyTypeDTO)
 	if err != nil {
 		result.Message = err.Error()
@@ -263,6 +282,15 @@ func (h *BrandHandler) v1CreateBrand(w http.ResponseWriter, r *http.Request) sht
 		result.Message = errData.Error()
 		h.logger.Error("unable to unmarshal request body", errData)
 		return shttp.UnprocessableEntity.SetData(result)
+	}
+
+	// Validate
+	validate := helpers.GetValidator()
+	err := validate.Struct(brandDTO)
+	if err != nil {
+		result.Message = err.Error()
+		h.logger.Errorln(err)
+		return shttp.BadRequest.SetData(result)
 	}
 
 	id, err := h.service.CreateBrand(r.Context(), brandDTO)
@@ -359,6 +387,15 @@ func (h *BrandHandler) v1UpdateBrand(w http.ResponseWriter, r *http.Request) sht
 		return shttp.UnprocessableEntity.SetData(result)
 	}
 
+	// Validate
+	validate := helpers.GetValidator()
+	err := validate.Struct(brandDTO)
+	if err != nil {
+		result.Message = err.Error()
+		h.logger.Errorln(err)
+		return shttp.BadRequest.SetData(result)
+	}
+
 	id, err := h.service.UpdateBrand(r.Context(), brandDTO)
 	if err != nil {
 		result.Message = err.Error()
@@ -449,6 +486,15 @@ func (h *BrandHandler) v1CreateModel(w http.ResponseWriter, r *http.Request) sht
 		result.Message = errData.Error()
 		h.logger.Error("unable to unmarshal request body", errData)
 		return shttp.UnprocessableEntity.SetData(result)
+	}
+
+	// Validate
+	validate := helpers.GetValidator()
+	err := validate.Struct(modelDTO)
+	if err != nil {
+		result.Message = err.Error()
+		h.logger.Errorln(err)
+		return shttp.BadRequest.SetData(result)
 	}
 
 	id, err := h.service.CreateModel(r.Context(), modelDTO)
@@ -545,6 +591,15 @@ func (h *BrandHandler) v1UpdateModel(w http.ResponseWriter, r *http.Request) sht
 		return shttp.UnprocessableEntity.SetData(result)
 	}
 
+	// Validate
+	validate := helpers.GetValidator()
+	err := validate.Struct(modelDTO)
+	if err != nil {
+		result.Message = err.Error()
+		h.logger.Errorln(err)
+		return shttp.BadRequest.SetData(result)
+	}
+
 	id, err := h.service.UpdateModel(r.Context(), modelDTO)
 	if err != nil {
 		result.Message = err.Error()
@@ -629,6 +684,15 @@ func (h *BrandHandler) v1CreateDescription(w http.ResponseWriter, r *http.Reques
 		result.Message = errData.Error()
 		h.logger.Error("unable to unmarshal request body", errData)
 		return shttp.UnprocessableEntity.SetData(result)
+	}
+
+	// Validate
+	validate := helpers.GetValidator()
+	err := validate.Struct(descriptionDTO)
+	if err != nil {
+		result.Message = err.Error()
+		h.logger.Errorln(err)
+		return shttp.BadRequest.SetData(result)
 	}
 
 	id, err := h.service.CreateDescription(r.Context(), descriptionDTO)
@@ -723,6 +787,15 @@ func (h *BrandHandler) v1UpdateDescription(w http.ResponseWriter, r *http.Reques
 		result.Message = errData.Error()
 		h.logger.Error("unable to unmarshal request body ", errData)
 		return shttp.UnprocessableEntity.SetData(result)
+	}
+
+	// Validate
+	validate := helpers.GetValidator()
+	err := validate.Struct(descriptionDTO)
+	if err != nil {
+		result.Message = err.Error()
+		h.logger.Errorln(err)
+		return shttp.BadRequest.SetData(result)
 	}
 
 	id, err := h.service.UpdateDescription(r.Context(), descriptionDTO)

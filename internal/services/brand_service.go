@@ -2,7 +2,6 @@ package services
 
 import (
 	"autotm-admin/internal/dtos"
-	"autotm-admin/internal/helpers"
 	"autotm-admin/internal/models"
 	"autotm-admin/internal/repository/storage"
 	"context"
@@ -27,11 +26,6 @@ func NewBrandService(logger *slog.Logger, repo storage.BrandRepository, minioFil
 
 func (s *BrandService) CreateBodyType(ctx context.Context, bodyType dtos.CreateBodyTypeReq) (dtos.ID, error) {
 	var id dtos.ID
-	validate := helpers.GetValidator()
-	if err := validate.Struct(bodyType); err != nil {
-		s.logger.Errorf("validate err: %v", err)
-		return id, err
-	}
 
 	newBodyType := models.BodyType{
 		NameTM:    bodyType.NameTM,
@@ -86,11 +80,6 @@ func (s *BrandService) GetBodyType(ctx context.Context, limit, page int64, categ
 
 func (s *BrandService) UpdateBodyType(ctx context.Context, bodyType dtos.UpdateBodyTypeReq) (dtos.ID, error) {
 	var id dtos.ID
-	validate := helpers.GetValidator()
-	if err := validate.Struct(bodyType); err != nil {
-		s.logger.Errorf("validate err: %v", err)
-		return id, err
-	}
 
 	newBodyType := models.BodyType{
 		ID:        bodyType.ID,
@@ -123,11 +112,6 @@ func (s *BrandService) DeleteBodyType(ctx context.Context, id int64) error {
 
 func (s *BrandService) CreateBrand(ctx context.Context, brand dtos.CreateBrandReq) (dtos.ID, error) {
 	var id dtos.ID
-	validate := helpers.GetValidator()
-	if err := validate.Struct(brand); err != nil {
-		s.logger.Errorf("validate err: %v", err)
-		return id, err
-	}
 
 	newBrand := models.Brand{
 		Name:       brand.Name,
@@ -178,11 +162,6 @@ func (s *BrandService) GetBrands(ctx context.Context, limit, page int64, categor
 
 func (s *BrandService) UpdateBrand(ctx context.Context, brand dtos.UpdateBrandReq) (dtos.ID, error) {
 	var id dtos.ID
-	validate := helpers.GetValidator()
-	if err := validate.Struct(brand); err != nil {
-		s.logger.Errorf("validate err: %v", err)
-		return id, err
-	}
 
 	newBrand := models.Brand{
 		ID:         brand.ID,
@@ -213,11 +192,6 @@ func (s *BrandService) DeleteBrandCategory(ctx context.Context, id int64, catego
 
 func (s *BrandService) CreateModel(ctx context.Context, model dtos.CreateModelReq) (dtos.ID, error) {
 	var id dtos.ID
-	validate := helpers.GetValidator()
-	if err := validate.Struct(model); err != nil {
-		s.logger.Errorf("validate err: %v", err)
-		return id, err
-	}
 
 	newModel := models.Model{
 		Name:     model.Name,
@@ -269,11 +243,6 @@ func (s *BrandService) GetModels(ctx context.Context, limit, page int64, categor
 
 func (s *BrandService) UpdateModel(ctx context.Context, model dtos.UpdateModelReq) (dtos.ID, error) {
 	var id dtos.ID
-	validate := helpers.GetValidator()
-	if err := validate.Struct(model); err != nil {
-		s.logger.Errorf("validate err: %v", err)
-		return id, err
-	}
 
 	newModel := models.Model{
 		ID:       model.ID,
@@ -302,11 +271,6 @@ func (s *BrandService) DeleteModel(ctx context.Context, id int64) error {
 
 func (s *BrandService) CreateDescription(ctx context.Context, description dtos.CreateDescription) (dtos.ID, error) {
 	var id dtos.ID
-	validate := helpers.GetValidator()
-	if err := validate.Struct(description); err != nil {
-		s.logger.Errorf("validate err: %v", err)
-		return id, err
-	}
 
 	newDescription := models.Description{
 		NameTM:     description.NameTM,
@@ -357,11 +321,6 @@ func (s *BrandService) GetDescriptions(ctx context.Context, limit, page int64, s
 
 func (s *BrandService) UpdateDescription(ctx context.Context, description dtos.UpdateDescription) (dtos.ID, error) {
 	var id dtos.ID
-	validate := helpers.GetValidator()
-	if err := validate.Struct(description); err != nil {
-		s.logger.Errorf("validate err: %v", err)
-		return id, err
-	}
 
 	newDescription := models.Description{
 		ID:         description.ID,

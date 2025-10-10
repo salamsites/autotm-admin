@@ -8,6 +8,7 @@ import (
 	"context"
 
 	pb "autotm-admin/push_service_pb"
+
 	trmpgx "github.com/avito-tech/go-transaction-manager/drivers/pgxv5/v2"
 	es "github.com/elastic/go-elasticsearch/v8"
 	"github.com/go-chi/chi/v5"
@@ -82,7 +83,7 @@ func Manager(logger *slog.Logger, grpcConn *grpc.ClientConn, clientPsql spsql.Cl
 	r.Route(stocksURL, func(subRouter chi.Router) {
 		stockRepo := repository.NewStockPsqlRepository(logger, clientPsql, trmpgx.DefaultCtxGetter)
 		stockService := services.NewStockService(logger, clientPsql, stockRepo, minioImageClient, minioFileClient, userService, pushService)
-		stockHandler := http.NewStockHandler(logger, newMiddleware, clientPsql, stockService, minioFileClient, minioImageClient)
+		stockHandler := http.NewStockHandler(logger, newMiddleware, stockService)
 		stockHandler.StockRegisterRoutes(subRouter)
 	})
 

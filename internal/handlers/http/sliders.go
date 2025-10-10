@@ -2,6 +2,7 @@ package http
 
 import (
 	"autotm-admin/internal/dtos"
+	"autotm-admin/internal/helpers"
 	"autotm-admin/internal/services/repository"
 	"encoding/json"
 	"io"
@@ -64,6 +65,15 @@ func (h *SliderHandler) v1CreateSlider(w http.ResponseWriter, r *http.Request) s
 		result.Message = errData.Error()
 		h.logger.Error("unable to unmarshal request body", errData)
 		return shttp.UnprocessableEntity.SetData(result)
+	}
+
+	// Validate
+	validate := helpers.GetValidator()
+	err := validate.Struct(sliderDTO)
+	if err != nil {
+		result.Message = err.Error()
+		h.logger.Errorln(err)
+		return shttp.BadRequest.SetData(result)
 	}
 
 	id, err := h.service.CreateSlider(r.Context(), sliderDTO)
@@ -152,6 +162,15 @@ func (h *SliderHandler) v1UpdateSlider(w http.ResponseWriter, r *http.Request) s
 		result.Message = errData.Error()
 		h.logger.Error("unable to unmarshal request body", errData)
 		return shttp.UnprocessableEntity.SetData(result)
+	}
+
+	// Validate
+	validate := helpers.GetValidator()
+	err := validate.Struct(sliderDTO)
+	if err != nil {
+		result.Message = err.Error()
+		h.logger.Errorln(err)
+		return shttp.BadRequest.SetData(result)
 	}
 
 	id, err := h.service.UpdateSlider(r.Context(), sliderDTO)

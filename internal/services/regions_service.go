@@ -2,7 +2,6 @@ package services
 
 import (
 	"autotm-admin/internal/dtos"
-	"autotm-admin/internal/helpers"
 	"autotm-admin/internal/models"
 	"autotm-admin/internal/repository/storage"
 	"context"
@@ -24,11 +23,6 @@ func NewRegionsService(logger *slog.Logger, repo storage.RegionsRepository) *Reg
 
 func (s *RegionsService) CreateRegion(ctx context.Context, region dtos.CreateRegionReq) (dtos.ID, error) {
 	var id dtos.ID
-	validate := helpers.GetValidator()
-	if err := validate.Struct(region); err != nil {
-		s.logger.Errorf("validate err: %v", err)
-		return id, err
-	}
 
 	newRegion := models.Region{
 		NameTM: region.NameTM,
@@ -76,11 +70,6 @@ func (s *RegionsService) GetAllRegions(ctx context.Context, limit, page int64, s
 
 func (s *RegionsService) UpdateRegion(ctx context.Context, region dtos.UpdateRegionReq) (dtos.ID, error) {
 	var id dtos.ID
-	validate := helpers.GetValidator()
-	if err := validate.Struct(region); err != nil {
-		s.logger.Errorf("validate err: %v", err)
-		return id, err
-	}
 
 	newRegion := models.Region{
 		ID:     region.ID,
@@ -110,11 +99,6 @@ func (s *RegionsService) DeleteRegion(ctx context.Context, id int64) error {
 // Cities
 func (s *RegionsService) CreateCity(ctx context.Context, city dtos.CreateCityReq) (dtos.ID, error) {
 	var id dtos.ID
-	validate := helpers.GetValidator()
-	if err := validate.Struct(city); err != nil {
-		s.logger.Errorf("validate err: %v", err)
-		return id, err
-	}
 
 	newCity := models.City{
 		NameTM:   city.NameTM,
@@ -167,11 +151,6 @@ func (s *RegionsService) GetAllCities(ctx context.Context, limit, page int64, se
 
 func (s *RegionsService) UpdateCity(ctx context.Context, city dtos.UpdateCityReq) (dtos.ID, error) {
 	var id dtos.ID
-	validate := helpers.GetValidator()
-	if err := validate.Struct(city); err != nil {
-		s.logger.Errorf("validate err: %v", err)
-		return id, err
-	}
 
 	newCity := models.City{
 		ID:       city.ID,

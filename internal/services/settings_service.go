@@ -3,7 +3,6 @@ package services
 import (
 	"autotm-admin/internal/configs"
 	"autotm-admin/internal/dtos"
-	"autotm-admin/internal/helpers"
 	"autotm-admin/internal/models"
 	"autotm-admin/internal/repository/storage"
 	"autotm-admin/utils"
@@ -29,11 +28,6 @@ func NewSettingsService(logger *slog.Logger, repo storage.SettingsRepository, cf
 
 func (s *SettingsService) CreateRole(ctx context.Context, role dtos.CreateRoleReq) (dtos.ID, error) {
 	var id dtos.ID
-	validate := helpers.GetValidator()
-	if err := validate.Struct(role); err != nil {
-		s.logger.Errorf("validate err: %v", err)
-		return id, err
-	}
 
 	newRole := models.Role{
 		Name: role.Name,
@@ -95,11 +89,6 @@ func (s *SettingsService) GetAllRoles(ctx context.Context, limit, page int64, se
 
 func (s *SettingsService) UpdateRole(ctx context.Context, role dtos.UpdateRoleReq) (dtos.ID, error) {
 	var id dtos.ID
-	validate := helpers.GetValidator()
-	if err := validate.Struct(role); err != nil {
-		s.logger.Errorf("validate err: %v", err)
-		return id, err
-	}
 
 	newRole := models.Role{
 		ID:   role.ID,
@@ -128,11 +117,6 @@ func (s *SettingsService) DeleteRole(ctx context.Context, id int64) error {
 // User
 func (s *SettingsService) CreateUser(ctx context.Context, user dtos.CreateUserReq) (dtos.ID, error) {
 	var id dtos.ID
-	validate := helpers.GetValidator()
-	if err := validate.Struct(user); err != nil {
-		s.logger.Errorf("validate user err: %v", err)
-		return id, err
-	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
@@ -237,11 +221,7 @@ func (s *SettingsService) GetAllUsers(ctx context.Context, limit, page int64, se
 
 func (s *SettingsService) UpdateUser(ctx context.Context, user dtos.UpdateUserReq) (dtos.ID, error) {
 	var id dtos.ID
-	validate := helpers.GetValidator()
-	if err := validate.Struct(user); err != nil {
-		s.logger.Errorf("validate err: %v", err)
-		return id, err
-	}
+
 	var hashedPassword string
 
 	if user.Password != "" {
@@ -281,12 +261,6 @@ func (s *SettingsService) DeleteUser(ctx context.Context, id int64) error {
 }
 
 func (s *SettingsService) Login(ctx context.Context, login dtos.LoginReq) (string, error) {
-	validate := helpers.GetValidator()
-	if err := validate.Struct(login); err != nil {
-		s.logger.Errorf("validate err: %v", err)
-		return "id", err
-	}
-
 	user, err := s.repo.GetUserByLogin(ctx, login.Login)
 	if err != nil {
 		s.logger.Errorf("get user err: %v", err)

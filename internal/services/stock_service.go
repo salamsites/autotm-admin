@@ -8,6 +8,7 @@ import (
 	"autotm-admin/internal/services/repository"
 	"context"
 	"fmt"
+	"net/http"
 	"time"
 
 	pb "autotm-admin/push_service_pb"
@@ -43,51 +44,67 @@ func NewStockService(logger *slog.Logger, clientPsql spsql.Client, repo storage.
 	}
 }
 
-func (s *StockService) CreateStock(ctx context.Context, stock dtos.CreateStockReq) (dtos.ID, error) {
+func (s *StockService) CreateStock(ctx context.Context, stock dtos.CreateStockReq, r *http.Request) (dtos.ID, error) {
 	var id dtos.ID
-	validate := helpers.GetValidator()
-	if err := validate.Struct(stock); err != nil {
-		s.logger.Errorf("validate err: %v", err)
-		return id, err
-	}
 
-	newStock := models.Stock{
-		UserID:      stock.UserID,
-		PhoneNumber: stock.PhoneNumber,
-		Email:       stock.Email,
-		StoreName:   stock.StoreName,
-		Address:     stock.Address,
-		RegionID:    stock.RegionID,
-		CityID:      stock.CityID,
-		Status:      stock.Status,
-		Description: stock.Description,
-		Location:    stock.Location,
-	}
+	trManager := manager.Must(trmpgx.NewDefaultFactory(s.clientPsql.Pool()))
 
-	stockID, err := s.repo.CreateStock(ctx, newStock)
-	if err != nil {
-		s.logger.Errorf("create err: %v", err)
-		return id, err
-	}
+	err := trManager.Do(ctx, func(ctx context.Context) error {
+		newStock := models.Stock{
+			UserID:      stock.UserID,
+			PhoneNumber: stock.PhoneNumber,
+			Email:       stock.Email,
+			StoreName:   stock.StoreName,
+			Address:     stock.Address,
+			RegionID:    stock.RegionID,
+			CityID:      stock.CityID,
+			Status:      stock.Status,
+			Description: stock.Description,
+			Location:    stock.Location,
+		}
 
-	id.ID = stockID
-	return id, nil
-}
+		stockID, err := s.repo.CreateStock(ctx, newStock)
+		if err != nil {
+			s.logger.Errorf("create err: %v", err)
+			return err
+		}
 
-func (s *StockService) UpdateStockFiles(ctx context.Context, stockID dtos.ID, images util.Media, logo interface{}) error {
-	if err := s.repo.UpdateStockImages(ctx, stockID.ID, images); err != nil {
-		s.logger.Errorf("failed to update stock images: %v", err)
-		return err
-	}
+		uploadResult, errUpload := s.minioFileClient.UploadFile(ctx, r, "image", stockID, helpers.StockImagesSize, util.StockBucket)
+		if errUpload.StatusCode != 0 {
+			s.logger.Error("failed to upload images", errUpload)
+			return err
+		}
 
-	if logo != "" {
-		if err := s.repo.UpdateStockLogo(ctx, stockID.ID, logo); err != nil {
+		logoFileHeaders := r.MultipartForm.File["logo"]
+		if len(logoFileHeaders) > 0 {
+			logoPath := fmt.Sprintf("%d/logo", stockID)
+			errLogo := s.minioImageClient.UploadImage(ctx, r, "logo", logoPath, helpers.StockLogoSize, util.StockBucket)
+			if errLogo.StatusCode != 0 {
+				s.logger.Error("failed to upload logo", errLogo)
+				return err
+			}
+		}
+
+		if err := s.repo.UpdateStockImages(ctx, stockID, uploadResult); err != nil {
+			s.logger.Errorf("failed to update stock images: %v", err)
+			return err
+		}
+
+		if err := s.repo.UpdateStockLogo(ctx, stockID, helpers.StockLogoSize); err != nil {
 			s.logger.Errorf("failed to update stock logo: %v", err)
 			return err
 		}
+
+		id.ID = stockID
+
+		return nil
+	})
+	if err != nil {
+		s.logger.Error("create stock transaction failed", err)
+		return id, err
 	}
 
-	return nil
+	return id, nil
 }
 
 func (s *StockService) GetStocks(ctx context.Context, limit, page int64, search, status string) (dtos.StocksResult, error) {
@@ -168,34 +185,67 @@ func (s *StockService) GetStockByID(ctx context.Context, stockID int64) (dtos.St
 	return result, nil
 }
 
-func (s *StockService) UpdateStock(ctx context.Context, stock dtos.UpdateStockReq) (dtos.ID, error) {
+func (s *StockService) UpdateStock(ctx context.Context, stock dtos.UpdateStockReq, r *http.Request) (dtos.ID, error) {
 	var id dtos.ID
-	validate := helpers.GetValidator()
-	if err := validate.Struct(stock); err != nil {
-		s.logger.Errorf("validate err: %v", err)
-		return id, err
-	}
 
-	newStock := models.Stock{
-		ID:          stock.ID,
-		UserID:      stock.UserID,
-		PhoneNumber: stock.PhoneNumber,
-		Email:       stock.Email,
-		StoreName:   stock.StoreName,
-		RegionID:    stock.RegionID,
-		CityID:      stock.CityID,
-		Address:     stock.Address,
-		Status:      stock.Status,
-		Description: stock.Description,
-	}
+	trManager := manager.Must(trmpgx.NewDefaultFactory(s.clientPsql.Pool()))
 
-	stockID, err := s.repo.UpdateStock(ctx, newStock)
+	err := trManager.Do(ctx, func(ctx context.Context) error {
+		newStock := models.Stock{
+			ID:          stock.ID,
+			UserID:      stock.UserID,
+			PhoneNumber: stock.PhoneNumber,
+			Email:       stock.Email,
+			StoreName:   stock.StoreName,
+			RegionID:    stock.RegionID,
+			CityID:      stock.CityID,
+			Address:     stock.Address,
+			Status:      stock.Status,
+			Description: stock.Description,
+		}
+
+		stockID, err := s.repo.UpdateStock(ctx, newStock)
+		if err != nil {
+			s.logger.Errorf("update stock err: %v", err)
+			return err
+		}
+
+		uploadResult, errUpload := s.minioFileClient.UploadFile(ctx, r, "image", stockID, helpers.StockImagesSize, util.StockBucket)
+		if errUpload.StatusCode != 0 {
+			s.logger.Error("failed to upload images", errUpload)
+			return err
+		}
+
+		logoFileHeaders := r.MultipartForm.File["logo"]
+		if len(logoFileHeaders) > 0 {
+			logoPath := fmt.Sprintf("%d/logo", stockID)
+			errLogo := s.minioImageClient.UploadImage(ctx, r, "logo", logoPath, helpers.StockLogoSize, util.StockBucket)
+			if errLogo.StatusCode != 0 {
+				s.logger.Error("failed to upload logo", errLogo)
+				return err
+			}
+		}
+
+		if err := s.repo.UpdateStockImages(ctx, stockID, uploadResult); err != nil {
+			s.logger.Errorf("failed to update stock images: %v", err)
+			return err
+		}
+
+		if err := s.repo.UpdateStockLogo(ctx, stockID, helpers.StockLogoSize); err != nil {
+			s.logger.Errorf("failed to update stock logo: %v", err)
+			return err
+		}
+
+		id.ID = stockID
+
+		return nil
+	})
+
 	if err != nil {
-		s.logger.Errorf("update stock err: %v", err)
+		s.logger.Error("update stock transaction failed", err)
 		return id, err
 	}
 
-	id.ID = stockID
 	return id, nil
 }
 

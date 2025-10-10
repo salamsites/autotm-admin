@@ -2,6 +2,7 @@ package http
 
 import (
 	"autotm-admin/internal/dtos"
+	"autotm-admin/internal/helpers"
 	"autotm-admin/internal/services/repository"
 	"encoding/json"
 	"io"
@@ -70,6 +71,15 @@ func (h *RegionsHandler) v1CreateRegion(w http.ResponseWriter, r *http.Request) 
 		result.Message = errData.Error()
 		h.logger.Error("unable to unmarshal request body", errData)
 		return shttp.UnprocessableEntity.SetData(result)
+	}
+
+	// Validate
+	validate := helpers.GetValidator()
+	err := validate.Struct(regionDTO)
+	if err != nil {
+		result.Message = err.Error()
+		h.logger.Errorln(err)
+		return shttp.BadRequest.SetData(result)
 	}
 
 	id, err := h.service.CreateRegion(r.Context(), regionDTO)
@@ -160,6 +170,15 @@ func (h *RegionsHandler) v1UpdateRegion(w http.ResponseWriter, r *http.Request) 
 		return shttp.UnprocessableEntity.SetData(result)
 	}
 
+	// Validate
+	validate := helpers.GetValidator()
+	err := validate.Struct(regionDTO)
+	if err != nil {
+		result.Message = err.Error()
+		h.logger.Errorln(err)
+		return shttp.BadRequest.SetData(result)
+	}
+
 	id, err := h.service.UpdateRegion(r.Context(), regionDTO)
 	if err != nil {
 		result.Message = err.Error()
@@ -244,6 +263,15 @@ func (h *RegionsHandler) v1CreateCity(w http.ResponseWriter, r *http.Request) sh
 		result.Message = errData.Error()
 		h.logger.Error("unable to unmarshal request body", errData)
 		return shttp.UnprocessableEntity.SetData(result)
+	}
+
+	// Validate
+	validate := helpers.GetValidator()
+	err := validate.Struct(cityDTO)
+	if err != nil {
+		result.Message = err.Error()
+		h.logger.Errorln(err)
+		return shttp.BadRequest.SetData(result)
 	}
 
 	id, err := h.service.CreateCity(r.Context(), cityDTO)
@@ -341,6 +369,15 @@ func (h *RegionsHandler) v1UpdateCity(w http.ResponseWriter, r *http.Request) sh
 		result.Message = errData.Error()
 		h.logger.Error("unable to unmarshal request body", errData)
 		return shttp.UnprocessableEntity.SetData(result)
+	}
+
+	// Validate
+	validate := helpers.GetValidator()
+	err := validate.Struct(cityDTO)
+	if err != nil {
+		result.Message = err.Error()
+		h.logger.Errorln(err)
+		return shttp.BadRequest.SetData(result)
 	}
 
 	id, err := h.service.UpdateCity(r.Context(), cityDTO)

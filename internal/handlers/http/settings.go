@@ -2,6 +2,7 @@ package http
 
 import (
 	"autotm-admin/internal/dtos"
+	"autotm-admin/internal/helpers"
 	"autotm-admin/internal/services/repository"
 	"encoding/json"
 	"io"
@@ -72,6 +73,15 @@ func (h *SettingsHandler) v1CreateRole(w http.ResponseWriter, r *http.Request) s
 		result.Message = errData.Error()
 		h.logger.Error("unable to unmarshal request body", errData)
 		return shttp.UnprocessableEntity.SetData(result)
+	}
+
+	// Validate
+	validate := helpers.GetValidator()
+	err := validate.Struct(roleDTO)
+	if err != nil {
+		result.Message = err.Error()
+		h.logger.Errorln(err)
+		return shttp.BadRequest.SetData(result)
 	}
 
 	id, err := h.service.CreateRole(r.Context(), roleDTO)
@@ -204,6 +214,15 @@ func (h *SettingsHandler) v1UpdateRole(w http.ResponseWriter, r *http.Request) s
 		return shttp.UnprocessableEntity.SetData(result)
 	}
 
+	// Validate
+	validate := helpers.GetValidator()
+	err := validate.Struct(roleDTO)
+	if err != nil {
+		result.Message = err.Error()
+		h.logger.Errorln(err)
+		return shttp.BadRequest.SetData(result)
+	}
+
 	id, err := h.service.UpdateRole(r.Context(), roleDTO)
 	if err != nil {
 		result.Message = err.Error()
@@ -288,6 +307,15 @@ func (h *SettingsHandler) v1CreateUser(w http.ResponseWriter, r *http.Request) s
 		result.Message = errData.Error()
 		h.logger.Error("unable to unmarshal request body", errData)
 		return shttp.UnprocessableEntity.SetData(result)
+	}
+
+	// Validate
+	validate := helpers.GetValidator()
+	err := validate.Struct(userDTO)
+	if err != nil {
+		result.Message = err.Error()
+		h.logger.Errorln(err)
+		return shttp.BadRequest.SetData(result)
 	}
 
 	id, err := h.service.CreateUser(r.Context(), userDTO)
@@ -378,6 +406,15 @@ func (h *SettingsHandler) v1UpdateUser(w http.ResponseWriter, r *http.Request) s
 		return shttp.UnprocessableEntity.SetData(result)
 	}
 
+	// Validate
+	validate := helpers.GetValidator()
+	err := validate.Struct(userDTO)
+	if err != nil {
+		result.Message = err.Error()
+		h.logger.Errorln(err)
+		return shttp.BadRequest.SetData(result)
+	}
+
 	id, err := h.service.UpdateUser(r.Context(), userDTO)
 	if err != nil {
 		result.Message = err.Error()
@@ -461,6 +498,15 @@ func (h *SettingsHandler) v1Login(w http.ResponseWriter, r *http.Request) shttp.
 	if errData != nil {
 		result.Message = errData.Error()
 		h.logger.Error("unable to unmarshal request body", errData)
+		return shttp.BadRequest.SetData(result)
+	}
+
+	// Validate
+	validate := helpers.GetValidator()
+	err := validate.Struct(req)
+	if err != nil {
+		result.Message = err.Error()
+		h.logger.Errorln(err)
 		return shttp.BadRequest.SetData(result)
 	}
 
