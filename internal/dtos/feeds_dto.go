@@ -3,6 +3,33 @@ package dtos
 import "time"
 
 type Car struct {
+	Id          int64       `json:"id"`
+	StockId     *int64      `json:"stock_id"`
+	StoreName   *string     `json:"store_name"`
+	BrandId     int64       `json:"brand_id"`
+	BrandName   *string     `json:"brand_name"`
+	ModelId     int64       `json:"model_id"`
+	ModelName   *string     `json:"model_name"`
+	Year        int64       `json:"year"`
+	CityId      int64       `json:"city_id"`
+	CityNameTM  *string     `json:"city_name_tm"`
+	CityNameEN  *string     `json:"city_name_en"`
+	CityNameRU  *string     `json:"city_name_ru"`
+	Name        *string     `json:"name"`
+	Mail        *string     `json:"mail"`
+	PhoneNumber string      `json:"phone_number"`
+	Price       int64       `json:"price"`
+	Images      interface{} `json:"images"`
+	Status      string      `json:"status"`
+	CreatedAt   time.Time   `json:"created_at"`
+}
+
+type CarsResp struct {
+	Cars  []Car `json:"cars"`
+	Count int64 `json:"count"`
+}
+
+type GetCarByID struct {
 	Id             int64       `json:"id"`
 	UserId         int64       `json:"user_id"`
 	UserName       *string     `json:"user_name"`
@@ -42,11 +69,6 @@ type Car struct {
 	UpdatedAt      time.Time   `json:"updated_at"`
 }
 
-type CarsResp struct {
-	Cars  []Car `json:"cars"`
-	Count int64 `json:"count"`
-}
-
 type UpdateCarStatus struct {
 	ID      int64  `json:"id"`
 	StockID int64  `json:"stock_id"`
@@ -55,6 +77,33 @@ type UpdateCarStatus struct {
 }
 
 type Truck struct {
+	Id          int64       `json:"id"`
+	StockId     *int64      `json:"stock_id"`
+	StoreName   *string     `json:"store_name"`
+	BrandId     int64       `json:"brand_id"`
+	BrandName   *string     `json:"brand_name"`
+	ModelId     int64       `json:"model_id"`
+	ModelName   *string     `json:"model_name"`
+	Price       int64       `json:"price"`
+	Year        int64       `json:"year"`
+	CityId      int64       `json:"city_id"`
+	CityNameTM  *string     `json:"city_name_tm"`
+	CityNameEN  *string     `json:"city_name_en"`
+	CityNameRU  *string     `json:"city_name_ru"`
+	Name        *string     `json:"name"`
+	Mail        *string     `json:"mail"`
+	PhoneNumber string      `json:"phone_number"`
+	Images      interface{} `json:"images"`
+	Status      string      `json:"status"`
+	CreatedAt   time.Time   `json:"created_at"`
+}
+
+type TrucksResp struct {
+	Trucks []Truck `json:"trucks"`
+	Count  int64   `json:"count"`
+}
+
+type GetTruckByID struct {
 	Id              int64       `json:"id"`
 	UserId          int64       `json:"user_id"`
 	UserName        *string     `json:"user_name"`
@@ -111,11 +160,6 @@ type Truck struct {
 	UpdatedAt       time.Time   `json:"updated_at"`
 }
 
-type TrucksResp struct {
-	Trucks []Truck `json:"trucks"`
-	Count  int64   `json:"count"`
-}
-
 type UpdateTruckStatus struct {
 	ID      int64  `json:"id"`
 	StockID int64  `json:"stock_id"`
@@ -124,6 +168,33 @@ type UpdateTruckStatus struct {
 }
 
 type Moto struct {
+	Id          int64       `json:"id"`
+	StockId     *int64      `json:"stock_id"`
+	StoreName   *string     `json:"store_name"`
+	BrandId     int64       `json:"brand_id"`
+	BrandName   *string     `json:"brand_name"`
+	ModelId     int64       `json:"model_id"`
+	ModelName   *string     `json:"model_name"`
+	Year        int32       `json:"year"`
+	Price       int64       `json:"price"`
+	CityId      *int64      `json:"city_id"`
+	CityNameTM  *string     `json:"city_name_tm"`
+	CityNameEN  *string     `json:"city_name_en"`
+	CityNameRU  *string     `json:"city_name_ru"`
+	Name        *string     `json:"name"`
+	Mail        *string     `json:"mail"`
+	PhoneNumber string      `json:"phone_number"`
+	Images      interface{} `json:"images"`
+	Status      string      `json:"status"`
+	CreatedAt   time.Time   `json:"created_at"`
+}
+
+type MotoResp struct {
+	Motors []Moto `json:"motors"`
+	Count  int64  `json:"count"`
+}
+
+type GetMotoByID struct {
 	Id                  int64       `json:"id"`
 	UserId              *int64      `json:"user_id"`
 	UserName            *string     `json:"user_name"`
@@ -164,11 +235,6 @@ type Moto struct {
 	LoadCapacity        *float64    `json:"load_capacity"`
 	CreatedAt           time.Time   `json:"created_at"`
 	UpdatedAt           time.Time   `json:"updated_at"`
-}
-
-type MotoResp struct {
-	Motors []Moto `json:"motors"`
-	Count  int64  `json:"count"`
 }
 
 type UpdateMotoStatus struct {

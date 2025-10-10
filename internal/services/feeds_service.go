@@ -59,43 +59,25 @@ func (s *CarsService) GetCars(ctx context.Context, limit, page int64, search, st
 	var dtoCars []dtos.Car
 	for _, car := range cars {
 		dtoCars = append(dtoCars, dtos.Car{
-			Id:             car.Id,
-			UserId:         car.UserId,
-			UserName:       car.UserName,
-			StockId:        car.StockId,
-			StoreName:      car.StoreName,
-			BrandId:        car.BrandId,
-			BrandName:      car.BrandName,
-			ModelId:        car.ModelId,
-			ModelName:      car.ModelName,
-			Year:           car.Year,
-			Mileage:        car.Mileage,
-			Color:          car.Color,
-			EngineCapacity: car.EngineCapacity,
-			EngineType:     car.EngineType,
-			BodyId:         car.BodyId,
-			BodyNameTM:     car.BodyNameTM,
-			BodyNameEN:     car.BodyNameEN,
-			BodyNameRU:     car.BodyNameRU,
-			Transmission:   car.Transmission,
-			DriveType:      car.DriveType,
-			Vin:            car.Vin,
-			Description:    car.Description,
-			CityId:         car.CityId,
-			CityNameTM:     car.CityNameTM,
-			CityNameEN:     car.CityNameEN,
-			CityNameRU:     car.CityNameRU,
-			Name:           car.Name,
-			Mail:           car.Mail,
-			PhoneNumber:    car.PhoneNumber,
-			Price:          car.Price,
-			IsComment:      car.IsComment,
-			IsExchange:     car.IsExchange,
-			IsCredit:       car.IsCredit,
-			Images:         car.Images,
-			Status:         car.Status,
-			CreatedAt:      car.CreatedAt,
-			UpdatedAt:      car.UpdatedAt,
+			Id:          car.Id,
+			StockId:     car.StockId,
+			StoreName:   car.StoreName,
+			BrandId:     car.BrandId,
+			BrandName:   car.BrandName,
+			ModelId:     car.ModelId,
+			ModelName:   car.ModelName,
+			Year:        car.Year,
+			CityId:      car.CityId,
+			CityNameTM:  car.CityNameTM,
+			CityNameEN:  car.CityNameEN,
+			CityNameRU:  car.CityNameRU,
+			Name:        car.Name,
+			Mail:        car.Mail,
+			PhoneNumber: car.PhoneNumber,
+			Price:       car.Price,
+			Images:      car.Images,
+			Status:      car.Status,
+			CreatedAt:   car.CreatedAt,
 		})
 	}
 
@@ -107,14 +89,14 @@ func (s *CarsService) GetCars(ctx context.Context, limit, page int64, search, st
 	return resp, nil
 }
 
-func (s *CarsService) GetCarByID(ctx context.Context, id int64) (dtos.Car, error) {
+func (s *CarsService) GetCarByID(ctx context.Context, id int64) (dtos.GetCarByID, error) {
 	car, err := s.repo.GetCarByID(ctx, id)
 	if err != nil {
 		s.logger.Errorf("get cars by id err: %v", err)
-		return dtos.Car{}, err
+		return dtos.GetCarByID{}, err
 	}
 
-	result := dtos.Car{
+	result := dtos.GetCarByID{
 		Id:             car.Id,
 		UserId:         car.UserId,
 		UserName:       car.UserName,
@@ -259,60 +241,25 @@ func (s *CarsService) GetTrucks(ctx context.Context, limit, page int64, search, 
 	var dtoTrucks []dtos.Truck
 	for _, truck := range trucks {
 		dtoTrucks = append(dtoTrucks, dtos.Truck{
-			Id:              truck.Id,
-			UserId:          truck.UserId,
-			UserName:        truck.UserName,
-			StockId:         truck.StockId,
-			StoreName:       truck.StoreName,
-			BrandId:         truck.BrandId,
-			BrandName:       truck.BrandName,
-			LoadCapacity:    truck.LoadCapacity,
-			Price:           truck.Price,
-			BodyType:        truck.BodyType,
-			DriveType:       truck.DriveType,
-			Transmission:    truck.Transmission,
-			EngineType:      truck.EngineType,
-			ModelId:         truck.ModelId,
-			ModelName:       truck.ModelName,
-			Year:            truck.Year,
-			Seats:           truck.Seats,
-			CabType:         truck.CabType,
-			WheelFormula:    truck.WheelFormula,
-			Chassis:         truck.Chassis,
-			CabSuspension:   truck.CabSuspension,
-			BusType:         truck.BusType,
-			SuspensionType:  truck.SuspensionType,
-			Brakes:          truck.Brakes,
-			Axles:           truck.Axles,
-			EngineHours:     truck.EngineHours,
-			VehicleType:     truck.VehicleType,
-			EngineCapacity:  truck.EngineCapacity,
-			ForkliftType:    truck.ForkliftType,
-			LiftingCapacity: truck.LiftingCapacity,
-			Mileage:         truck.Mileage,
-			ExcavatorType:   truck.ExcavatorType,
-			BulldozerType:   truck.BulldozerType,
-			Color:           truck.Color,
-			Vin:             truck.Vin,
-			BodyId:          truck.BodyId,
-			BodyNameTM:      truck.BodyNameTM,
-			BodyNameEN:      truck.BodyNameEN,
-			BodyNameRU:      truck.BodyNameRU,
-			Description:     truck.Description,
-			CityId:          truck.CityId,
-			CityNameTM:      truck.CityNameTM,
-			CityNameEN:      truck.CityNameEN,
-			CityNameRU:      truck.CityNameRU,
-			Name:            truck.Name,
-			Mail:            truck.Mail,
-			PhoneNumber:     truck.PhoneNumber,
-			IsComment:       truck.IsComment,
-			IsExchange:      truck.IsExchange,
-			IsCredit:        truck.IsCredit,
-			Images:          truck.Images,
-			Status:          truck.Status,
-			CreatedAt:       truck.CreatedAt,
-			UpdatedAt:       truck.UpdatedAt,
+			Id:          truck.Id,
+			StockId:     truck.StockId,
+			StoreName:   truck.StoreName,
+			BrandId:     truck.BrandId,
+			BrandName:   truck.BrandName,
+			Price:       truck.Price,
+			ModelId:     truck.ModelId,
+			ModelName:   truck.ModelName,
+			Year:        truck.Year,
+			CityId:      truck.CityId,
+			CityNameTM:  truck.CityNameTM,
+			CityNameEN:  truck.CityNameEN,
+			CityNameRU:  truck.CityNameRU,
+			Name:        truck.Name,
+			Mail:        truck.Mail,
+			PhoneNumber: truck.PhoneNumber,
+			Images:      truck.Images,
+			Status:      truck.Status,
+			CreatedAt:   truck.CreatedAt,
 		})
 	}
 
@@ -324,14 +271,14 @@ func (s *CarsService) GetTrucks(ctx context.Context, limit, page int64, search, 
 	return resp, nil
 }
 
-func (s *CarsService) GetTruckByID(ctx context.Context, id int64) (dtos.Truck, error) {
+func (s *CarsService) GetTruckByID(ctx context.Context, id int64) (dtos.GetTruckByID, error) {
 	truck, err := s.repo.GetTruckByID(ctx, id)
 	if err != nil {
 		s.logger.Errorf("get truck by id err: %v", err)
-		return dtos.Truck{}, err
+		return dtos.GetTruckByID{}, err
 	}
 
-	result := dtos.Truck{
+	result := dtos.GetTruckByID{
 		Id:              truck.Id,
 		UserId:          truck.UserId,
 		UserName:        truck.UserName,
@@ -511,45 +458,25 @@ func (s *CarsService) GetMotors(ctx context.Context, limit, page int64, search, 
 	var dtoMotors []dtos.Moto
 	for _, moto := range motors {
 		dtoMotors = append(dtoMotors, dtos.Moto{
-			Id:                  moto.Id,
-			UserId:              moto.UserId,
-			UserName:            moto.UserName,
-			StockId:             moto.StockId,
-			StoreName:           moto.StoreName,
-			BodyId:              moto.BodyId,
-			BodyNameTM:          moto.BodyNameTM,
-			BodyNameEN:          moto.BodyNameEN,
-			BodyNameRU:          moto.BodyNameRU,
-			BrandId:             moto.BrandId,
-			BrandName:           moto.BrandName,
-			ModelId:             moto.ModelId,
-			ModelName:           moto.ModelName,
-			TypeMotorcycles:     moto.TypeMotorcycles,
-			Year:                moto.Year,
-			Price:               moto.Price,
-			Volume:              moto.Volume,
-			EngineType:          moto.EngineType,
-			NumberOfClockCycles: moto.NumberOfClockCycles,
-			Mileage:             moto.Mileage,
-			AirType:             moto.AirType,
-			Color:               moto.Color,
-			Vin:                 moto.Vin,
-			Description:         moto.Description,
-			CityId:              moto.CityId,
-			CityNameTM:          moto.CityNameTM,
-			CityNameEN:          moto.CityNameEN,
-			CityNameRU:          moto.CityNameRU,
-			Name:                moto.Name,
-			Mail:                moto.Mail,
-			PhoneNumber:         moto.PhoneNumber,
-			IsComment:           moto.IsComment,
-			IsExchange:          moto.IsExchange,
-			IsCredit:            moto.IsCredit,
-			Images:              moto.Images,
-			Status:              moto.Status,
-			Options:             moto.Options,
-			CreatedAt:           moto.CreatedAt,
-			UpdatedAt:           moto.UpdatedAt,
+			Id:          moto.Id,
+			StockId:     moto.StockId,
+			StoreName:   moto.StoreName,
+			BrandId:     moto.BrandId,
+			BrandName:   moto.BrandName,
+			ModelId:     moto.ModelId,
+			ModelName:   moto.ModelName,
+			Year:        moto.Year,
+			Price:       moto.Price,
+			CityId:      moto.CityId,
+			CityNameTM:  moto.CityNameTM,
+			CityNameEN:  moto.CityNameEN,
+			CityNameRU:  moto.CityNameRU,
+			Name:        moto.Name,
+			Mail:        moto.Mail,
+			PhoneNumber: moto.PhoneNumber,
+			Images:      moto.Images,
+			Status:      moto.Status,
+			CreatedAt:   moto.CreatedAt,
 		})
 	}
 
@@ -561,14 +488,14 @@ func (s *CarsService) GetMotors(ctx context.Context, limit, page int64, search, 
 	return resp, nil
 }
 
-func (s *CarsService) GetMotoByID(ctx context.Context, id int64) (dtos.Moto, error) {
+func (s *CarsService) GetMotoByID(ctx context.Context, id int64) (dtos.GetMotoByID, error) {
 	moto, err := s.repo.GetMotoByID(ctx, id)
 	if err != nil {
 		s.logger.Errorf("get moto by id err: %v", err)
-		return dtos.Moto{}, err
+		return dtos.GetMotoByID{}, err
 	}
 
-	result := dtos.Moto{
+	result := dtos.GetMotoByID{
 		Id:                  moto.Id,
 		UserId:              moto.UserId,
 		UserName:            moto.UserName,
@@ -774,43 +701,25 @@ func (s *CarsService) SearchCars(ctx context.Context, ft *filter.CarFilter) ([]d
 
 	for i, car := range cars {
 		dtoCars[i] = dtos.Car{
-			Id:             car.ID,
-			UserId:         car.UserId,
-			UserName:       car.UserName,
-			StockId:        car.StockId,
-			StoreName:      car.StoreName,
-			BrandId:        car.BrandId,
-			BrandName:      car.BrandName,
-			ModelId:        car.ModelId,
-			ModelName:      car.ModelName,
-			Year:           car.Year,
-			Price:          car.Price,
-			Color:          car.Color,
-			Vin:            car.Vin,
-			Description:    car.Description,
-			CityId:         car.CityId,
-			CityNameTM:     car.CityNameTM,
-			CityNameEN:     car.CityNameEN,
-			CityNameRU:     car.CityNameRU,
-			Name:           car.Name,
-			Mail:           car.Mail,
-			PhoneNumber:    car.PhoneNumber,
-			IsComment:      car.IsComment,
-			IsExchange:     car.IsExchange,
-			IsCredit:       car.IsCredit,
-			Images:         car.Images,
-			Status:         car.Status,
-			Mileage:        car.Mileage,
-			EngineCapacity: car.EngineCapacity,
-			EngineType:     car.EngineType,
-			BodyId:         car.BodyId,
-			BodyNameTM:     car.BodyNameTM,
-			BodyNameEN:     car.BodyNameEN,
-			BodyNameRU:     car.BodyNameRU,
-			Transmission:   car.Transmission,
-			DriveType:      car.DriveType,
-			CreatedAt:      car.CreatedAt,
-			UpdatedAt:      car.UpdatedAt,
+			Id:          car.ID,
+			StockId:     car.StockId,
+			StoreName:   car.StoreName,
+			BrandId:     car.BrandId,
+			BrandName:   car.BrandName,
+			ModelId:     car.ModelId,
+			ModelName:   car.ModelName,
+			Year:        car.Year,
+			Price:       car.Price,
+			CityId:      car.CityId,
+			CityNameTM:  car.CityNameTM,
+			CityNameEN:  car.CityNameEN,
+			CityNameRU:  car.CityNameRU,
+			Name:        car.Name,
+			Mail:        car.Mail,
+			PhoneNumber: car.PhoneNumber,
+			Images:      car.Images,
+			Status:      car.Status,
+			CreatedAt:   car.CreatedAt,
 		}
 	}
 

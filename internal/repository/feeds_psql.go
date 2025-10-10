@@ -30,17 +30,22 @@ func (r *CarsPsqlRepository) GetCars(ctx context.Context, limit, page int64, sea
 
 	query := `
 		SELECT
-			cr.id, cr.user_id, u.full_name, cr.stock_id, s.store_name, cr.brand_id, b.name,
-			cr.model_id, m.name, cr.year, cr.mileage, cr.color, cr.engine_capacity, cr.engine_type,
-			cr.body_id, bt.name_tm, bt.name_en, bt.name_ru, cr.transmission, cr.drive_type, cr.vin, 
-			cr.description, cr.city_id, cs.name_tm, cs.name_en, cs.name_ru, cr.name, cr.mail, cr.phone_number, 
-			cr.price, cr.is_comment, cr.is_exchange, cr.is_credit, cr.images, cr.status, cr.created_at, cr.updated_at
+			cr.id,
+			-- Stock
+			cr.stock_id, s.store_name,
+			-- Brand
+			cr.brand_id, b.name,
+			-- Model
+			cr.model_id, m.name, 
+			-- City
+			cr.city_id, cs.name_tm, cs.name_en, cs.name_ru, 
+			cr.name, cr.mail, cr.phone_number, 
+			cr.year, cr.price, cr.images, 
+			cr.status, cr.created_at
 		FROM cars cr
-			LEFT JOIN users u ON u.id = cr.user_id 
 			LEFT JOIN stocks s ON s.id = cr.stock_id
 			LEFT JOIN brands b ON b.id = cr.brand_id
 			LEFT JOIN models m ON m.id = cr.model_id
-			LEFT JOIN body_types bt ON bt.id = cr.body_id
 			LEFT JOIN cities cs ON cs.id = cr.city_id
 	`
 
@@ -54,22 +59,12 @@ func (r *CarsPsqlRepository) GetCars(ctx context.Context, limit, page int64, sea
 	// Search condition
 	if search != "" {
 		searchCondition := `
-			(u.full_name ILIKE '%' || @search || '%' OR 
-			 s.store_name ILIKE '%' || @search || '%' OR 
+			(s.store_name ILIKE '%' || @search || '%' OR 
 			 b.name ILIKE '%' || @search || '%' OR
 			 m.name ILIKE '%' || @search || '%' OR
-			 bt.name_tm ILIKE '%' || @search || '%' OR
-			 bt.name_en ILIKE '%' || @search || '%' OR
-			 bt.name_ru ILIKE '%' || @search || '%' OR
 			 cs.name_tm ILIKE '%' || @search || '%' OR
 			 cs.name_en ILIKE '%' || @search || '%' OR
 			 cs.name_ru ILIKE '%' || @search || '%' OR
-			 cr.color ILIKE '%' || @search || '%' OR
-			 cr.engine_type ILIKE '%' || @search || '%' OR
-			 cr.transmission ILIKE '%' || @search || '%' OR
-			 cr.drive_type ILIKE '%' || @search || '%' OR
-			 cr.vin ILIKE '%' || @search || '%' OR
-			 cr.description ILIKE '%' || @search || '%' OR
 			 cr.name ILIKE '%' || @search || '%' OR
 			 cr.phone_number ILIKE '%' || @search || '%' OR
 			 CAST(cr.year AS TEXT) ILIKE '%' || @search || '%' OR
@@ -105,27 +100,12 @@ func (r *CarsPsqlRepository) GetCars(ctx context.Context, limit, page int64, sea
 
 		err := rows.Scan(
 			&car.Id,
-			&car.UserId,
-			&car.UserName,
 			&car.StockId,
 			&car.StoreName,
 			&car.BrandId,
 			&car.BrandName,
 			&car.ModelId,
 			&car.ModelName,
-			&car.Year,
-			&car.Mileage,
-			&car.Color,
-			&car.EngineCapacity,
-			&car.EngineType,
-			&car.BodyId,
-			&car.BodyNameTM,
-			&car.BodyNameEN,
-			&car.BodyNameRU,
-			&car.Transmission,
-			&car.DriveType,
-			&car.Vin,
-			&car.Description,
 			&car.CityId,
 			&car.CityNameTM,
 			&car.CityNameEN,
@@ -133,14 +113,11 @@ func (r *CarsPsqlRepository) GetCars(ctx context.Context, limit, page int64, sea
 			&car.Name,
 			&car.Mail,
 			&car.PhoneNumber,
+			&car.Year,
 			&car.Price,
-			&car.IsComment,
-			&car.IsExchange,
-			&car.IsCredit,
 			&car.Images,
 			&car.Status,
 			&car.CreatedAt,
-			&car.UpdatedAt,
 		)
 		if err != nil {
 			r.logger.Errorf("Error getting cars: %s", err)
@@ -152,11 +129,9 @@ func (r *CarsPsqlRepository) GetCars(ctx context.Context, limit, page int64, sea
 			SELECT 
     			COUNT(cr.id) 
 			FROM cars cr
-				LEFT JOIN users u ON u.id = cr.user_id 
 				LEFT JOIN stocks s ON s.id = cr.stock_id
 				LEFT JOIN brands b ON b.id = cr.brand_id
 				LEFT JOIN models m ON m.id = cr.model_id
-				LEFT JOIN body_types bt ON bt.id = cr.body_id
 				LEFT JOIN cities cs ON cs.id = cr.city_id
 		`
 	countArgs := pgx.NamedArgs{}
@@ -185,11 +160,23 @@ func (r *CarsPsqlRepository) GetCarByID(ctx context.Context, id int64) (models.C
 
 	query := `
 		SELECT
-			cr.id, cr.user_id, u.full_name, cr.stock_id, s.store_name, cr.brand_id, b.name,
-			cr.model_id, m.name, cr.year, cr.mileage, cr.color, cr.engine_capacity, cr.engine_type,
-			cr.body_id, bt.name_tm, bt.name_en, bt.name_ru, cr.transmission, cr.drive_type, cr.vin, 
-			cr.description, cr.city_id, cs.name_tm, cs.name_en, cs.name_ru, cr.name, cr.mail, cr.phone_number, 
-			cr.price, cr.is_comment, cr.is_exchange, cr.is_credit, cr.images, cr.status, cr.created_at, cr.updated_at
+			cr.id,
+			-- User
+			cr.user_id, u.full_name, 
+			-- Stock
+			cr.stock_id, s.store_name, 
+			-- Brand
+			cr.brand_id, b.name,
+			-- Model
+			cr.model_id, m.name, 
+			cr.year, cr.mileage, cr.color, cr.engine_capacity, cr.engine_type,
+			-- Body
+			cr.body_id, bt.name_tm, bt.name_en, bt.name_ru, 
+			cr.transmission, cr.drive_type, cr.vin, cr.description, 
+			-- City
+			cr.city_id, cs.name_tm, cs.name_en, cs.name_ru, 
+			cr.name, cr.mail, cr.phone_number, cr.price, cr.is_comment, 
+			cr.is_exchange, cr.is_credit, cr.images, cr.status, cr.created_at, cr.updated_at
 		FROM cars cr
 			LEFT JOIN users u ON u.id = cr.user_id 
 			LEFT JOIN stocks s ON s.id = cr.stock_id
@@ -251,19 +238,21 @@ func (r *CarsPsqlRepository) GetTrucks(ctx context.Context, limit, page int64, s
 
 	query := `
 		SELECT
-			t.id, t.user_id, u.full_name, t.stock_id, s.store_name, t.brand_id, b.name, t.load_capacity, t.price, 
-			t.body_type, t.drive_type, t.transmission, t.engine_type, t.model_id, m.name, t.year, t.seats, 
-			t.cab_type, t.wheel_formula, t.chassis, t.cab_suspension, t.bus_type, t.suspension_type, t.brakes, 
-			t.axles, t.engine_hours, t.vehicle_type, t.engine_capacity, t.forklift_type, t.lifting_capacity, 
-			t.mileage, t.excavator_type, t.bulldozer_type, t.color, t.vin, t.body_id, bt.name_tm, bt.name_en, bt.name_ru, 
-			t.description, t.city_id, cs.name_tm, cs.name_en, cs.name_ru, t.name, t.mail, t.phone_number, t.is_comment, 
-			t.is_exchange, t.is_credit, t.images, t.status, t.created_at, t.updated_at
+			t.id, 
+			-- Stock
+			t.stock_id, s.store_name, 
+			-- Brand
+			t.brand_id, b.name,
+			-- Model
+			t.model_id, m.name,
+			-- City
+			t.city_id, cs.name_tm, cs.name_en, cs.name_ru, 
+			t.name, t.mail, t.phone_number, t.year,
+			t.price, t.images, t.status, t.created_at
 		FROM trucks t
-			LEFT JOIN users u ON u.id = t.user_id 
 			LEFT JOIN stocks s ON s.id = t.stock_id
 			LEFT JOIN brands b ON b.id = t.brand_id
 			LEFT JOIN models m ON m.id = t.model_id
-			LEFT JOIN body_types bt ON bt.id = t.body_id
 			LEFT JOIN cities cs ON cs.id = t.city_id
 	`
 
@@ -277,22 +266,12 @@ func (r *CarsPsqlRepository) GetTrucks(ctx context.Context, limit, page int64, s
 	// Search condition
 	if search != "" {
 		searchCondition := `
-			(u.full_name ILIKE '%' || @search || '%' OR 
-			 s.store_name ILIKE '%' || @search || '%' OR 
+			(s.store_name ILIKE '%' || @search || '%' OR 
 			 b.name ILIKE '%' || @search || '%' OR
 			 m.name ILIKE '%' || @search || '%' OR
-			 bt.name_tm ILIKE '%' || @search || '%' OR
-			 bt.name_en ILIKE '%' || @search || '%' OR
-			 bt.name_ru ILIKE '%' || @search || '%' OR
 			 cs.name_tm ILIKE '%' || @search || '%' OR
 			 cs.name_en ILIKE '%' || @search || '%' OR
 			 cs.name_ru ILIKE '%' || @search || '%' OR
-			 t.color ILIKE '%' || @search || '%' OR
-			 t.engine_type ILIKE '%' || @search || '%' OR
-			 t.transmission ILIKE '%' || @search || '%' OR
-			 t.drive_type ILIKE '%' || @search || '%' OR
-			 t.vin ILIKE '%' || @search || '%' OR
-			 t.description ILIKE '%' || @search || '%' OR
 			 t.name ILIKE '%' || @search || '%' OR
 			 t.phone_number ILIKE '%' || @search || '%' OR
 			 CAST(t.year AS TEXT) ILIKE '%' || @search || '%' OR
@@ -328,45 +307,14 @@ func (r *CarsPsqlRepository) GetTrucks(ctx context.Context, limit, page int64, s
 
 		err := rows.Scan(
 			&truck.Id,
-			&truck.UserId,
-			&truck.UserName,
 			&truck.StockId,
 			&truck.StoreName,
 			&truck.BrandId,
 			&truck.BrandName,
-			&truck.LoadCapacity,
 			&truck.Price,
-			&truck.BodyType,
-			&truck.DriveType,
-			&truck.Transmission,
-			&truck.EngineType,
 			&truck.ModelId,
 			&truck.ModelName,
 			&truck.Year,
-			&truck.Seats,
-			&truck.CabType,
-			&truck.WheelFormula,
-			&truck.Chassis,
-			&truck.CabSuspension,
-			&truck.BusType,
-			&truck.SuspensionType,
-			&truck.Brakes,
-			&truck.Axles,
-			&truck.EngineHours,
-			&truck.VehicleType,
-			&truck.EngineCapacity,
-			&truck.ForkliftType,
-			&truck.LiftingCapacity,
-			&truck.Mileage,
-			&truck.ExcavatorType,
-			&truck.BulldozerType,
-			&truck.Color,
-			&truck.Vin,
-			&truck.BodyId,
-			&truck.BodyNameTM,
-			&truck.BodyNameEN,
-			&truck.BodyNameRU,
-			&truck.Description,
 			&truck.CityId,
 			&truck.CityNameTM,
 			&truck.CityNameEN,
@@ -374,13 +322,11 @@ func (r *CarsPsqlRepository) GetTrucks(ctx context.Context, limit, page int64, s
 			&truck.Name,
 			&truck.Mail,
 			&truck.PhoneNumber,
-			&truck.IsComment,
-			&truck.IsExchange,
-			&truck.IsCredit,
+			&truck.Year,
+			&truck.Price,
 			&truck.Images,
 			&truck.Status,
 			&truck.CreatedAt,
-			&truck.UpdatedAt,
 		)
 		if err != nil {
 			r.logger.Errorf("Error getting cars: %s", err)
@@ -392,11 +338,9 @@ func (r *CarsPsqlRepository) GetTrucks(ctx context.Context, limit, page int64, s
 			SELECT 
     			COUNT(t.id) 
 			FROM trucks t
-				LEFT JOIN users u ON u.id = t.user_id 
 				LEFT JOIN stocks s ON s.id = t.stock_id
 				LEFT JOIN brands b ON b.id = t.brand_id
 				LEFT JOIN models m ON m.id = t.model_id
-				LEFT JOIN body_types bt ON bt.id = t.body_id
 				LEFT JOIN cities cs ON cs.id = t.city_id
 		`
 	countArgs := pgx.NamedArgs{}
@@ -425,14 +369,26 @@ func (r *CarsPsqlRepository) GetTruckByID(ctx context.Context, id int64) (models
 
 	query := `
 		SELECT
-			t.id, t.user_id, u.full_name, t.stock_id, s.store_name, t.brand_id, b.name,
+			t.id, 
+			-- User
+			t.user_id, u.full_name, 
+			-- Stock
+			t.stock_id, s.store_name, 
+			-- Brand
+			t.brand_id, b.name,
 			t.load_capacity, t.price, t.body_type, t.drive_type, t.transmission, t.engine_type,
-			t.model_id, m.name, t.year, t.seats, t.cab_type, t.wheel_formula, t.chassis, t.cab_suspension,
+			-- Model
+			t.model_id, m.name, 
+			t.year, t.seats, t.cab_type, t.wheel_formula, t.chassis, t.cab_suspension,
 			t.bus_type, t.suspension_type, t.brakes, t.axles, t.engine_hours, t.vehicle_type, t.engine_capacity,
 			t.forklift_type, t.lifting_capacity, t.mileage, t.excavator_type, t.bulldozer_type, t.color, t.vin, 
-			t.body_id, bt.name_tm, bt.name_en, bt.name_ru, t.description, t.city_id, cs.name_tm, cs.name_en, cs.name_ru, 
-			t.name, t.mail, t.phone_number, t.is_comment, t.is_exchange, t.is_credit, t.images, t.status,
-			t.created_at, t.updated_at
+			-- Body
+			t.body_id, bt.name_tm, bt.name_en, bt.name_ru, 
+			t.description,
+			-- City
+			t.city_id, cs.name_tm, cs.name_en, cs.name_ru, 
+			t.name, t.mail, t.phone_number, t.is_comment, t.is_exchange, 
+			t.is_credit, t.images, t.status, t.created_at, t.updated_at
 		FROM trucks t
 			LEFT JOIN users u ON u.id = t.user_id 
 			LEFT JOIN stocks s ON s.id = t.stock_id
@@ -497,19 +453,22 @@ func (r *CarsPsqlRepository) GetMotors(ctx context.Context, limit, page int64, s
 
 	query := `
 		SELECT
-			ms.id, ms.user_id, u.full_name, ms.stock_id, s.store_name, ms.brand_id, b.name,
-			ms.type_motorcycles, ms.year, ms.price, ms.volume, ms.engine_type, 
-			ms.number_of_clock_cycles, ms.model_id, m.name, ms.air_type, ms.color, ms.vin, 
-			ms.description, ms.city_id, cs.name_tm, cs.name_en, cs.name_ru,
-			ms.name, ms.mail, ms.phone_number, ms.options, ms.is_comment, 
-			ms.is_exchange, ms.is_credit, ms.images, ms.status,
-			ms.options, ms.created_at, ms.updated_at
+			ms.id, 
+			-- Stock
+			ms.stock_id, s.store_name, 
+			-- Brand
+			ms.brand_id, b.name,
+			-- Model
+			ms.model_id, m.name, 
+			-- City
+			ms.city_id, cs.name_tm, cs.name_en, cs.name_ru,
+			ms.name, ms.mail, ms.phone_number, 
+			ms.year, ms.price,
+			ms.images, ms.status, ms.created_at
 		FROM motoes ms
-			LEFT JOIN users u ON u.id = ms.user_id 
 			LEFT JOIN stocks s ON s.id = ms.stock_id
 			LEFT JOIN brands b ON b.id = ms.brand_id
 			LEFT JOIN models m ON m.id = ms.model_id
-			LEFT JOIN body_types bt ON bt.id = ms.body_id
 			LEFT JOIN cities cs ON cs.id = ms.city_id
 	`
 
@@ -523,22 +482,12 @@ func (r *CarsPsqlRepository) GetMotors(ctx context.Context, limit, page int64, s
 	// Search condition
 	if search != "" {
 		searchCondition := `
-			(u.full_name ILIKE '%' || @search || '%' OR 
-			 s.store_name ILIKE '%' || @search || '%' OR 
+			(s.store_name ILIKE '%' || @search || '%' OR 
 			 b.name ILIKE '%' || @search || '%' OR
 			 m.name ILIKE '%' || @search || '%' OR
-			 bt.name_tm ILIKE '%' || @search || '%' OR
-			 bt.name_en ILIKE '%' || @search || '%' OR
-			 bt.name_ru ILIKE '%' || @search || '%' OR
 			 cs.name_tm ILIKE '%' || @search || '%' OR
 			 cs.name_en ILIKE '%' || @search || '%' OR
 			 cs.name_ru ILIKE '%' || @search || '%' OR
-			 ms.color ILIKE '%' || @search || '%' OR
-			 ms.engine_type ILIKE '%' || @search || '%' OR
-			 ms.transmission ILIKE '%' || @search || '%' OR
-			 ms.drive_type ILIKE '%' || @search || '%' OR
-			 ms.vin ILIKE '%' || @search || '%' OR
-			 ms.description ILIKE '%' || @search || '%' OR
 			 ms.name ILIKE '%' || @search || '%' OR
 			 ms.phone_number ILIKE '%' || @search || '%' OR
 			 CAST(ms.year AS TEXT) ILIKE '%' || @search || '%' OR
@@ -574,24 +523,12 @@ func (r *CarsPsqlRepository) GetMotors(ctx context.Context, limit, page int64, s
 
 		err := rows.Scan(
 			&motor.Id,
-			&motor.UserId,
-			&motor.UserName,
 			&motor.StockId,
 			&motor.StoreName,
 			&motor.BrandId,
 			&motor.BrandName,
-			&motor.TypeMotorcycles,
-			&motor.Year,
-			&motor.Price,
-			&motor.Volume,
-			&motor.EngineType,
-			&motor.NumberOfClockCycles,
 			&motor.ModelId,
 			&motor.ModelName,
-			&motor.AirType,
-			&motor.Color,
-			&motor.Vin,
-			&motor.Description,
 			&motor.CityId,
 			&motor.CityNameTM,
 			&motor.CityNameEN,
@@ -599,15 +536,11 @@ func (r *CarsPsqlRepository) GetMotors(ctx context.Context, limit, page int64, s
 			&motor.Name,
 			&motor.Mail,
 			&motor.PhoneNumber,
-			&motor.Options,
-			&motor.IsComment,
-			&motor.IsExchange,
-			&motor.IsCredit,
+			&motor.Year,
+			&motor.Price,
 			&motor.Images,
 			&motor.Status,
-			&motor.Options,
 			&motor.CreatedAt,
-			&motor.UpdatedAt,
 		)
 		if err != nil {
 			r.logger.Errorf("Error getting motors: %s", err)
@@ -619,11 +552,9 @@ func (r *CarsPsqlRepository) GetMotors(ctx context.Context, limit, page int64, s
 			SELECT 
     			COUNT(ms.id) 
 			FROM motoes ms
-				LEFT JOIN users u ON u.id = ms.user_id 
 				LEFT JOIN stocks s ON s.id = ms.stock_id
 				LEFT JOIN brands b ON b.id = ms.brand_id
 				LEFT JOIN models m ON m.id = ms.model_id
-				LEFT JOIN body_types bt ON bt.id = ms.body_id
 				LEFT JOIN cities cs ON cs.id = ms.city_id
 		`
 	countArgs := pgx.NamedArgs{}
@@ -652,10 +583,22 @@ func (r *CarsPsqlRepository) GetMotoByID(ctx context.Context, id int64) (models.
 
 	query := `
 		SELECT
-			ms.id, ms.user_id, u.full_name, ms.stock_id, s.store_name, ms.brand_id, b.name,
+			ms.id, 
+			-- User
+			ms.user_id, u.full_name, 
+			-- Stock
+			ms.stock_id, s.store_name,
+			-- Brand
+			ms.brand_id, b.name,
 			ms.type_motorcycles, ms.year, ms.price, ms.volume, ms.engine_type, 
-			ms.number_of_clock_cycles, ms.model_id, m.name, ms.air_type, ms.color, ms.vin, 
-			ms.description, ms.city_id, cs.name_tm, cs.name_en, cs.name_ru,
+			ms.number_of_clock_cycles, 
+			-- Model
+			ms.model_id, m.name, 
+			ms.air_type, ms.color, ms.vin, ms.description,
+			-- City
+			ms.city_id, cs.name_tm, cs.name_en, cs.name_ru,
+			-- Body
+			ms.body_id, bt.name_tm, bt.name_en, bt.name_ru,
 			ms.name, ms.mail, ms.phone_number, ms.options, ms.is_comment, 
 			ms.is_exchange, ms.is_credit, ms.images, ms.status,
 			ms.options, ms.created_at, ms.updated_at
@@ -696,6 +639,10 @@ func (r *CarsPsqlRepository) GetMotoByID(ctx context.Context, id int64) (models.
 		&motor.CityNameTM,
 		&motor.CityNameEN,
 		&motor.CityNameRU,
+		&motor.BodyId,
+		&motor.BodyNameTM,
+		&motor.BodyNameEN,
+		&motor.BodyNameRU,
 		&motor.Name,
 		&motor.Mail,
 		&motor.PhoneNumber,
