@@ -201,7 +201,7 @@ func (r *RegionsPsqlRepository) GetAllCities(ctx context.Context, limit, page in
 
 	queryCount := `
 			SELECT 
-			    COUNT(c.id) 
+			    COUNT(*) 
 			FROM cities c
 			LEFT JOIN regions r on r.id = c.region_id
 		WHERE (c.name_tm ILIKE '%' || @search || '%' OR c.name_ru ILIKE '%' || @search || '%' OR c.name_en ILIKE '%' || @search || '%' 

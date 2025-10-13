@@ -174,7 +174,7 @@ func (r *StockPsqlRepository) GetStocks(ctx context.Context, limit, page int64, 
 
 	queryCount := `
 			SELECT 
-    			COUNT(s.id) 
+    			COUNT(*) 
 			FROM stocks s 
 				LEFT JOIN users u ON u.id = s.user_id
 			    LEFT JOIN cities c ON c.id = s.city_id

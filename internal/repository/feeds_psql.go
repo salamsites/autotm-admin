@@ -127,7 +127,7 @@ func (r *CarsPsqlRepository) GetCars(ctx context.Context, limit, page int64, sea
 
 	queryCount := `
 			SELECT 
-    			COUNT(cr.id) 
+    			COUNT(*) 
 			FROM cars cr
 				LEFT JOIN stocks s ON s.id = cr.stock_id
 				LEFT JOIN brands b ON b.id = cr.brand_id
@@ -334,7 +334,7 @@ func (r *CarsPsqlRepository) GetTrucks(ctx context.Context, limit, page int64, s
 
 	queryCount := `
 			SELECT 
-    			COUNT(t.id) 
+    			COUNT(*)
 			FROM trucks t
 				LEFT JOIN stocks s ON s.id = t.stock_id
 				LEFT JOIN brands b ON b.id = t.brand_id
@@ -548,7 +548,7 @@ func (r *CarsPsqlRepository) GetMotors(ctx context.Context, limit, page int64, s
 
 	queryCount := `
 			SELECT 
-    			COUNT(ms.id) 
+    			COUNT(*) 
 			FROM motoes ms
 				LEFT JOIN stocks s ON s.id = ms.stock_id
 				LEFT JOIN brands b ON b.id = ms.brand_id

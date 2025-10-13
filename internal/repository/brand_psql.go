@@ -49,10 +49,9 @@ func (r *BrandPsqlRepository) CreateBodyType(ctx context.Context, bodyType model
 	return id, nil
 }
 
-func (r *BrandPsqlRepository) GetBodyType(ctx context.Context, limit, page int64, category, search string) ([]models.BodyType, int64, error) {
+func (r *BrandPsqlRepository) GetBodyType(ctx context.Context, limit, page int64, category, search string) ([]models.BodyType, error) {
 	var (
 		bodyTypes []models.BodyType
-		count     int64
 	)
 
 	query := `
@@ -75,19 +74,25 @@ func (r *BrandPsqlRepository) GetBodyType(ctx context.Context, limit, page int64
 	rows, err := r.client.Query(ctx, query, args)
 	if err != nil {
 		r.logger.Errorf("get body types query err : %v", err)
-		return nil, 0, err
+		return nil, err
 	}
 	defer rows.Close()
 	for rows.Next() {
 		var bodyType models.BodyType
 		if err = rows.Scan(&bodyType.ID, &bodyType.NameTM, &bodyType.NameEN, &bodyType.NameRU, &bodyType.Category, &bodyType.ImagePath, &bodyType.UploadId); err != nil {
 			r.logger.Errorf("get body types scan err : %v", err)
-			return nil, 0, err
+			return nil, err
 		}
 		bodyTypes = append(bodyTypes, bodyType)
 	}
 
-	queryCount := `
+	return bodyTypes, nil
+}
+
+func (r *BrandPsqlRepository) GetBodyTypeCount(ctx context.Context, category, search string) (int64, error) {
+	var count int64
+
+	query := `
 			SELECT 
 			    COUNT(*) 
 			FROM body_types 
@@ -95,16 +100,17 @@ func (r *BrandPsqlRepository) GetBodyType(ctx context.Context, limit, page int64
 				(name_tm ILIKE '%' || @search || '%' OR name_en ILIKE '%' || @search || '%' OR name_ru ILIKE '%' || @search || '%')	
 		`
 
-	argsCount := pgx.NamedArgs{
+	args := pgx.NamedArgs{
 		"category": category,
 		"search":   search,
 	}
-	errCount := r.client.QueryRow(ctx, queryCount, argsCount).Scan(&count)
-	if errCount != nil {
+	err := r.client.QueryRow(ctx, query, args).Scan(&count)
+	if err != nil {
 		r.logger.Errorf("get body types count err : %v", err)
-		return nil, 0, err
+		return 0, err
 	}
-	return bodyTypes, count, nil
+
+	return count, nil
 }
 
 func (r *BrandPsqlRepository) GetBodyTypeByID(ctx context.Context, id int64) (models.BodyType, error) {
@@ -219,10 +225,9 @@ func (r *BrandPsqlRepository) CreateBrand(ctx context.Context, brand models.Bran
 	return brandID, nil
 }
 
-func (r *BrandPsqlRepository) GetBrands(ctx context.Context, limit, page int64, category, search string) ([]models.Brand, int64, error) {
+func (r *BrandPsqlRepository) GetBrands(ctx context.Context, limit, page int64, category, search string) ([]models.Brand, error) {
 	var (
 		brands []models.Brand
-		count  int64
 	)
 
 	query := `
@@ -248,37 +253,43 @@ func (r *BrandPsqlRepository) GetBrands(ctx context.Context, limit, page int64, 
 	rows, err := r.client.Query(ctx, query, args)
 	if err != nil {
 		r.logger.Errorf("get brands query err : %v", err)
-		return nil, 0, err
+		return nil, err
 	}
 	defer rows.Close()
 	for rows.Next() {
 		var brand models.Brand
 		if err := rows.Scan(&brand.ID, &brand.Name, &brand.LogoPath, &brand.UploadId, &brand.Categories); err != nil {
 			r.logger.Errorf("get brands scan err : %v", err)
-			return nil, 0, err
+			return nil, err
 		}
 		brands = append(brands, brand)
 	}
 
-	queryCount := `
+	return brands, nil
+}
+
+func (r *BrandPsqlRepository) GetBrandsCount(ctx context.Context, category, search string) (int64, error) {
+	var count int64
+
+	query := `
 			SELECT 
-			    COUNT(b.id) 
+			    COUNT(*) 
 			FROM brands b
 			LEFT JOIN brand_categories bc ON bc.brand_id = b.id
 			WHERE  bc.category = @category AND
 				b.name ILIKE '%' || @search || '%'
 		`
 
-	argsCount := pgx.NamedArgs{
+	args := pgx.NamedArgs{
 		"category": category,
 		"search":   search,
 	}
-	errCount := r.client.QueryRow(ctx, queryCount, argsCount).Scan(&count)
-	if errCount != nil {
-		r.logger.Errorf("get brands count err : %v", err)
-		return nil, 0, err
+	err := r.client.QueryRow(ctx, query, args).Scan(&count)
+	if err != nil {
+		r.logger.Errorf("get brands count query err : %v", err)
+		return count, err
 	}
-	return brands, count, nil
+	return count, nil
 }
 
 func (r *BrandPsqlRepository) UpdateBrand(ctx context.Context, brand models.Brand) (int64, error) {
@@ -305,13 +316,13 @@ func (r *BrandPsqlRepository) UpdateBrand(ctx context.Context, brand models.Bran
 	}
 	errUpdate := tx.QueryRow(ctx, query, args).Scan(&id)
 	if errUpdate != nil {
-		r.logger.Errorf("update brand err: %v", err)
+		r.logger.Errorf("update brand query err: %v", err)
 		return 0, errUpdate
 	}
 
 	_, err = tx.Exec(ctx, `DELETE FROM brand_categories WHERE brand_id = $1`, brand.ID)
 	if err != nil {
-		r.logger.Errorf("delete old brand_category err: %v", err)
+		r.logger.Errorf("delete old brand_category query err: %v", err)
 		return 0, err
 	}
 
@@ -321,7 +332,7 @@ func (r *BrandPsqlRepository) UpdateBrand(ctx context.Context, brand models.Bran
 			brand.ID, category,
 		)
 		if err != nil {
-			r.logger.Errorf("update brand_categorys err: %v", err)
+			r.logger.Errorf("update brand_categories query err: %v", err)
 			return 0, err
 		}
 	}
@@ -387,10 +398,9 @@ func (r *BrandPsqlRepository) CreateModel(ctx context.Context, model models.Mode
 	return id, nil
 }
 
-func (r *BrandPsqlRepository) GetModels(ctx context.Context, limit, page int64, category, search string) ([]models.Model, int64, error) {
+func (r *BrandPsqlRepository) GetModels(ctx context.Context, limit, page int64, category, search string) ([]models.Model, error) {
 	var (
 		brandModels []models.Model
-		count       int64
 	)
 
 	query := `
@@ -415,7 +425,7 @@ func (r *BrandPsqlRepository) GetModels(ctx context.Context, limit, page int64, 
 	rows, err := r.client.Query(ctx, query, args)
 	if err != nil {
 		r.logger.Errorf("get models query err : %v", err)
-		return nil, 0, err
+		return nil, err
 	}
 	defer rows.Close()
 	for rows.Next() {
@@ -424,30 +434,36 @@ func (r *BrandPsqlRepository) GetModels(ctx context.Context, limit, page int64, 
 			&brandModel.UploadId, &brandModel.BrandID, &brandModel.BrandName, &brandModel.Category,
 		); err != nil {
 			r.logger.Errorf("get models scan err : %v", err)
-			return nil, 0, err
+			return nil, err
 		}
 		brandModels = append(brandModels, brandModel)
 	}
 
-	queryCount := `
+	return brandModels, nil
+}
+
+func (r *BrandPsqlRepository) GetModelsCount(ctx context.Context, category, search string) (int64, error) {
+	var count int64
+
+	query := `
 		SELECT 
-			COUNT(m.id) 
+			COUNT(*) 
 		FROM models m
 			LEFT JOIN brands b ON m.brand_id = b.id
 		WHERE  m.category = @category AND 
 		    ( m.name ILIKE '%' || @search || '%' OR b.name ILIKE '%' || @search || '%' )
 		`
 
-	argsCount := pgx.NamedArgs{
+	args := pgx.NamedArgs{
 		"category": category,
 		"search":   search,
 	}
-	errCount := r.client.QueryRow(ctx, queryCount, argsCount).Scan(&count)
-	if errCount != nil {
-		r.logger.Errorf("get models count err : %v", err)
-		return nil, 0, err
+	err := r.client.QueryRow(ctx, query, args).Scan(&count)
+	if err != nil {
+		r.logger.Errorf("get models query count err : %v", err)
+		return count, err
 	}
-	return brandModels, count, nil
+	return count, nil
 }
 
 func (r *BrandPsqlRepository) UpdateModel(ctx context.Context, model models.Model) (int64, error) {
@@ -535,10 +551,9 @@ func (r *BrandPsqlRepository) CreateDescription(ctx context.Context, req models.
 	return descriptionID, nil
 }
 
-func (r *BrandPsqlRepository) GetDescriptions(ctx context.Context, limit, page int64, search, category string) ([]models.Description, int64, error) {
+func (r *BrandPsqlRepository) GetDescriptions(ctx context.Context, limit, page int64, search, category string) ([]models.Description, error) {
 	var (
 		descriptions []models.Description
-		count        int64
 	)
 
 	query := `
@@ -548,7 +563,8 @@ func (r *BrandPsqlRepository) GetDescriptions(ctx context.Context, limit, page i
 		FROM descriptions d
 		LEFT JOIN description_categories dc ON dc.description_id = d.id
 		WHERE  dc.category = @category AND
-			(d.name_tm ILIKE '%' || @search || '%' OR d.name_en ILIKE '%' || @search || '%' OR d.name_ru ILIKE '%' || @search || '%')
+			(d.name_tm ILIKE '%' || @search || '%' OR d.name_en ILIKE '%' || @search || '%' 
+			OR d.name_ru ILIKE '%' || @search || '%')
 		GROUP BY d.id
 		ORDER BY d.created_at DESC
 		LIMIT @limit OFFSET @offset;
@@ -564,37 +580,44 @@ func (r *BrandPsqlRepository) GetDescriptions(ctx context.Context, limit, page i
 	rows, err := r.client.Query(ctx, query, args)
 	if err != nil {
 		r.logger.Errorf("get descriptions query err : %v", err)
-		return nil, 0, err
+		return nil, err
 	}
 	defer rows.Close()
 	for rows.Next() {
 		var description models.Description
 		if err := rows.Scan(&description.ID, &description.NameTM, &description.NameEN, &description.NameRU, &description.Categories); err != nil {
 			r.logger.Errorf("get descriptions scan err : %v", err)
-			return nil, 0, err
+			return nil, err
 		}
 		descriptions = append(descriptions, description)
 	}
 
-	queryCount := `
+	return descriptions, nil
+}
+
+func (r *BrandPsqlRepository) GetDescriptionsCount(ctx context.Context, category, search string) (int64, error) {
+	var count int64
+
+	query := `
 			SELECT 
-			    COUNT(d.id) 
+			    COUNT(*) 
 			FROM descriptions d
 			LEFT JOIN description_categories dc ON dc.description_id = d.id
 			WHERE  dc.category = @category AND
-				(d.name_tm ILIKE '%' || @search || '%' OR d.name_en ILIKE '%' || @search || '%' OR d.name_ru ILIKE '%' || @search || '%')
+				(d.name_tm ILIKE '%' || @search || '%' OR d.name_en ILIKE '%' || @search || '%' 
+				OR d.name_ru ILIKE '%' || @search || '%')
 		`
 
-	argsCount := pgx.NamedArgs{
+	args := pgx.NamedArgs{
 		"category": category,
 		"search":   search,
 	}
-	errCount := r.client.QueryRow(ctx, queryCount, argsCount).Scan(&count)
-	if errCount != nil {
+	err := r.client.QueryRow(ctx, query, args).Scan(&count)
+	if err != nil {
 		r.logger.Errorf("get descriptions count err : %v", err)
-		return nil, 0, err
+		return count, err
 	}
-	return descriptions, count, nil
+	return count, nil
 }
 
 func (r *BrandPsqlRepository) UpdateDescription(ctx context.Context, description models.Description) (int64, error) {
