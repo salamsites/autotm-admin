@@ -327,7 +327,7 @@ func (r *CarsPsqlRepository) GetTrucks(ctx context.Context, limit, page int64, s
 			&truck.CreatedAt,
 		)
 		if err != nil {
-			r.logger.Errorf("Error getting cars: %s", err)
+			r.logger.Errorf("Error getting trucks: %s", err)
 		}
 		trucks = append(trucks, truck)
 	}
