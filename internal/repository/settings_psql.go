@@ -197,7 +197,7 @@ func (r *SettingsPsqlRepository) GetUserByLogin(ctx context.Context, login strin
 			id, username, login, 
 			password, role_id, status
 		FROM admin_users
-		WHERE login = @login
+		WHERE login = @login AND status = true
 		LIMIT 1
 	`
 
