@@ -30,11 +30,13 @@ func (r *SettingsPsqlRepository) CreateRole(ctx context.Context, role models.Rol
 		"name": role.Name,
 		"role": role.Role,
 	}
+
 	err := r.client.QueryRow(ctx, query, args).Scan(&id)
 	if err != nil {
-		r.logger.Errorf("create role err: %v", err)
+		r.logger.Errorf("create role query err: %v", err)
 		return id, err
 	}
+
 	return id, nil
 }
 
@@ -51,19 +53,19 @@ func (r *SettingsPsqlRepository) GetRoleByID(ctx context.Context, roleID int64) 
 	args := pgx.NamedArgs{
 		"id": roleID,
 	}
+
 	err := r.client.QueryRow(ctx, query, args).Scan(&role.ID, &role.Name, &role.Role)
 	if err != nil {
-		r.logger.Errorf("get role err: %v", err)
+		r.logger.Errorf("get role by id query err: %v", err)
 		return role, err
 	}
 
 	return role, nil
 }
 
-func (r *SettingsPsqlRepository) GetAllRoles(ctx context.Context, limit, page int64, search string) ([]models.Role, int64, error) {
+func (r *SettingsPsqlRepository) GetAllRoles(ctx context.Context, limit, page int64, search string) ([]models.Role, error) {
 	var (
 		roles []models.Role
-		count int64
 	)
 
 	query := `
@@ -84,34 +86,43 @@ func (r *SettingsPsqlRepository) GetAllRoles(ctx context.Context, limit, page in
 	rows, err := r.client.Query(ctx, query, args)
 	if err != nil {
 		r.logger.Errorf("get all roles query err : %v", err)
-		return nil, 0, err
+		return nil, err
 	}
 	defer rows.Close()
+
 	for rows.Next() {
 		var role models.Role
 		if err := rows.Scan(&role.ID, &role.Name, &role.Role); err != nil {
 			r.logger.Errorf("get all roles scan err : %v", err)
-			return nil, 0, err
+			return nil, err
 		}
 		roles = append(roles, role)
 	}
 
-	queryCount := `
-			SELECT 
-			    COUNT(*) 
-			FROM roles
-			WHERE name ILIKE '%' || @search || '%'
-		`
+	return roles, nil
+}
 
-	argsCount := pgx.NamedArgs{
+func (r *SettingsPsqlRepository) GetRolesCount(ctx context.Context, search string) (int64, error) {
+	var count int64
+
+	query := `
+		SELECT 
+			COUNT(*) 
+		FROM roles
+		WHERE name ILIKE '%' || @search || '%'
+	`
+
+	args := pgx.NamedArgs{
 		"search": search,
 	}
-	errCount := r.client.QueryRow(ctx, queryCount, argsCount).Scan(&count)
-	if errCount != nil {
-		r.logger.Errorf("get all roles count err : %v", err)
-		return nil, 0, err
+
+	err := r.client.QueryRow(ctx, query, args).Scan(&count)
+	if err != nil {
+		r.logger.Errorf("get all roles count query err : %v", err)
+		return count, err
 	}
-	return roles, count, nil
+
+	return count, nil
 }
 
 func (r *SettingsPsqlRepository) UpdateRole(ctx context.Context, role models.Role) (int64, error) {
@@ -129,24 +140,28 @@ func (r *SettingsPsqlRepository) UpdateRole(ctx context.Context, role models.Rol
 		"role": role.Role,
 		"id":   role.ID,
 	}
+
 	err := r.client.QueryRow(ctx, query, args).Scan(&id)
 	if err != nil {
-		r.logger.Errorf("update role err: %v", err)
+		r.logger.Errorf("update role  query err: %v", err)
 		return id, err
 	}
+
 	return id, nil
 }
 
 func (r *SettingsPsqlRepository) DeleteRole(ctx context.Context, id int64) error {
 	query := `DELETE FROM roles WHERE id = @id`
+
 	args := pgx.NamedArgs{
 		"id": id,
 	}
 	_, err := r.client.Exec(ctx, query, args)
 	if err != nil {
-		r.logger.Errorf("delete role err: %v", err)
+		r.logger.Errorf("delete role query err: %v", err)
 		return err
 	}
+
 	return nil
 }
 
@@ -165,9 +180,10 @@ func (r *SettingsPsqlRepository) CreateUser(ctx context.Context, user models.Use
 	}
 	err := r.client.QueryRow(ctx, query, args).Scan(&id)
 	if err != nil {
-		r.logger.Errorf("create user err: %v", err)
+		r.logger.Errorf("create user query err: %v", err)
 		return id, err
 	}
+
 	return id, nil
 }
 
@@ -188,18 +204,19 @@ func (r *SettingsPsqlRepository) GetUserByLogin(ctx context.Context, login strin
 	args := pgx.NamedArgs{
 		"login": login,
 	}
+
 	err := r.client.QueryRow(ctx, query, args).Scan(&user.ID, &user.Username, &user.Login, &user.Password, &user.RoleID, &user.Status)
 	if err != nil {
-		r.logger.Errorf("get user by login err: %v", err)
+		r.logger.Errorf("get user by login query err: %v", err)
 		return user, err
 	}
+
 	return user, nil
 }
 
-func (r *SettingsPsqlRepository) GetAllUsers(ctx context.Context, limit, page int64, search string) ([]models.User, int64, error) {
+func (r *SettingsPsqlRepository) GetAllUsers(ctx context.Context, limit, page int64, search string) ([]models.User, error) {
 	var (
 		users []models.User
-		count int64
 	)
 
 	query := `
@@ -208,7 +225,8 @@ func (r *SettingsPsqlRepository) GetAllUsers(ctx context.Context, limit, page in
 		    u.role_id, r.name, u.status
 		FROM admin_users u
 			LEFT JOIN roles r ON u.role_id = r.id
-		WHERE (u.username ILIKE '%' || @search || '%' OR r.name ILIKE '%' || @search || '%' OR u.login ILIKE '%' || @search || '%')
+		WHERE (u.username ILIKE '%' || @search || '%' OR r.name ILIKE '%' || @search || '%' 
+		    OR u.login ILIKE '%' || @search || '%')
 		ORDER BY u.created_at DESC
 		LIMIT @limit OFFSET @offset;
 	`
@@ -222,35 +240,46 @@ func (r *SettingsPsqlRepository) GetAllUsers(ctx context.Context, limit, page in
 	rows, err := r.client.Query(ctx, query, args)
 	if err != nil {
 		r.logger.Errorf("get all users query err : %v", err)
-		return nil, 0, err
+		return nil, err
 	}
 	defer rows.Close()
+
 	for rows.Next() {
 		var user models.User
-		if err := rows.Scan(&user.ID, &user.Username, &user.Login, &user.Password, &user.RoleID, &user.RoleName, &user.Status); err != nil {
+		if err := rows.Scan(&user.ID, &user.Username, &user.Login, &user.Password,
+			&user.RoleID, &user.RoleName, &user.Status); err != nil {
 			r.logger.Errorf("get all users scan err : %v", err)
-			return nil, 0, err
+			return nil, err
 		}
 		users = append(users, user)
 	}
 
-	queryCount := `
-			SELECT 
-			    COUNT(*) 
-			FROM admin_users u
-				LEFT JOIN roles r ON u.role_id = r.id
-			WHERE (u.username ILIKE '%' || @search || '%' OR r.name ILIKE '%' || @search || '%' OR u.login ILIKE '%' || @search || '%')
-		`
+	return users, nil
+}
 
-	argsCount := pgx.NamedArgs{
+func (r *SettingsPsqlRepository) GetUsersCount(ctx context.Context, search string) (int64, error) {
+	var count int64
+
+	query := `
+		SELECT 
+			COUNT(*) 
+		FROM admin_users u
+			LEFT JOIN roles r ON u.role_id = r.id
+		WHERE (u.username ILIKE '%' || @search || '%' OR r.name ILIKE '%' || @search || '%' 
+		    OR u.login ILIKE '%' || @search || '%')
+	`
+
+	args := pgx.NamedArgs{
 		"search": search,
 	}
-	errCount := r.client.QueryRow(ctx, queryCount, argsCount).Scan(&count)
-	if errCount != nil {
-		r.logger.Errorf("get all users count err : %v", err)
-		return nil, 0, err
+
+	err := r.client.QueryRow(ctx, query, args).Scan(&count)
+	if err != nil {
+		r.logger.Errorf("get users count query err : %v", err)
+		return count, err
 	}
-	return users, count, nil
+
+	return count, nil
 }
 
 func (r *SettingsPsqlRepository) UpdateUser(ctx context.Context, user models.User) (int64, error) {

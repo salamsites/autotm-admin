@@ -39,7 +39,7 @@ func (s *SlidersService) CreateSlider(ctx context.Context, slider dtos.CreateSli
 
 	brandID, err := s.repo.CreateSlider(ctx, newSlider)
 	if err != nil {
-		s.logger.Errorf("create err: %v", err)
+		s.logger.Errorf("create slider service err: %v", err)
 		return id, err
 	}
 	id.ID = brandID
@@ -53,9 +53,9 @@ func (s *SlidersService) GetAllSliders(ctx context.Context, limit, page int64, p
 		offset = 0
 	}
 
-	sliders, count, err := s.repo.GetAllSliders(ctx, limit, offset, platform)
+	sliders, err := s.repo.GetAllSliders(ctx, limit, offset, platform)
 	if err != nil {
-		s.logger.Errorf("get sliders err: %v", err)
+		s.logger.Errorf("get sliders service err: %v", err)
 		return dtos.SliderResult{}, err
 	}
 	var dtoSliders []dtos.Slider
@@ -70,6 +70,12 @@ func (s *SlidersService) GetAllSliders(ctx context.Context, limit, page int64, p
 			UploadIdEN:  b.UploadIdEN,
 			UploadIdRU:  b.UploadIdRU,
 		})
+	}
+
+	count, errCount := s.repo.GetSlidersCount(ctx, platform)
+	if errCount != nil {
+		s.logger.Errorf("get slidersCount service err: %v", err)
+		return dtos.SliderResult{}, errCount
 	}
 
 	result := dtos.SliderResult{
@@ -95,7 +101,7 @@ func (s *SlidersService) UpdateSlider(ctx context.Context, slider dtos.UpdateSli
 
 	sliderID, err := s.repo.UpdateSlider(ctx, newSlider)
 	if err != nil {
-		s.logger.Errorf("update slider err: %v", err)
+		s.logger.Errorf("update slider service err: %v", err)
 		return id, err
 	}
 	id.ID = sliderID
@@ -105,7 +111,7 @@ func (s *SlidersService) UpdateSlider(ctx context.Context, slider dtos.UpdateSli
 func (s *SlidersService) DeleteSlider(ctx context.Context, id int64) error {
 	err := s.repo.DeleteSlider(ctx, id)
 	if err != nil {
-		s.logger.Errorf("delete slider err: %v", err)
+		s.logger.Errorf("delete slider service err: %v", err)
 		return err
 	}
 	return nil

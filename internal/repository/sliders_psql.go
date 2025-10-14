@@ -40,18 +40,19 @@ func (r *SliderPsqlRepository) CreateSlider(ctx context.Context, slider models.S
 		"upload_id_ru":  slider.UploadIdRU,
 		"platform":      slider.Platform,
 	}
+
 	err := r.client.QueryRow(ctx, query, args).Scan(&id)
 	if err != nil {
 		r.logger.Errorf("create err: %v", err)
 		return id, err
 	}
+
 	return id, nil
 }
 
-func (r *SliderPsqlRepository) GetAllSliders(ctx context.Context, limit, page int64, platform string) ([]models.Slider, int64, error) {
+func (r *SliderPsqlRepository) GetAllSliders(ctx context.Context, limit, page int64, platform string) ([]models.Slider, error) {
 	var (
 		sliders []models.Slider
-		count   int64
 	)
 
 	query := `
@@ -72,36 +73,45 @@ func (r *SliderPsqlRepository) GetAllSliders(ctx context.Context, limit, page in
 	rows, err := r.client.Query(ctx, query, args)
 	if err != nil {
 		r.logger.Errorf("get sliders query err : %v", err)
-		return nil, 0, err
+		return nil, err
 	}
 	defer rows.Close()
+
 	for rows.Next() {
 		var slider models.Slider
 		if err = rows.Scan(&slider.ID, &slider.ImagePathTM, &slider.ImagePathEN, &slider.ImagePathRU,
 			&slider.UploadIdTM, &slider.UploadIdEN, &slider.UploadIdRU, &slider.Platform,
 		); err != nil {
 			r.logger.Errorf("get sliders scan err : %v", err)
-			return nil, 0, err
+			return nil, err
 		}
 		sliders = append(sliders, slider)
 	}
 
-	queryCount := `
-			SELECT 
-			    COUNT(*) 
-			FROM sliders
-			WHERE platform = @platform
-		`
+	return sliders, nil
+}
 
-	argsCount := pgx.NamedArgs{
+func (r *SliderPsqlRepository) GetSlidersCount(ctx context.Context, platform string) (int64, error) {
+	var count int64
+
+	query := `
+		SELECT 
+			COUNT(*) 
+		FROM sliders
+		WHERE platform = @platform
+	`
+
+	args := pgx.NamedArgs{
 		"platform": platform,
 	}
-	errCount := r.client.QueryRow(ctx, queryCount, argsCount).Scan(&count)
-	if errCount != nil {
-		r.logger.Errorf("get sliders count err : %v", err)
-		return nil, 0, err
+
+	err := r.client.QueryRow(ctx, query, args).Scan(&count)
+	if err != nil {
+		r.logger.Errorf("get slidersCount query err : %v", err)
+		return count, err
 	}
-	return sliders, count, nil
+
+	return count, nil
 }
 
 func (r *SliderPsqlRepository) UpdateSlider(ctx context.Context, slider models.Slider) (int64, error) {
@@ -125,24 +135,29 @@ func (r *SliderPsqlRepository) UpdateSlider(ctx context.Context, slider models.S
 		"upload_id_ru":  slider.UploadIdRU,
 		"id":            slider.ID,
 	}
+
 	err := r.client.QueryRow(ctx, query, args).Scan(&id)
 	if err != nil {
 		r.logger.Errorf("update slider err: %v", err)
 		return id, err
 	}
+
 	return id, nil
 }
 
 func (r *SliderPsqlRepository) DeleteSlider(ctx context.Context, id int64) error {
 	query := `DELETE FROM sliders WHERE id = @id`
+
 	args := pgx.NamedArgs{
 		"id": id,
 	}
+
 	_, err := r.client.Exec(ctx, query, args)
 	if err != nil {
 		r.logger.Errorf("delete slider err: %v", err)
 		return err
 	}
+
 	return nil
 }
 

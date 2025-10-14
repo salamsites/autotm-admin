@@ -36,17 +36,18 @@ func (s *SettingsService) CreateRole(ctx context.Context, role dtos.CreateRoleRe
 
 	roleID, err := s.repo.CreateRole(ctx, newRole)
 	if err != nil {
-		s.logger.Errorf("create err: %v", err)
+		s.logger.Errorf("create role service err: %v", err)
 		return id, err
 	}
 	id.ID = roleID
+
 	return id, nil
 }
 
 func (s *SettingsService) GetRoleByID(ctx context.Context, roleID int64) (dtos.Role, error) {
 	role, err := s.repo.GetRoleByID(ctx, roleID)
 	if err != nil {
-		s.logger.Errorf("get err: %v", err)
+		s.logger.Errorf("get role by id service err: %v", err)
 		return dtos.Role{}, err
 	}
 
@@ -66,11 +67,12 @@ func (s *SettingsService) GetAllRoles(ctx context.Context, limit, page int64, se
 		offset = 0
 	}
 
-	roles, count, err := s.repo.GetAllRoles(ctx, limit, offset, search)
+	roles, err := s.repo.GetAllRoles(ctx, limit, offset, search)
 	if err != nil {
-		s.logger.Errorf("get all roles err: %v", err)
+		s.logger.Errorf("get all roles service err: %v", err)
 		return dtos.RoleResult{}, err
 	}
+
 	var dtoRoles []dtos.Role
 	for _, b := range roles {
 		dtoRoles = append(dtoRoles, dtos.Role{
@@ -80,10 +82,17 @@ func (s *SettingsService) GetAllRoles(ctx context.Context, limit, page int64, se
 		})
 	}
 
+	count, errCount := s.repo.GetRolesCount(ctx, search)
+	if errCount != nil {
+		s.logger.Errorf("get roles count service err: %v", err)
+		return dtos.RoleResult{}, errCount
+	}
+
 	result := dtos.RoleResult{
 		Roles: dtoRoles,
 		Count: count,
 	}
+
 	return result, nil
 }
 
@@ -98,17 +107,18 @@ func (s *SettingsService) UpdateRole(ctx context.Context, role dtos.UpdateRoleRe
 
 	roleID, err := s.repo.UpdateRole(ctx, newRole)
 	if err != nil {
-		s.logger.Errorf("update role err: %v", err)
+		s.logger.Errorf("update role service err: %v", err)
 		return id, err
 	}
 	id.ID = roleID
+
 	return id, nil
 }
 
 func (s *SettingsService) DeleteRole(ctx context.Context, id int64) error {
 	err := s.repo.DeleteRole(ctx, id)
 	if err != nil {
-		s.logger.Errorf("delete role err: %v", err)
+		s.logger.Errorf("delete role service err: %v", err)
 		return err
 	}
 	return nil
@@ -134,10 +144,11 @@ func (s *SettingsService) CreateUser(ctx context.Context, user dtos.CreateUserRe
 
 	userID, err := s.repo.CreateUser(ctx, newUser)
 	if err != nil {
-		s.logger.Errorf("create user err: %v", err)
+		s.logger.Errorf("create user service err: %v", err)
 		return id, err
 	}
 	id.ID = userID
+
 	return id, nil
 }
 
@@ -178,7 +189,7 @@ func (s *SettingsService) InitSuperAdmin(ctx context.Context) error {
 
 	_, err = s.repo.CreateUser(ctx, superAdmin)
 	if err != nil {
-		s.logger.Errorf("create super admin err: %v", err)
+		s.logger.Errorf("create super admin service err: %v", err)
 		return err
 	}
 
@@ -194,11 +205,12 @@ func (s *SettingsService) GetAllUsers(ctx context.Context, limit, page int64, se
 		offset = 0
 	}
 
-	users, count, err := s.repo.GetAllUsers(ctx, limit, offset, search)
+	users, err := s.repo.GetAllUsers(ctx, limit, offset, search)
 	if err != nil {
-		s.logger.Errorf("get all users err: %v", err)
+		s.logger.Errorf("get all users service err: %v", err)
 		return dtos.UserResult{}, err
 	}
+
 	var dtoUsers []dtos.User
 	for _, b := range users {
 		dtoUsers = append(dtoUsers, dtos.User{
@@ -212,10 +224,17 @@ func (s *SettingsService) GetAllUsers(ctx context.Context, limit, page int64, se
 		})
 	}
 
+	count, errCount := s.repo.GetUsersCount(ctx, search)
+	if errCount != nil {
+		s.logger.Errorf("get users count service err: %v", errCount)
+		return dtos.UserResult{}, err
+	}
+
 	result := dtos.UserResult{
 		Users: dtoUsers,
 		Count: count,
 	}
+
 	return result, nil
 }
 
@@ -244,7 +263,7 @@ func (s *SettingsService) UpdateUser(ctx context.Context, user dtos.UpdateUserRe
 
 	userID, err := s.repo.UpdateUser(ctx, newUser)
 	if err != nil {
-		s.logger.Errorf("update user err: %v", err)
+		s.logger.Errorf("update user service  err: %v", err)
 		return id, err
 	}
 	id.ID = userID
@@ -254,7 +273,7 @@ func (s *SettingsService) UpdateUser(ctx context.Context, user dtos.UpdateUserRe
 func (s *SettingsService) DeleteUser(ctx context.Context, id int64) error {
 	err := s.repo.DeleteUser(ctx, id)
 	if err != nil {
-		s.logger.Errorf("delete user err: %v", err)
+		s.logger.Errorf("delete user service err: %v", err)
 		return err
 	}
 	return nil
@@ -263,7 +282,7 @@ func (s *SettingsService) DeleteUser(ctx context.Context, id int64) error {
 func (s *SettingsService) Login(ctx context.Context, login dtos.LoginReq) (string, error) {
 	user, err := s.repo.GetUserByLogin(ctx, login.Login)
 	if err != nil {
-		s.logger.Errorf("get user err: %v", err)
+		s.logger.Errorf("get user login service err: %v", err)
 		return "", err
 	}
 
