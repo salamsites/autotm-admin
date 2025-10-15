@@ -1,6 +1,6 @@
 package dtos
 
 type UploadImage struct {
-	UploadID string   `json:"upload_id"`
-	Sizes    []string `json:"sizes"`
+	UploadID string      `json:"upload_id"`
+	Sizes    interface{} `json:"sizes"`
 }

@@ -1,4 +1,10 @@
-BBINARY_NAME=app
+# Variables
+BINARY_NAME=autotm-admin
+DOCKER_IMAGE_NAME=autotm-admin
+DOCKER_TAG=latest
+DB_URL=postgres://autotm:autotm@127.0.0.1:5432/autotm_admin?sslmode=disable
+CONFIG_FILE=config.yml
+
 .PHONY: build clean run_app_go run generate init_swagger dev deps test update pull
 
 build:
@@ -33,8 +39,6 @@ deps:
 test:
 	go test -v ./...
 
-DB_URL := postgres://autotm:autotm@127.0.0.1:5432/autotm_admin?sslmode=disable
-
 migrate_create:
 	goose -dir db/migrations create init_autotm_admin sql
 
@@ -46,3 +50,11 @@ migrate_down:
 
 migrate_status:
 	goose -dir db/migrations postgres "$(DB_URL)" status
+
+# Build Docker image
+docker_build:
+	docker build -t $(DOCKER_IMAGE_NAME):$(DOCKER_TAG) .
+
+# Run Docker container
+docker_run:
+	docker run -d -p 8006:8006 --name $(DOCKER_IMAGE_NAME) $(DOCKER_IMAGE_NAME):$(DOCKER_TAG)
