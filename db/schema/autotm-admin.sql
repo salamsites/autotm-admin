@@ -113,13 +113,12 @@ CREATE TABLE IF NOT EXISTS cities (
 
 CREATE TABLE IF NOT EXISTS sliders (
             "id" SERIAL PRIMARY KEY,
-            "image_path_tm" CHARACTER VARYING(255) NOT NULL,
-            "image_path_en" CHARACTER VARYING(255) NOT NULL,
-            "image_path_ru" CHARACTER VARYING(255) NOT NULL,
+            "image_path_tm" JSONB,
+            "image_path_en" JSONB,
+            "image_path_ru" JSONB,
             "upload_id_tm" UUID,
             "upload_id_en" UUID,
             "upload_id_ru" UUID,
-            "platform" CHARACTER VARYING(100) NOT NULL,
             "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

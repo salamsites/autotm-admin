@@ -34,7 +34,6 @@ func (s *SlidersService) CreateSlider(ctx context.Context, slider dtos.CreateSli
 		UploadIdTM:  slider.UploadIdTM,
 		UploadIdEN:  slider.UploadIdEN,
 		UploadIdRU:  slider.UploadIdRU,
-		Platform:    slider.Platform,
 	}
 
 	brandID, err := s.repo.CreateSlider(ctx, newSlider)
@@ -46,14 +45,14 @@ func (s *SlidersService) CreateSlider(ctx context.Context, slider dtos.CreateSli
 	return id, nil
 }
 
-func (s *SlidersService) GetAllSliders(ctx context.Context, limit, page int64, platform string) (dtos.SliderResult, error) {
+func (s *SlidersService) GetAllSliders(ctx context.Context, limit, page int64) (dtos.SliderResult, error) {
 	offset := (page - 1) * limit
 	if page <= 0 {
 		page = 1
 		offset = 0
 	}
 
-	sliders, err := s.repo.GetAllSliders(ctx, limit, offset, platform)
+	sliders, err := s.repo.GetAllSliders(ctx, limit, offset)
 	if err != nil {
 		s.logger.Errorf("get sliders service err: %v", err)
 		return dtos.SliderResult{}, err
@@ -65,14 +64,13 @@ func (s *SlidersService) GetAllSliders(ctx context.Context, limit, page int64, p
 			ImagePathTM: b.ImagePathTM,
 			ImagePathEN: b.ImagePathEN,
 			ImagePathRU: b.ImagePathRU,
-			Platform:    b.Platform,
 			UploadIdTM:  b.UploadIdTM,
 			UploadIdEN:  b.UploadIdEN,
 			UploadIdRU:  b.UploadIdRU,
 		})
 	}
 
-	count, errCount := s.repo.GetSlidersCount(ctx, platform)
+	count, errCount := s.repo.GetSlidersCount(ctx)
 	if errCount != nil {
 		s.logger.Errorf("get slidersCount service err: %v", err)
 		return dtos.SliderResult{}, errCount
@@ -96,7 +94,6 @@ func (s *SlidersService) UpdateSlider(ctx context.Context, slider dtos.UpdateSli
 		UploadIdTM:  slider.UploadIdTM,
 		UploadIdEN:  slider.UploadIdEN,
 		UploadIdRU:  slider.UploadIdRU,
-		Platform:    slider.Platform,
 	}
 
 	sliderID, err := s.repo.UpdateSlider(ctx, newSlider)

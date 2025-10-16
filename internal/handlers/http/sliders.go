@@ -97,7 +97,6 @@ func (h *SliderHandler) v1CreateSlider(w http.ResponseWriter, r *http.Request) s
 // @Produce json
 // @Param limit query int false "Limit number of sliders to return"
 // @Param page query int false "Page number"
-// @Param platform query string false "Platform string to filter sliders (web, mobile)"
 // @Success 200 {object} dtos.SliderResult "List of sliders with pagination info successfully"
 // @Failure 400 {object} string "Bad request"
 // @Failure 500 {object} string "Internal server error"
@@ -108,7 +107,6 @@ func (h *SliderHandler) v1GetAllSliders(w http.ResponseWriter, r *http.Request) 
 
 	limitStr := r.URL.Query().Get("limit")
 	pageStr := r.URL.Query().Get("page")
-	platform := r.URL.Query().Get("platform")
 
 	limit, err := strconv.ParseInt(limitStr, 10, 64)
 	if err != nil || limit <= 0 {
@@ -119,7 +117,7 @@ func (h *SliderHandler) v1GetAllSliders(w http.ResponseWriter, r *http.Request) 
 		page = 1
 	}
 
-	sliders, err := h.service.GetAllSliders(r.Context(), limit, page, platform)
+	sliders, err := h.service.GetAllSliders(r.Context(), limit, page)
 	if err != nil {
 		result.Message = err.Error()
 		h.logger.Error("unable to get sliders", err)

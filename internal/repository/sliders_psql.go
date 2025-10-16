@@ -26,8 +26,8 @@ func (r *SliderPsqlRepository) CreateSlider(ctx context.Context, slider models.S
 
 	query := `
 			INSERT INTO sliders 
-    			(image_path_tm, image_path_en, image_path_ru, upload_id_tm, upload_id_en, upload_id_ru, platform) 
-			VALUES (@image_path_tm, @image_path_en, @image_path_ru, @upload_id_tm, @upload_id_en, @upload_id_ru, @platform) 
+    			(image_path_tm, image_path_en, image_path_ru, upload_id_tm, upload_id_en, upload_id_ru) 
+			VALUES (@image_path_tm, @image_path_en, @image_path_ru, @upload_id_tm, @upload_id_en, @upload_id_ru) 
 			RETURNING id
 		`
 
@@ -38,7 +38,6 @@ func (r *SliderPsqlRepository) CreateSlider(ctx context.Context, slider models.S
 		"upload_id_tm":  slider.UploadIdTM,
 		"upload_id_en":  slider.UploadIdEN,
 		"upload_id_ru":  slider.UploadIdRU,
-		"platform":      slider.Platform,
 	}
 
 	err := r.client.QueryRow(ctx, query, args).Scan(&id)
@@ -50,7 +49,7 @@ func (r *SliderPsqlRepository) CreateSlider(ctx context.Context, slider models.S
 	return id, nil
 }
 
-func (r *SliderPsqlRepository) GetAllSliders(ctx context.Context, limit, page int64, platform string) ([]models.Slider, error) {
+func (r *SliderPsqlRepository) GetAllSliders(ctx context.Context, limit, page int64) ([]models.Slider, error) {
 	var (
 		sliders []models.Slider
 	)
@@ -58,17 +57,15 @@ func (r *SliderPsqlRepository) GetAllSliders(ctx context.Context, limit, page in
 	query := `
 		SELECT 
 		    id, image_path_tm, image_path_en, image_path_ru, 
-		    upload_id_tm, upload_id_en, upload_id_ru, platform
+		    upload_id_tm, upload_id_en, upload_id_ru
 		FROM sliders
-		WHERE platform = @platform
 		ORDER BY created_at DESC
 		LIMIT @limit OFFSET @offset;
 	`
 
 	args := pgx.NamedArgs{
-		"platform": platform,
-		"limit":    limit,
-		"offset":   page,
+		"limit":  limit,
+		"offset": page,
 	}
 	rows, err := r.client.Query(ctx, query, args)
 	if err != nil {
@@ -80,7 +77,7 @@ func (r *SliderPsqlRepository) GetAllSliders(ctx context.Context, limit, page in
 	for rows.Next() {
 		var slider models.Slider
 		if err = rows.Scan(&slider.ID, &slider.ImagePathTM, &slider.ImagePathEN, &slider.ImagePathRU,
-			&slider.UploadIdTM, &slider.UploadIdEN, &slider.UploadIdRU, &slider.Platform,
+			&slider.UploadIdTM, &slider.UploadIdEN, &slider.UploadIdRU,
 		); err != nil {
 			r.logger.Errorf("get sliders scan err : %v", err)
 			return nil, err
@@ -91,21 +88,16 @@ func (r *SliderPsqlRepository) GetAllSliders(ctx context.Context, limit, page in
 	return sliders, nil
 }
 
-func (r *SliderPsqlRepository) GetSlidersCount(ctx context.Context, platform string) (int64, error) {
+func (r *SliderPsqlRepository) GetSlidersCount(ctx context.Context) (int64, error) {
 	var count int64
 
 	query := `
 		SELECT 
 			COUNT(*) 
 		FROM sliders
-		WHERE platform = @platform
 	`
 
-	args := pgx.NamedArgs{
-		"platform": platform,
-	}
-
-	err := r.client.QueryRow(ctx, query, args).Scan(&count)
+	err := r.client.QueryRow(ctx, query).Scan(&count)
 	if err != nil {
 		r.logger.Errorf("get slidersCount query err : %v", err)
 		return count, err
@@ -119,7 +111,7 @@ func (r *SliderPsqlRepository) UpdateSlider(ctx context.Context, slider models.S
 
 	query := `
 		UPDATE sliders SET 
-		    image_path_tm = @image_path_tm, image_path_en = @image_path_en, image_path_ru = @image_path_ru, platform = @platform, 
+		    image_path_tm = @image_path_tm, image_path_en = @image_path_en, image_path_ru = @image_path_ru, 
 		    upload_id_tm = @upload_id_tm, upload_id_en = @upload_id_en, upload_id_ru = @upload_id_ru, updated_at = NOW()
 		WHERE id = @id
 		RETURNING id;
@@ -129,7 +121,6 @@ func (r *SliderPsqlRepository) UpdateSlider(ctx context.Context, slider models.S
 		"image_path_tm": slider.ImagePathTM,
 		"image_path_en": slider.ImagePathEN,
 		"image_path_ru": slider.ImagePathRU,
-		"platform":      slider.Platform,
 		"upload_id_tm":  slider.UploadIdTM,
 		"upload_id_en":  slider.UploadIdEN,
 		"upload_id_ru":  slider.UploadIdRU,
@@ -138,7 +129,7 @@ func (r *SliderPsqlRepository) UpdateSlider(ctx context.Context, slider models.S
 
 	err := r.client.QueryRow(ctx, query, args).Scan(&id)
 	if err != nil {
-		r.logger.Errorf("update slider err: %v", err)
+		r.logger.Errorf("update slider query err: %v", err)
 		return id, err
 	}
 

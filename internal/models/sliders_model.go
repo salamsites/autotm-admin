@@ -8,5 +8,4 @@ type Slider struct {
 	UploadIdTM  string
 	UploadIdEN  string
 	UploadIdRU  string
-	Platform    string
 }

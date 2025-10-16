@@ -126,7 +126,6 @@ CREATE TABLE IF NOT EXISTS sliders (
                 "upload_id_tm" UUID,
                 "upload_id_en" UUID,
                 "upload_id_ru" UUID,
-                "platform" CHARACTER VARYING(100) NOT NULL,
                 "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

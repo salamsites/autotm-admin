@@ -7,7 +7,6 @@ type CreateSliderReq struct {
 	UploadIdTM  string   `json:"upload_id_tm"`
 	UploadIdEN  string   `json:"upload_id_en"`
 	UploadIdRU  string   `json:"upload_id_ru"`
-	Platform    string   `json:"platform"`
 }
 
 type UpdateSliderReq struct {
@@ -18,7 +17,6 @@ type UpdateSliderReq struct {
 	UploadIdTM  string   `json:"upload_id_tm"`
 	UploadIdEN  string   `json:"upload_id_en"`
 	UploadIdRU  string   `json:"upload_id_ru"`
-	Platform    string   `json:"platform"`
 }
 type Slider struct {
 	ID          int64    `json:"id"`
@@ -28,7 +26,6 @@ type Slider struct {
 	UploadIdTM  string   `json:"upload_id_tm"`
 	UploadIdEN  string   `json:"upload_id_en"`
 	UploadIdRU  string   `json:"upload_id_ru"`
-	Platform    string   `json:"platform"`
 }
 
 type SliderResult struct {

@@ -291,7 +291,7 @@ func (s *SettingsService) Login(ctx context.Context, login dtos.LoginReq) (strin
 		s.logger.Errorf("compare hash err: %v", err)
 	}
 
-	token, err := utils.TokenEncode(user.ID, s.cfg.Auth.JwtRegistration)
+	token, err := utils.TokenEncode(user.ID, user.RoleName, s.cfg.Auth.JwtRegistration)
 	if err != nil {
 		s.logger.Errorf("token encode err: %v", err)
 		return "", err
