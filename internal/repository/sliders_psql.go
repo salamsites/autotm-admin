@@ -167,7 +167,7 @@ func (r *SliderPsqlRepository) GetSliderByID(ctx context.Context, id int64) (mod
 		"id": id,
 	}
 	err := r.client.QueryRow(ctx, query, args).Scan(&slider.ID, &slider.ImagePathTM, &slider.ImagePathEN,
-		&slider.ImagePathRU, &slider.UploadIdTM, &slider.UploadIdEN, &slider.UploadIdRU, &slider.Platform,
+		&slider.ImagePathRU, &slider.UploadIdTM, &slider.UploadIdEN, &slider.UploadIdRU,
 	)
 	if err != nil {
 		r.logger.Errorf("get slider by id query err : %v", err)
